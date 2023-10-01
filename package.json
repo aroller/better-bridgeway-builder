@@ -3,8 +3,8 @@
   "version": "0.1.0-SNAPSHOT",
   "description": "Frogger style game to improve Bridgeway Blvd in Sausalito.",
   "scripts": {
-    "test": "jest",
     "serve": "webpack-cli serve --mode development",
+    "test": "jest",
     "build": "webpack"
   },
   "keywords": [
