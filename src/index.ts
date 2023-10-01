@@ -1,4 +1,5 @@
 // (base: https://www.typescriptlang.org/play/)
+import { Other } from "./other";
 
 class Greeter {
   greeting: string;
@@ -16,3 +17,5 @@ const button = document.getElementById('myButton')!;
 button.onclick = () => {
   alert(greeter.greet());
 };
+
+const other = new Other();
