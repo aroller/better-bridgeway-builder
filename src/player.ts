@@ -27,4 +27,20 @@ export class Player {
 		ctx.fillStyle = this.color
 		ctx.fillRect(this.x, this.y, this.width, this.height);
 	}
+
+	public moveUp(): Player {
+		return new Player(this.x, this.y - 10, this.width, this.height, this.color);
+	}
+
+	public moveDown(): Player {
+		return new Player(this.x, this.y + 10, this.width, this.height, this.color);
+	}
+
+	public moveLeft(): Player {
+		return new Player(this.x - 10, this.y, this.width, this.height, this.color);
+	}
+	
+	public moveRight(): Player {
+		return new Player(this.x + 10, this.y, this.width, this.height, this.color);
+	}
 }

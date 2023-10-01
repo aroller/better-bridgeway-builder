@@ -8,22 +8,22 @@ const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
 
-const player = new Player(canvas.width / 2,  canvas.height - 50, 50, 50);
+let player = new Player(canvas.width / 2,  canvas.height - 50, 50, 50);
 
 // Event listener for keyboard input
 document.addEventListener("keydown", function(event) {
     switch(event.code) {
         case "ArrowUp":
-            // player.moveUp();frogY -= 10;
+            player = player.moveUp();
             break;
         case "ArrowDown":
-            // frogY += 10;
+            player = player.moveDown();
             break;
         case "ArrowLeft":
-            // frogX -= 10;
+            player = player.moveLeft();
             break;
         case "ArrowRight":
-            // frogX += 10;
+            player = player.moveRight();
             break;
     }
 
