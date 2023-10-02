@@ -1,30 +1,17 @@
-# typescript-on-browser-starter
-[![Netlify Status](https://api.netlify.com/api/v1/badges/4cf13290-0bf6-4e80-a86e-7dd0d5371a5a/deploy-status)](https://app.netlify.com/sites/typescript-on-browser-starter/deploys)
-
-Starter for TypeScript on Web Browser
+# better-bridgeway-builder
 
 ## Purpose
-For users who wants to try TypeScript on Web Browser easily and stress free
+A Frogger-style game to advocate for Building a Better Bridgeway in Sausalito, California. 
 
-## Feature
-* Simple as possible
-* Source map
-* Hot reload
+Crossing the street can be difficult. Avoid getting squashed by oncoming cars and bicycles. 
 
-## Quick Start
 
-```bash
-# You can change app name
-APP_NAME="myapp"
-git clone https://github.com/nwtgck/typescript-on-browser-starter.git $APP_NAME && \
-cd $APP_NAME && \
-rm -rf .git && \
-sed -i '' "s/typescript-on-browser-starter/${APP_NAME}/" package.json && \
-sed -i '' "s/Starter for TypeScript on Web Browser/${APP_NAME}/" package.json && \
-echo -e "# $APP_NAME" > README.md && \
-sed -i ''  "s/2019/$(date -u "+%Y")/" LICENSE  && \
-npm i
-```
+
+
+## Development
+
+Download Visual Studio Code and open the project in the [Docker Dev Container](https://code.visualstudio.com/docs/devcontainers/containers) when prompted. 
+
 
 ## How to change
 
@@ -57,3 +44,11 @@ dist/
 ```
 
 `bundle.js` includes an inline source map.
+
+## Application Development 
+
+The Frogger-style game consists of three main components:
+
+- `player.ts`: This file defines the player object, which is the being trying to cross the street.
+- `street.ts`: This file manages the street, lanes, and obstacles that the player must avoid.
+- `index.ts`: This file orchestrates the game and provides access to the `index.html` canvas component.
