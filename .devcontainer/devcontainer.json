@@ -16,7 +16,8 @@
 		"ms-vscode.vscode-typescript-tslint-plugin",
 		"Orta.vscode-jest",
 		"GitHub.copilot",
-		"yzhang.markdown-all-in-one"
+		"yzhang.markdown-all-in-one",
+		"esbenp.prettier-vscode"
 	]
     }
   },
