@@ -114,4 +114,8 @@ export class Street {
 			positionY += lane.laneWidth;
 		}
 	}
+
+	public getStreetWidth(): number {
+		return this.lanes.reduce((totalWidth, lane) => totalWidth + lane.laneWidth, 0);
+	}
 }
