@@ -6,7 +6,7 @@
     "serve": "webpack-cli serve --mode development",
     "test": "jest",
     "build": "webpack",
-    "format": "prettier --loglevel warn --write \"src/**/*.ts\""
+    "format": "prettier --loglevel warn --write \"src/**/*.ts\" --write \"*.json\" --write \"public/*.html\""
   },
   "keywords": [
     "TypeScript",
