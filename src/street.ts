@@ -1,126 +1,107 @@
+export enum LaneDirection {
+	LEFT = -1,
+	RIGHT = 1,
+}
+
 /**
  * Any object traveling in a lane that may conflict with the frog.
  */
 export class Obstacle {
-  constructor(
-    public readonly x: number,
-    public readonly y: number,
-    public readonly width: number,
-    public readonly height: number,
-    public readonly speed: number
-  ) {}
+	constructor(
+		public readonly x: number,
+		public readonly y: number,
+		public readonly width: number,
+		public readonly height: number,
+		public readonly speed: number
+	) {}
 
-  public moveObstacle(speed: number): Obstacle {
-    const newX = this.x + speed;
-    return new Obstacle(newX, this.y, this.width, this.height, this.speed);
-  }
+	public moveObstacle(speed: number): Obstacle {
+		return new Obstacle(this.x + speed, this.y, this.width, this.height, this.speed);
+	}
 }
 
 export class Lane {
-  private obstacles: Obstacle[];
+	private obstacles: Obstacle[];
 
-  constructor(
-    public readonly laneId: number,
-    public readonly direction: number,
-    public readonly laneWidth: number = 600,
-    public readonly laneHeight: number = 50
-  ) {
-    this.obstacles = [];
-  }
+	constructor(
+		public readonly direction: LaneDirection,
+		public readonly laneWidth: number = 600,
+		public readonly laneHeight: number = 50,
+		obstacles: Obstacle[] = []
+	) {
+		this.obstacles = obstacles;
+	}
 
-  public generateObstacle(): void {
-    const obstacleWidth = this.laneHeight;
-    const obstacleHeight = this.laneHeight;
-    const speed = Math.random() * 5 + 2;
-    let obstacleX;
+	public addObstacle(obstacle: Obstacle): Lane {
+		const newObstacles = [...this.obstacles, obstacle];
+		return new Lane(this.direction, this.laneWidth, this.laneHeight, newObstacles);
+	}
 
-    if (this.direction === 1) {
-      obstacleX = this.laneWidth;
-    } else {
-      obstacleX = 0;
-    }
+	public updateObstacles(): Lane {
+		const newObstacles = this.obstacles.map((obstacle) => obstacle.moveObstacle(obstacle.speed));
+		return new Lane(this.direction, this.laneWidth, this.laneHeight, newObstacles);
+	}
 
-    const newObstacle = new Obstacle(
-      obstacleX,
-      this.laneId * this.laneHeight,
-      obstacleWidth,
-      obstacleHeight,
-      this.direction === 1 ? -speed : speed
-    );
+	public draw(ctx: CanvasRenderingContext2D, positionY: number): void {
+		// Draw lane lines
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = 5;
 
-    for (let obstacle of this.obstacles) {
-      if (Math.abs(obstacle.x - newObstacle.x) <= newObstacle.width) {
-        return;
-      }
-    }
+		const laneLineOffset = 20;
 
-    this.obstacles.push(newObstacle);
-  }
+		// Draw left lane line
+		ctx.beginPath();
+		ctx.moveTo(0, positionY);
+		ctx.lineTo(this.laneWidth, positionY);
+		ctx.stroke();
 
-  public updateObstacles(): void {
-    const newObstacles = this.obstacles.map((obstacle) =>
-      obstacle.moveObstacle(obstacle.speed)
-    );
-    this.obstacles = newObstacles.filter(
-      (obstacle) =>
-        !(obstacle.x > this.laneWidth || obstacle.x < -obstacle.width)
-    );
+		// Draw right lane line
+		ctx.beginPath();
+		ctx.moveTo(0, positionY + laneLineOffset * 2);
+		ctx.lineTo(this.laneWidth, positionY + laneLineOffset * 2);
+		ctx.stroke();
 
-    for (let i = 0; i < this.obstacles.length; i++) {
-      for (let j = i + 1; j < this.obstacles.length; j++) {
-        if (
-          Math.abs(this.obstacles[i].x - this.obstacles[j].x) <
-          this.obstacles[i].width
-        ) {
-          if (this.obstacles[i].x > this.obstacles[j].x) {
-            this.obstacles[j] = this.obstacles[j].moveObstacle(
-              this.obstacles[i].speed
-            );
-          } else {
-            this.obstacles[i] = this.obstacles[i].moveObstacle(
-              this.obstacles[j].speed
-            );
-          }
-        }
-      }
-    }
-  }
-
-  public drawObstacles(ctx: CanvasRenderingContext2D): void {
-    for (const obstacle of this.obstacles) {
-      ctx.fillStyle = "red";
-      ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-    }
-  }
+		// Draw obstacles
+		for (const obstacle of this.obstacles) {
+			ctx.fillStyle = "red";
+			ctx.fillRect(obstacle.x, obstacle.y + positionY, obstacle.width, obstacle.height);
+		}
+	}
 }
+
 export class Street {
-  private lanes: Lane[];
+	private lanes: Lane[];
 
-  constructor(public readonly laneCount: number) {
-    this.lanes = [];
+	constructor() {
+		this.lanes = [];
+	}
 
-    // Instantiate the lanes
-    for (let i = 0; i < laneCount; i++) {
-      let direction = i % 2 == 0 ? -1 : 1; // Alternate direction for each lane
-      this.lanes[i] = new Lane(i, direction);
-    }
-  }
+	public addLane(lane: Lane): Street {
+		const newLanes = [...this.lanes, lane];
+		return this.withLanes(newLanes);
+	}
 
-  public generateObstacles(): void {
-    for (const lane of this.lanes) {
-      lane.generateObstacle();
-    }
-  }
+	public withLanes(lanes: Lane[]): Street {
+		const newStreet = new Street();
+		newStreet.lanes = lanes;
+		return newStreet;
+	}
 
-  public updateObstacles(): void {
-    for (const lane of this.lanes) {
-      lane.updateObstacles();
-    }
-  }
+	public generateObstacles(): Street {
+		const newLanes = this.lanes.map((lane) => lane.addObstacle(new Obstacle(0, 0, 50, 50, 5)));
+		return this.withLanes(newLanes);
+	}
 
-  public drawObstacles(ctx: CanvasRenderingContext2D): void {
-    for (const lane of this.lanes) {
-      lane.drawObstacles(ctx);
-    }
-  }
+	public updateObstacles(): Street {
+		const newLanes = this.lanes.map((lane) => lane.updateObstacles());
+		return this.withLanes(newLanes);
+	}
+
+	public draw(ctx: CanvasRenderingContext2D): void {
+		let positionY = 0;
+		for (const lane of this.lanes) {
+			lane.draw(ctx, positionY);
+			positionY += lane.laneHeight;
+		}
+	}
 }
