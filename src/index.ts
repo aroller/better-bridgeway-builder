@@ -13,8 +13,13 @@ function init(ctx: CanvasRenderingContext2D) {
     .addLane(new Lane(LaneDirection.RIGHT, vehicleLaneWidth, streetLength))
     .addLane(new Lane(LaneDirection.RIGHT, bikeLaneWidth, streetLength));
 
-    const playerSize = 50;
-    let player = new Player(streetLength / 2, street.getStreetWidth() + playerSize, playerSize, playerSize);
+  const playerSize = 50;
+  let player = new Player(
+    streetLength / 2,
+    street.getStreetWidth() + playerSize,
+    playerSize,
+    playerSize,
+  );
 
   // Event listener for keyboard input
   document.addEventListener("keydown", function (event) {
@@ -44,7 +49,7 @@ function init(ctx: CanvasRenderingContext2D) {
 function updateCanvas(
   ctx: CanvasRenderingContext2D,
   player: Player,
-  street: Street
+  street: Street,
 ) {
   // clear the canvas
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);

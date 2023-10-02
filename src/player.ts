@@ -15,7 +15,7 @@ export class Player {
     public readonly y: number,
     public readonly width: number,
     public readonly height: number,
-    public readonly color: string = "green"
+    public readonly color: string = "green",
   ) {}
 
   /**
