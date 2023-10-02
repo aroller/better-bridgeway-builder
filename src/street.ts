@@ -25,8 +25,8 @@ export class Lane {
 
 	constructor(
 		public readonly direction: LaneDirection,
-		public readonly laneWidth: number = 600,
-		public readonly laneHeight: number = 50,
+		public readonly laneWidth: number = 50,
+		public readonly streetLength: number = 600,
 		obstacles: Obstacle[] = []
 	) {
 		this.obstacles = obstacles;
@@ -34,31 +34,35 @@ export class Lane {
 
 	public addObstacle(obstacle: Obstacle): Lane {
 		const newObstacles = [...this.obstacles, obstacle];
-		return new Lane(this.direction, this.laneWidth, this.laneHeight, newObstacles);
+		return new Lane(this.direction, this.laneWidth, this.streetLength, newObstacles);
 	}
 
 	public updateObstacles(): Lane {
 		const newObstacles = this.obstacles.map((obstacle) => obstacle.moveObstacle(obstacle.speed));
-		return new Lane(this.direction, this.laneWidth, this.laneHeight, newObstacles);
+		return new Lane(this.direction, this.laneWidth, this.streetLength, newObstacles);
 	}
 
+	/**
+	 * Draws the street on the canvas with lane lines and obstacles.
+	 * @param {CanvasRenderingContext2D} ctx - The canvas rendering context to draw on.
+	 * @param {number} positionY - The canvas y position for the top side of the lane.
+	 * @returns {void}
+	 */
 	public draw(ctx: CanvasRenderingContext2D, positionY: number): void {
 		// Draw lane lines
 		ctx.strokeStyle = "black";
 		ctx.lineWidth = 5;
 
-		const laneLineOffset = 20;
-
 		// Draw left lane line
 		ctx.beginPath();
 		ctx.moveTo(0, positionY);
-		ctx.lineTo(this.laneWidth, positionY);
+		ctx.lineTo(this.streetLength, positionY);
 		ctx.stroke();
 
 		// Draw right lane line
 		ctx.beginPath();
-		ctx.moveTo(0, positionY + laneLineOffset * 2);
-		ctx.lineTo(this.laneWidth, positionY + laneLineOffset * 2);
+		ctx.moveTo(0, positionY + this.laneWidth);
+		ctx.lineTo(this.streetLength, positionY + this.laneWidth);
 		ctx.stroke();
 
 		// Draw obstacles
@@ -69,6 +73,12 @@ export class Lane {
 	}
 }
 
+/**
+ * A street consists of lanes that travel horizontally across the canvas.
+ * The lanes may have obstacles that travel in the same direction as the lane.
+ * The obstacles may conflict with the player.
+ * @class
+ */
 export class Street {
 	private lanes: Lane[];
 
@@ -101,7 +111,7 @@ export class Street {
 		let positionY = 0;
 		for (const lane of this.lanes) {
 			lane.draw(ctx, positionY);
-			positionY += lane.laneHeight;
+			positionY += lane.laneWidth;
 		}
 	}
 }
