@@ -63,10 +63,13 @@ export class Lane {
   /**
    * Draws the street on the canvas with lane lines and obstacles.
    * @param {CanvasRenderingContext2D} ctx - The canvas rendering context to draw on.
-   * @param {number} positionY - The canvas y position for the top side of the lane.
+   * @param {number} centerY - The canvas y position for the center of the lane.
    * @returns {void}
    */
-  public draw(ctx: CanvasRenderingContext2D, positionY: number): void {
+  public draw(ctx: CanvasRenderingContext2D, centerY: number): void {
+    // Calculate the top position of the lane
+    const positionY = centerY - this.laneWidth / 2;
+
     // Draw lane lines
     ctx.strokeStyle = "black";
     ctx.lineWidth = 5;
@@ -88,7 +91,7 @@ export class Lane {
       ctx.fillStyle = "red";
       ctx.fillRect(
         obstacle.x,
-        obstacle.y + positionY,
+        obstacle.y + positionY + (this.laneWidth - obstacle.height) / 2,
         obstacle.width,
         obstacle.height,
       );
@@ -122,7 +125,7 @@ export class Street {
 
   public generateObstacles(): Street {
     const newLanes = this.lanes.map((lane) =>
-      lane.addObstacle(new Obstacle(0, 0, 50, 50, 5)),
+      lane.addObstacle(new Obstacle(0, 0, 40, 25, 5)),
     );
     return this.withLanes(newLanes);
   }
@@ -132,11 +135,17 @@ export class Street {
     return this.withLanes(newLanes);
   }
 
-  public draw(ctx: CanvasRenderingContext2D): void {
-    let positionY = 0;
+  /**
+   * Draws the street on the canvas with all lanes and obstacles.
+   * @param {CanvasRenderingContext2D} ctx - The canvas rendering context to draw on.
+   * @param {number} topOfStreetY - The canvas y position for the top of the street.
+   * @returns {void}
+   */
+  public draw(ctx: CanvasRenderingContext2D, topOfStreetY: number = 0): void {
+    let centerY = topOfStreetY;
     for (const lane of this.lanes) {
-      lane.draw(ctx, positionY);
-      positionY += lane.laneWidth;
+      lane.draw(ctx, centerY);
+      centerY += lane.laneWidth;
     }
   }
 

@@ -7,13 +7,14 @@ function init(ctx: CanvasRenderingContext2D) {
   const streetLength = canvas.width;
   const vehicleLaneWidth = 100;
   const bikeLaneWidth = 40;
-  const street = new Street()
-    .addLane(new Lane(LaneDirection.LEFT, bikeLaneWidth, streetLength))
+  let street = new Street()
+    // .addLane(new Lane(LaneDirection.LEFT, bikeLaneWidth, streetLength))
     .addLane(new Lane(LaneDirection.LEFT, vehicleLaneWidth, streetLength))
     .addLane(new Lane(LaneDirection.RIGHT, vehicleLaneWidth, streetLength))
-    .addLane(new Lane(LaneDirection.RIGHT, bikeLaneWidth, streetLength));
+    // .addLane(new Lane(LaneDirection.RIGHT, bikeLaneWidth, streetLength))
+    .generateObstacles(); // Add obstacles to the lanes
 
-  const playerSize = 50;
+  const playerSize = 20;
   let player = new Player(
     streetLength / 2,
     street.getStreetWidth() + playerSize,
@@ -54,9 +55,13 @@ function updateCanvas(
   // clear the canvas
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+  // Update the obstacles in each lane
+  street = street.updateObstacles();
+
   // Draw the scene
+  const topOfStreetY = ctx.canvas.height / 10; //use a buffer at the top 
   player.draw(ctx);
-  street.draw(ctx);
+  street.draw(ctx, topOfStreetY);
 }
 
 // Get the canvas element and context
