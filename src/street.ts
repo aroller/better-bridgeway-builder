@@ -89,11 +89,13 @@ export class Lane {
     // Draw obstacles
     for (const obstacle of this.obstacles) {
       ctx.fillStyle = "red";
+      const obstacleWidth = this.laneWidth * 0.75;
+      const obstacleHeight = obstacleWidth * (obstacle.height / obstacle.width);
       ctx.fillRect(
         obstacle.x,
-        obstacle.y + positionY + (this.laneWidth - obstacle.height) / 2,
-        obstacle.width,
-        obstacle.height,
+        obstacle.y + positionY + (this.laneWidth - obstacleHeight) / 2,
+        obstacleWidth,
+        obstacleHeight,
       );
     }
   }
