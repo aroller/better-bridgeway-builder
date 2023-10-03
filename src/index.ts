@@ -29,11 +29,11 @@ class Scene {
         const bikeLaneWidth = 50;
 
         // Create the street object with four lanes, two for vehicles and two for bikes.
-        this.street = new Street()
-            .addLane(new Lane(LaneDirection.LEFT, bikeLaneWidth, streetLength))
-            .addLane(new Lane(LaneDirection.LEFT, vehicleLaneWidth, streetLength))
-            .addLane(new Lane(LaneDirection.RIGHT, vehicleLaneWidth, streetLength))
-            .addLane(new Lane(LaneDirection.RIGHT, bikeLaneWidth, streetLength))
+        this.street = new Street(this.topOfStreetY, streetLength)
+            .addLane(LaneDirection.LEFT, bikeLaneWidth)
+            .addLane(LaneDirection.LEFT, vehicleLaneWidth)
+            .addLane(LaneDirection.RIGHT, vehicleLaneWidth)
+            .addLane(LaneDirection.RIGHT, bikeLaneWidth)
             .generateObstacles();
 
         // Create the player object in the middle of the street.
@@ -94,7 +94,7 @@ class Scene {
         // Draw the player and street.
         this.player.draw(this.ctx);
         this.ctx.fillText(`x: ${this.player.x}, y: ${this.player.y}`, this.player.x, this.player.y - 10);
-        this.street.draw(this.ctx, this.topOfStreetY);
+        this.street.draw(this.ctx);
     }
 }
 
