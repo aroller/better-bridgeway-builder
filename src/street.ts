@@ -13,15 +13,18 @@ export class Obstacle {
     public readonly width: number,
     public readonly height: number,
     public readonly speed: number,
+    public readonly direction: LaneDirection,
   ) {}
 
-  public moveObstacle(speed: number): Obstacle {
+  public moveObstacle(): Obstacle {
+    const newX = this.x + this.speed * this.direction;
     return new Obstacle(
-      this.x + speed,
+      newX,
       this.y,
       this.width,
       this.height,
       this.speed,
+      this.direction,
     );
   }
 }
@@ -50,7 +53,7 @@ export class Lane {
 
   public updateObstacles(): Lane {
     const newObstacles = this.obstacles.map((obstacle) =>
-      obstacle.moveObstacle(obstacle.speed),
+      obstacle.moveObstacle(),
     );
     return new Lane(
       this.direction,
@@ -126,9 +129,13 @@ export class Street {
   }
 
   public generateObstacles(): Street {
-    const newLanes = this.lanes.map((lane) =>
-      lane.addObstacle(new Obstacle(0, 0, 40, 25, 5)),
-    );
+    const newLanes = this.lanes.map((lane) => {
+      // Place obstacles at the beginning or end of the lane based on the lane direction.
+      const objectWidth = 40;
+      const offsetOffCanvas = 3 * objectWidth;
+      const x = lane.direction === LaneDirection.LEFT ? lane.streetLength + offsetOffCanvas : 0 - offsetOffCanvas;
+      return lane.addObstacle(new Obstacle(x, 0, objectWidth, 25, 5, lane.direction)); 
+    });
     return this.withLanes(newLanes);
   }
 
