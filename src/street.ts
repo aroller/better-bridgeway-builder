@@ -3,23 +3,20 @@
     LEFT = -1,
     RIGHT = 1,
   }
-
-
+  
   export class Obstacle {
     constructor(
       public readonly x: number,
-      public readonly y: number,
       public readonly width: number,
       public readonly height: number,
       public readonly speed: number,
       public readonly direction: LaneDirection,
     ) {}
-
+  
     public moveObstacle(): Obstacle {
       const newX = this.x + this.speed * this.direction;
       return new Obstacle(
         newX,
-        this.y,
         this.width,
         this.height,
         this.speed,
@@ -103,7 +100,7 @@
         const obstacleHeight = obstacleWidth * (obstacle.height / obstacle.width);
         ctx.fillRect(
           obstacle.x,
-          obstacle.y + positionY + (this.laneWidth - obstacleHeight) / 2,
+          positionY + (this.laneWidth - obstacleHeight) / 2,
           obstacleWidth,
           obstacleHeight,
         );
@@ -125,8 +122,8 @@
         if (
           playerX > obstacle.x &&
           playerX < obstacle.x + obstacle.width &&
-          playerY > obstacle.y + positionY + (this.laneWidth - obstacle.height) / 2 &&
-          playerY < obstacle.y + positionY + (this.laneWidth - obstacle.height) / 2 + obstacle.height
+          playerY >  positionY + (this.laneWidth - obstacle.height) / 2 &&
+          playerY <  positionY + (this.laneWidth - obstacle.height) / 2 + obstacle.height
         ) {
           return true;
         }
@@ -181,7 +178,7 @@
             ? lane.streetLength + offsetOffCanvas
             : 0 - offsetOffCanvas;
         return lane.addObstacle(
-          new Obstacle(x, 0, objectWidth, 25, 5, lane.direction),
+          new Obstacle(x, objectWidth, 25, 5, lane.direction),
         );
       });
       return new Street(
