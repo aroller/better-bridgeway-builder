@@ -32,8 +32,7 @@ class Scene {
             .addLane(LaneDirection.LEFT, bikeLaneWidth)
             .addLane(LaneDirection.LEFT, vehicleLaneWidth)
             .addLane(LaneDirection.RIGHT, vehicleLaneWidth)
-            .addLane(LaneDirection.RIGHT, bikeLaneWidth)
-            .generateObstacles();
+            .addLane(LaneDirection.RIGHT, bikeLaneWidth);
 
         // Create the player object in the middle of the street.
         const playerSize = 20;
@@ -52,6 +51,9 @@ class Scene {
             this.street = this.street.updateObstacles();
             this.updateCanvas();
         }, 50);
+        setInterval(() => {
+            this.street = this.street.generateObstacles();
+        }, 1000);
     }
 
     /**

@@ -169,17 +169,21 @@
     }
 
     public generateObstacles(): Street {
-      const newLanes = this.lanes.map((lane) => {
-        // Place obstacles at the beginning or end of the lane based on the lane direction.
-        const objectWidth = 40;
-        const offsetOffCanvas = 3 * objectWidth;
-        const x =
-          lane.direction === LaneDirection.LEFT
-            ? lane.streetLength + offsetOffCanvas
-            : 0 - offsetOffCanvas;
-        return lane.addObstacle(
-          new Obstacle(x, objectWidth, 25, 5, lane.direction),
-        );
+      const randomLaneIndex = Math.floor(Math.random() * this.lanes.length);
+      const newLanes = this.lanes.map((lane, index) => {
+        if (index === randomLaneIndex) {
+          // Place obstacles at the beginning or end of the lane based on the lane direction.
+          const objectWidth = 40;
+          const offsetOffCanvas = 3 * objectWidth;
+          const x =
+            lane.direction === LaneDirection.LEFT
+              ? lane.streetLength + offsetOffCanvas
+              : 0 - offsetOffCanvas;
+          return lane.addObstacle(
+            new Obstacle(x, objectWidth, 25, 5, lane.direction),
+          );
+        }
+        return lane;
       });
       return new Street(
         this.topOfStreetY,
