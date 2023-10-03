@@ -30,9 +30,9 @@ class Scene {
         // Create the street object with four lanes, two for vehicles and two for bikes.
         this.street = new Street(this.topOfStreetY, streetLength)
             .addLane(LaneDirection.LEFT, bikeLaneWidth)
+            .addLane(LaneDirection.RIGHT, bikeLaneWidth)
             .addLane(LaneDirection.LEFT, vehicleLaneWidth)
-            .addLane(LaneDirection.RIGHT, vehicleLaneWidth)
-            .addLane(LaneDirection.RIGHT, bikeLaneWidth);
+            .addLane(LaneDirection.RIGHT, vehicleLaneWidth);
 
         // Create the player object in the middle of the street.
         const playerSize = 20;
@@ -45,6 +45,7 @@ class Scene {
 
         // Listen for keyboard input to move the player.
         document.addEventListener("keydown", this.handleKeyDown.bind(this));
+        document.addEventListener("mousedown", this.handleMouseDown.bind(this));
 
         // Update the game every 50 milliseconds.
         setInterval(() => {
@@ -75,6 +76,39 @@ class Scene {
                 case "ArrowRight":
                     this.player = this.player.moveRight();
                     break;
+            }
+
+            this.updateCanvas();
+        }
+    }
+
+      /**
+     * Handles mouse input to move the player towards the point being clicked.
+     * @param event - The MouseEvent object representing the mouse click.
+     */
+      private handleMouseDown(event: MouseEvent) {
+        const x = event.clientX - canvas.offsetLeft;
+        const y = event.clientY - canvas.offsetTop;
+        this.navigateToPosition(x, y);
+    }
+
+    private navigateToPosition(x: number, y: number) {
+        if (!this.isGameOver) {
+            const dx = x - this.player.x;
+            const dy = y - this.player.y;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                if (dx > 0) {
+                    this.player = this.player.moveRight();
+                } else {
+                    this.player = this.player.moveLeft();
+                }
+            } else {
+                if (dy > 0) {
+                    this.player = this.player.moveDown();
+                } else {
+                    this.player = this.player.moveUp();
+                }
             }
 
             this.updateCanvas();

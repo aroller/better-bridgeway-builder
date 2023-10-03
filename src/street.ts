@@ -81,7 +81,7 @@
 
       // Draw lane lines
       ctx.strokeStyle = "black";
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 2;
 
       // Draw left lane line
       ctx.beginPath();
