@@ -21,7 +21,7 @@ class Scene {
   private street: Street;
   private player: Player;
   private topOfStreetY: number;
-  private isGameOver: boolean;
+  private isPlayerSquashed: boolean;
   private playerDestination: Point | null = null;
 
   /**
@@ -31,7 +31,7 @@ class Scene {
   constructor(ctx: CanvasRenderingContext2D) {
     this.ctx = ctx;
     this.topOfStreetY = canvas.height / 10;
-    this.isGameOver = false;
+    this.isPlayerSquashed = false;
 
     const streetLength = canvas.width;
     const vehicleLaneWidth = 120;
@@ -73,7 +73,7 @@ class Scene {
    * @param event - The KeyboardEvent object representing the key press.
    */
   private handleKeyDown(event: KeyboardEvent) {
-    if (!this.isGameOver) {
+    if (!this.isPlayerSquashed) {
       switch (event.code) {
         case "ArrowUp":
           this.player = this.player.moveUp();
@@ -112,7 +112,7 @@ class Scene {
   }
 
   private navigateToDestination() {
-    if (!this.isGameOver && this.playerDestination !== null) {
+    if (!this.isPlayerSquashed && this.playerDestination !== null) {
       const x = this.playerDestination.x;
       const y = this.playerDestination.y;
       const dx = x - this.player.x;
@@ -149,7 +149,7 @@ class Scene {
 
     if (this.street.detectCollision(this.player.x, this.player.y)) {
       this.player = this.player.onCollisionDetected();
-      this.isGameOver = true;
+      this.isPlayerSquashed = true;
     }
 
     // Draw the player and street.
