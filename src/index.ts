@@ -16,10 +16,9 @@ class Scene {
 
     /**
      * Creates a new Scene instance.
-     * @param canvas - The HTMLCanvasElement to render the game on.
      * @param ctx - The CanvasRenderingContext2D to use for rendering.
      */
-    constructor(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+    constructor(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
         this.topOfStreetY = canvas.height / 10;
         this.isGameOver = false;
@@ -112,7 +111,7 @@ if (canvas) {
     const ctx = canvas.getContext("2d");
 
     if (ctx) {
-        new Scene(canvas, ctx);
+        new Scene(ctx);
     } else {
         console.error("Canvas context is null");
     }
