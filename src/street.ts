@@ -61,7 +61,7 @@ export class Lane {
   }
 
   /**
-   * Draws the street on the canvas with lane lines and obstacles.
+   * Draws the lane on the canvas with lane lines and obstacles.
    * @param {CanvasRenderingContext2D} ctx - The canvas rendering context to draw on.
    * @param {number} centerY - The canvas y position for the center of the lane.
    * @returns {void}
@@ -144,7 +144,7 @@ export class Street {
   public draw(ctx: CanvasRenderingContext2D, topOfStreetY: number = 0): void {
     let centerY = topOfStreetY;
     for (const lane of this.lanes) {
-      lane.draw(ctx, centerY);
+      lane.draw(ctx, centerY + lane.laneWidth / 2);
       centerY += lane.laneWidth;
     }
   }

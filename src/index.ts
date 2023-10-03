@@ -5,13 +5,13 @@ function init(ctx: CanvasRenderingContext2D) {
   const canvas = ctx.canvas;
 
   const streetLength = canvas.width;
-  const vehicleLaneWidth = 100;
-  const bikeLaneWidth = 40;
+  const vehicleLaneWidth = 120;
+  const bikeLaneWidth = 50;
   let street = new Street()
-    // .addLane(new Lane(LaneDirection.LEFT, bikeLaneWidth, streetLength))
+    .addLane(new Lane(LaneDirection.LEFT, bikeLaneWidth, streetLength))
     .addLane(new Lane(LaneDirection.LEFT, vehicleLaneWidth, streetLength))
     .addLane(new Lane(LaneDirection.RIGHT, vehicleLaneWidth, streetLength))
-    // .addLane(new Lane(LaneDirection.RIGHT, bikeLaneWidth, streetLength))
+    .addLane(new Lane(LaneDirection.RIGHT, bikeLaneWidth, streetLength))
     .generateObstacles(); // Add obstacles to the lanes
 
   const playerSize = 20;
