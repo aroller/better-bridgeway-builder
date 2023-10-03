@@ -45,7 +45,11 @@ function init(ctx: CanvasRenderingContext2D) {
     });
 
     // Initial canvas update and obstacle generation
-    setInterval(() => updateCanvas(ctx, player, street, topOfStreetY), 50);
+    let updatedStreet = street;
+    setInterval(() => {
+        updatedStreet = updatedStreet.updateObstacles();
+        updateCanvas(ctx, player, updatedStreet, topOfStreetY);
+    }, 50);
 }
 
 function updateCanvas(
