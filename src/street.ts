@@ -53,9 +53,15 @@
     }
 
     public updateObstacles(): Lane {
-      const newObstacles = this.obstacles.map((obstacle) =>
-        obstacle.moveObstacle(),
-      );
+      const newObstacles = this.obstacles
+        .map((obstacle) => obstacle.moveObstacle())
+        .filter((obstacle) => {
+          if (this.direction === LaneDirection.LEFT) {
+            return obstacle.x + obstacle.width > 0;
+          } else {
+            return obstacle.x < this.streetLength;
+          }
+        });
       return new Lane(
         this.direction,
         this.laneWidth,
