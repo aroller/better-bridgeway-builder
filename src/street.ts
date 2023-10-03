@@ -11,6 +11,7 @@
       public readonly height: number,
       public readonly speed: number,
       public readonly direction: LaneDirection,
+      public readonly color: string = "black",
     ) {}
   
     public moveObstacle(): Obstacle {
@@ -21,6 +22,7 @@
         this.height,
         this.speed,
         this.direction,
+        this.color,
       );
     }
   }
@@ -95,7 +97,7 @@
 
       // Draw obstacles
       for (const obstacle of this.obstacles) {
-        ctx.fillStyle = "purple";
+        ctx.fillStyle = obstacle.color;
         const obstacleWidth = this.laneWidth * 0.75;
         const obstacleHeight = obstacleWidth * (obstacle.height / obstacle.width);
         ctx.fillRect(
