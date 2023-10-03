@@ -91,7 +91,7 @@ export class Lane {
 
     // Draw obstacles
     for (const obstacle of this.obstacles) {
-      ctx.fillStyle = "red";
+      ctx.fillStyle = "purple";
       const obstacleWidth = this.laneWidth * 0.75;
       const obstacleHeight = obstacleWidth * (obstacle.height / obstacle.width);
       ctx.fillRect(
@@ -101,6 +101,27 @@ export class Lane {
         obstacleHeight,
       );
     }
+  }
+
+  /**
+   * Detects collision between the player and the obstacles in the lane.
+   * @param {number} playerX - The x coordinate of the player.
+   * @param {number} playerY - The y coordinate of the player.
+   * @returns {boolean} - True if there is a collision, false otherwise.
+   */
+  public detectCollision(playerX: number, playerY: number): boolean {
+    for (const obstacle of this.obstacles) {
+      console.log(`playerX: ${playerX}, playerY: ${playerY} obstacle: ${obstacle.x}, ${obstacle.y}`);
+      if (
+        playerX > obstacle.x &&
+        playerX < obstacle.x + obstacle.width &&
+        playerY > obstacle.y &&
+        playerY < obstacle.y + obstacle.height
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -133,8 +154,13 @@ export class Street {
       // Place obstacles at the beginning or end of the lane based on the lane direction.
       const objectWidth = 40;
       const offsetOffCanvas = 3 * objectWidth;
-      const x = lane.direction === LaneDirection.LEFT ? lane.streetLength + offsetOffCanvas : 0 - offsetOffCanvas;
-      return lane.addObstacle(new Obstacle(x, 0, objectWidth, 25, 5, lane.direction)); 
+      const x =
+        lane.direction === LaneDirection.LEFT
+          ? lane.streetLength + offsetOffCanvas
+          : 0 - offsetOffCanvas;
+      return lane.addObstacle(
+        new Obstacle(x, 0, objectWidth, 25, 5, lane.direction),
+      );
     });
     return this.withLanes(newLanes);
   }
@@ -142,6 +168,21 @@ export class Street {
   public updateObstacles(): Street {
     const newLanes = this.lanes.map((lane) => lane.updateObstacles());
     return this.withLanes(newLanes);
+  }
+
+  /**
+   * Detects collision between the player and the obstacles in all lanes.
+   * @param {number} playerX - The x coordinate of the player.
+   * @param {number} playerY - The y coordinate of the player.
+   * @returns {boolean} - True if there is a collision, false otherwise.
+   */
+  public detectCollision(playerX: number, playerY: number): boolean {
+    for (const lane of this.lanes) {
+      if (lane.detectCollision(playerX, playerY)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

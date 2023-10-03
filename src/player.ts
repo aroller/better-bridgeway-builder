@@ -27,6 +27,13 @@ export class Player {
     ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
+  /**
+   * Changes the player's color to red when a collision is detected.
+   */
+  public onCollisionDetected(): Player {
+    return new Player(this.x, this.y, this.width, this.height, "red");
+  }
+
   public moveUp(): Player {
     return new Player(this.x, this.y - 10, this.width, this.height, this.color);
   }

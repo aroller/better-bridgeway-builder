@@ -88,8 +88,12 @@ class Scene {
         // Update the street obstacles.
         this.street = this.street.updateObstacles();
 
+        if(this.street.detectCollision(this.player.x,this.player.y)){
+            this.player = this.player.onCollisionDetected();
+        }
         // Draw the player and street.
         this.player.draw(this.ctx);
+        this.ctx.fillText(`x: ${this.player.x}, y: ${this.player.y}`, this.player.x, this.player.y - 10);
         this.street.draw(this.ctx, this.topOfStreetY);
     }
 }
@@ -107,4 +111,3 @@ if (canvas) {
 } else {
     console.error("Canvas element is null");
 }
-
