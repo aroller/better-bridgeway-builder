@@ -36,8 +36,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          # Just testing with all.  /dist is all that is needed
-          path: './dist/*'
+          # only files generated with `npm run build` are needed
+          path: '/dist'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2
