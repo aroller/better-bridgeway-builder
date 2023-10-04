@@ -135,23 +135,30 @@ class Scene {
      * @returns void
      */
     private navigateToDestination() {
+        
         if (!this.isPlayerSquashed && this.playerDestination !== null) {
+            //avoid flopping when the player reaches the destination
+            const destinationTolerance = 5;
             const x = this.playerDestination.x;
             const y = this.playerDestination.y;
             const dx = x - this.player.x;
             const dy = y - this.player.y;
 
             if (Math.abs(dx) > Math.abs(dy)) {
-                if (dx > 0) {
+                if (dx > destinationTolerance) {
                     this.player = this.player.moveRight();
-                } else {
+                } else if (dx < -destinationTolerance) {
                     this.player = this.player.moveLeft();
+                } else {
+                    this.playerDestination = null;
                 }
             } else {
-                if (dy > 0) {
+                if (dy > destinationTolerance) {
                     this.player = this.player.moveDown();
-                } else {
+                } else if (dy < -destinationTolerance) {
                     this.player = this.player.moveUp();
+                } else {
+                    this.playerDestination = null;
                 }
             }
         }
