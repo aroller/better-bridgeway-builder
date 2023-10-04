@@ -11,10 +11,8 @@ class Point {
 }
 
 /**
- * Represents a game scene with a canvas, street, and player.
- */
-/**
- * The Scene class manages the rendering of the canvas for the game, as well as the street and player objects.
+ * The Scene class manages the rendering of the canvas for the game, 
+ * as well as the street and player objects.
  */
 class Scene {
   private ctx: CanvasRenderingContext2D;
@@ -111,6 +109,11 @@ class Scene {
     this.playerDestination = null;
   }
 
+  /**
+   * Navigates the player to their destination if they are not squashed and a destination is set.
+   * This is useful for touch input for mobile devices.
+   * @returns void
+   */
   private navigateToDestination() {
     if (!this.isPlayerSquashed && this.playerDestination !== null) {
       const x = this.playerDestination.x;
@@ -136,6 +139,8 @@ class Scene {
 
   /**
    * Updates the canvas with the current state of the game.
+   * Called periodically, this function clears the canvas, 
+   * updates the street and player objects, and draws them.
    */
   private updateCanvas() {
     // Clear the canvas.
@@ -143,7 +148,7 @@ class Scene {
 
     // Update the street obstacles.
     this.street = this.street.updateObstacles();
-    
+
     // move to the position if controls instruct to do so
     this.navigateToDestination();
 
