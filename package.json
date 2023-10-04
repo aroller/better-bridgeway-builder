@@ -2,10 +2,11 @@
   "name": "better-bridgeway-builder",
   "version": "0.1.0-SNAPSHOT",
   "description": "Frogger style game to improve Bridgeway Blvd in Sausalito.",
+  "homepage": "http://aroller.github.io/better-bridgeway-builder",
   "scripts": {
     "serve": "webpack-cli serve --mode development",
     "test": "jest",
-    "build": "webpack",
+    "build": "webpack --mode production",
     "format": "prettier --loglevel warn --write \"src/**/*.ts\" --write \"*.json\" --write \"public/*.html\""
   },
   "keywords": [
