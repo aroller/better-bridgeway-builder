@@ -7,6 +7,7 @@
   export class Obstacle {
     constructor(
       public readonly x: number,
+      public readonly y: number,
       public readonly width: number,
       public readonly height: number,
       public readonly speed: number,
@@ -18,6 +19,7 @@
       const newX = this.x + this.speed * this.direction;
       return new Obstacle(
         newX,
+        this.y,
         this.width,
         this.height,
         this.speed,
@@ -101,8 +103,8 @@
         const obstacleWidth = this.laneWidth * 0.75;
         const obstacleHeight = obstacleWidth * (obstacle.height / obstacle.width);
         ctx.fillRect(
-          obstacle.x,
-          positionY + (this.laneWidth - obstacleHeight) / 2,
+          obstacle.x - obstacleWidth / 2,
+          obstacle.y - obstacleHeight / 2,
           obstacleWidth,
           obstacleHeight,
         );
@@ -177,12 +179,13 @@
           // Place obstacles at the beginning or end of the lane based on the lane direction.
           const objectWidth = 40;
           const offsetOffCanvas = 3 * objectWidth;
-          const x =
+          const x = 
             lane.direction === LaneDirection.LEFT
               ? lane.streetLength + offsetOffCanvas
               : 0 - offsetOffCanvas;
+          const y = lane.centerY;
           return lane.addObstacle(
-            new Obstacle(x, objectWidth, 25, 5, lane.direction),
+            new Obstacle(x, y, objectWidth, 25, 5, lane.direction),
           );
         }
         return lane;

@@ -5,8 +5,8 @@ describe("Street.detectCollision", () => {
 
   beforeEach(() => {
     // Create a new street with one lane and one obstacle
-    const lane = new Lane(LaneDirection.Right, 50, 600, 100, [
-      new Obstacle(200, 50, 50, 10, LaneDirection.Right),
+    const lane = new Lane(LaneDirection.RIGHT, 50, 600, 100, [
+      new Obstacle(200, 50, 50, 10, LaneDirection.RIGHT),
     ]);
     street = new Street(0, 600, [lane]);
   });

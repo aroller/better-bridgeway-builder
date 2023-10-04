@@ -18,7 +18,8 @@
 		"GitHub.copilot",
 		"yzhang.markdown-all-in-one",
 		"esbenp.prettier-vscode",
-		"github.vscode-github-actions"
+		"github.vscode-github-actions",
+		"jock.svg"
 	]
     }
   },
