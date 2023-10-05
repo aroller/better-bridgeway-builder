@@ -182,7 +182,7 @@ class Scene {
         // move to the position if controls instruct to do so
         this.navigateToDestination();
 
-        if (this.street.detectCollision(this.player.x, this.player.y)) {
+        if (!this.isPlayerSquashed && this.street.detectCollision(this.player.x, this.player.y)) {
             this.player = this.player.onCollisionDetected();
             this.isPlayerSquashed = true;
         }
