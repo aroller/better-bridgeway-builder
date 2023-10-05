@@ -43,7 +43,7 @@ class Scene {
             .addLane(LaneDirection.RIGHT, vehicleLaneWidth);
 
         // Create the player object in the middle of the street.
-        const playerSize = 20;
+        const playerSize = 40;
         const playerImage = new Image();
         playerImage.src = "images/players/frog.svg";
         this.player = new Player(

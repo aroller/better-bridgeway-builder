@@ -176,17 +176,19 @@ import { GameObject } from "./game";
       const newLanes = this.lanes.map((lane, index) => {
         if (index === randomLaneIndex) {
           // Place obstacles at the beginning or end of the lane based on the lane direction.
-          const objectWidth = 40;
+          const imageScale = 0.2;
+          const objectWidth = 706.12 * imageScale;
+          const objectHeight = 314.33 * imageScale;
           const offsetOffCanvas = 3 * objectWidth;
           const x = 
             lane.direction === LaneDirection.LEFT
-              ? lane.streetLength + offsetOffCanvas
+            ? lane.streetLength + offsetOffCanvas
               : 0 - offsetOffCanvas;
-          const y = lane.centerY;
+          const y = lane.centerY - objectHeight / 2;
           const image = new Image();
-          image.src = "images/obstacles/car-wagon-silver.svg";
+          image.src = "images/obstacles/car-wagon.svg";
           return lane.addObstacle(
-            new Obstacle(x, y, objectWidth, 25, 5, lane.direction,image),
+            new Obstacle(x, y, objectWidth, objectHeight,5, lane.direction,image),
           );
         }
         return lane;
