@@ -44,11 +44,14 @@ class Scene {
 
         // Create the player object in the middle of the street.
         const playerSize = 20;
+        const playerImage = new Image();
+        playerImage.src = "images/players/frog.svg";
         this.player = new Player(
             streetLength / 2,
             this.street.getStreetWidth() + playerSize + this.topOfStreetY,
             playerSize,
             playerSize,
+            playerImage
         );
 
         // Listen for keyboard input to move the player.

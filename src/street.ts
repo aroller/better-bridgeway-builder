@@ -1,20 +1,26 @@
+import { GameObject } from "./game";
 
   export const enum LaneDirection {
     LEFT = -1,
     RIGHT = 1,
   }
   
-  export class Obstacle {
+
+  export class Obstacle extends GameObject {
     constructor(
-      public readonly x: number,
-      public readonly y: number,
-      public readonly width: number,
-      public readonly height: number,
+      x: number,
+      y: number,
+      width: number,
+      height: number,
       public readonly speed: number,
       public readonly direction: LaneDirection,
-      public readonly color: string = "black",
-    ) {}
-  
+      image: HTMLImageElement,
+    ) {
+      super(x, y, width, height, image);
+      this.speed = speed;
+      this.direction = direction;
+    }
+
     public moveObstacle(): Obstacle {
       const newX = this.x + this.speed * this.direction;
       return new Obstacle(
@@ -24,10 +30,11 @@
         this.height,
         this.speed,
         this.direction,
-        this.color,
+        this.image,
       );
     }
   }
+  
 
   export class Lane {
     private obstacles: Obstacle[];
@@ -99,15 +106,7 @@
 
       // Draw obstacles
       for (const obstacle of this.obstacles) {
-        ctx.fillStyle = obstacle.color;
-        const obstacleWidth = this.laneWidth * 0.75;
-        const obstacleHeight = obstacleWidth * (obstacle.height / obstacle.width);
-        ctx.fillRect(
-          obstacle.x - obstacleWidth / 2,
-          obstacle.y - obstacleHeight / 2,
-          obstacleWidth,
-          obstacleHeight,
-        );
+        obstacle.draw(ctx);
       }
     }
 
@@ -184,8 +183,10 @@
               ? lane.streetLength + offsetOffCanvas
               : 0 - offsetOffCanvas;
           const y = lane.centerY;
+          const image = new Image();
+          image.src = "images/obstacles/car-wagon-silver.svg";
           return lane.addObstacle(
-            new Obstacle(x, y, objectWidth, 25, 5, lane.direction),
+            new Obstacle(x, y, objectWidth, 25, 5, lane.direction,image),
           );
         }
         return lane;
