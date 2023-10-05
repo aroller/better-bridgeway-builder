@@ -27,9 +27,9 @@ export class Player extends GameObject {
    * Changes the player's image to a red rectangle when a collision is detected.
    */
   public onCollisionDetected(): Player {
-    // Create a new image element with a red rectangle
+    // show the squashed image
     const redImage = new Image();
-    redImage.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect x='0' y='0' width='100' height='100' fill='red'/%3E%3C/svg%3E";
+    redImage.src = "images/players/squashed.svg";
     return new Player(this.x, this.y, this.width, this.height, redImage, !this.flipHorizontally);
   }
 
@@ -46,6 +46,6 @@ export class Player extends GameObject {
   }
 
   public moveRight(): Player {
-    return new Player(this.x + 10, this.y, this.width, this.height, this.image);
+    return new Player(this.x + 10, this.y, this.width, this.height, this.image, !this.flipHorizontally);
   }
 }
