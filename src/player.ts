@@ -18,34 +18,35 @@ export class Player extends GameObject {
     public readonly width: number,
     public readonly height: number,
     public readonly image: HTMLImageElement,
-    public readonly flipHorizontally: boolean = false
+    public readonly flipHorizontally: boolean = false,
+    public readonly speedInPixelsPerMove: number = 10
   ) {
     super(x, y, width, height, image, flipHorizontally);
   }
 
   /**
-   * Changes the player's image to a red rectangle when a collision is detected.
+   * Changes the player's image to a red splat when a collision is detected.
    */
   public onCollisionDetected(): Player {
     // show the squashed image
     const redImage = new Image();
     redImage.src = "images/players/squashed.svg";
-    return new Player(this.x, this.y, this.width, this.height, redImage, !this.flipHorizontally);
+    return new Player(this.x, this.y, this.width, this.height, redImage, !this.flipHorizontally, this.speedInPixelsPerMove);
   }
 
   public moveUp(): Player {
-    return new Player(this.x, this.y - 10, this.width, this.height, this.image, !this.flipHorizontally);
+    return new Player(this.x, this.y - this.speedInPixelsPerMove, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
   }
 
   public moveDown(): Player {
-    return new Player(this.x, this.y + 10, this.width, this.height, this.image, !this.flipHorizontally);
+    return new Player(this.x, this.y + this.speedInPixelsPerMove, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
   }
 
   public moveLeft(): Player {
-    return new Player(this.x - 10, this.y, this.width, this.height, this.image, !this.flipHorizontally);
+    return new Player(this.x - this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
   }
 
   public moveRight(): Player {
-    return new Player(this.x + 10, this.y, this.width, this.height, this.image, !this.flipHorizontally);
+    return new Player(this.x + this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
   }
 }
