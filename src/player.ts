@@ -18,8 +18,9 @@ export class Player extends GameObject {
     public readonly width: number,
     public readonly height: number,
     public readonly image: HTMLImageElement,
+    public readonly flipHorizontally: boolean = false
   ) {
-    super(x, y, width, height, image);
+    super(x, y, width, height, image, flipHorizontally);
   }
 
   /**
@@ -29,19 +30,19 @@ export class Player extends GameObject {
     // Create a new image element with a red rectangle
     const redImage = new Image();
     redImage.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect x='0' y='0' width='100' height='100' fill='red'/%3E%3C/svg%3E";
-    return new Player(this.x, this.y, this.width, this.height, redImage);
+    return new Player(this.x, this.y, this.width, this.height, redImage, !this.flipHorizontally);
   }
 
   public moveUp(): Player {
-    return new Player(this.x, this.y - 10, this.width, this.height, this.image);
+    return new Player(this.x, this.y - 10, this.width, this.height, this.image, !this.flipHorizontally);
   }
 
   public moveDown(): Player {
-    return new Player(this.x, this.y + 10, this.width, this.height, this.image);
+    return new Player(this.x, this.y + 10, this.width, this.height, this.image, !this.flipHorizontally);
   }
 
   public moveLeft(): Player {
-    return new Player(this.x - 10, this.y, this.width, this.height, this.image);
+    return new Player(this.x - 10, this.y, this.width, this.height, this.image, !this.flipHorizontally);
   }
 
   public moveRight(): Player {
