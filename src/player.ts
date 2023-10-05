@@ -31,7 +31,7 @@ export class Player extends GameObject {
     // show the squashed image
     const redImage = new Image();
     redImage.src = "images/players/squashed.svg";
-    return new Player(this.x, this.y, this.width, this.height, redImage, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(this.x, this.y, this.width, this.height, redImage, this.flipHorizontally, this.speedInPixelsPerMove);
   }
 
   public moveUp(): Player {
