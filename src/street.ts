@@ -16,7 +16,7 @@ import { GameObject } from "./game";
       public readonly direction: LaneDirection,
       image: HTMLImageElement,
     ) {
-      super(x, y, width, height, image);
+      super(x, y, width, height, image, direction === LaneDirection.LEFT);
       this.speed = speed;
       this.direction = direction;
     }

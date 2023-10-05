@@ -13,6 +13,7 @@ export abstract class GameObject {
    * @param width The width of the object.
    * @param height The height of the object.
    * @param image The image to be displayed for the object.
+   * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
    */
   constructor(
     public readonly x: number,
@@ -20,6 +21,7 @@ export abstract class GameObject {
     public readonly width: number,
     public readonly height: number,
     public readonly image: HTMLImageElement,
+    public readonly flipHorizontally: boolean = true,
   ) { }
 
   /**
@@ -28,10 +30,18 @@ export abstract class GameObject {
    */
   public draw(ctx: CanvasRenderingContext2D): void {
     if (this.image.complete) {
-      ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+      if (this.flipHorizontally) {
+        ctx.save();
+        ctx.translate(this.x + this.width, this.y);
+        ctx.scale(-1, 1);
+        ctx.drawImage(this.image, 0, 0, this.width, this.height);
+        ctx.restore();
+      } else {
+        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+      }
     } else {
       this.image.onload = () => {
-        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+        this.draw(ctx);
       };
     }
   }
