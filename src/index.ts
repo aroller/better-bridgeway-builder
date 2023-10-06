@@ -108,9 +108,9 @@ class Scene {
 
     /**
      * Handles mouse input to set the player destination to null when the mouse button is released.
-     * @param event - The MouseEvent object representing the mouse click.
+     * @param _event - The MouseEvent object representing the mouse click.
      */
-    private handleMouseUp(event: MouseEvent) {
+    private handleMouseUp(_event: MouseEvent) {
         this.playerDestination = null;
     }
 
@@ -126,9 +126,9 @@ class Scene {
 
     /**
      * Handles touch input to set the player destination to null when the touch ends.
-     * @param event - The TouchEvent object representing the touch.
+     * @param _event - The TouchEvent object representing the touch.
      */
-    private handleTouchEnd(event: TouchEvent) {
+    private handleTouchEnd(_event: TouchEvent) {
         this.playerDestination = null;
     }
 
@@ -187,8 +187,13 @@ class Scene {
             this.isPlayerSquashed = true;
         }
 
+        // Rotate player to face destination
+        if (this.playerDestination !== null) {
+            this.player = this.player.rotate(this.playerDestination.x - this.player.x, this.playerDestination.y - this.player.y);
+        }
+
         // Draw the player and street.
-        this.player.draw(this.ctx);
+        this.player.draw(this.ctx, this.player.angle);
         // this.ctx.fillText(
         //     `x: ${this.player.x}, y: ${this.player.y}`,
         //     this.player.x,

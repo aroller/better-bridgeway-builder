@@ -13,15 +13,16 @@ export class Player extends GameObject {
    * @param image The image to be displayed for the player.
    */
   constructor(
-    public readonly x: number,
-    public readonly y: number,
-    public readonly width: number,
-    public readonly height: number,
-    public readonly image: HTMLImageElement,
-    public readonly flipHorizontally: boolean = false,
-    public readonly speedInPixelsPerMove: number = 10
+      public readonly x: number,
+      public readonly y: number,
+      public readonly width: number,
+      public readonly height: number,
+      public readonly image: HTMLImageElement,
+      public readonly flipHorizontally: boolean = false,
+      public readonly speedInPixelsPerMove: number = 10,
+      public readonly angle: number = 0,
   ) {
-    super(x, y, width, height, image, flipHorizontally);
+    super(x, y, width, height, image, flipHorizontally, angle);
   }
 
   /**
@@ -39,14 +40,18 @@ export class Player extends GameObject {
   }
 
   public moveDown(): Player {
-    return new Player(this.x, this.y + this.speedInPixelsPerMove, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(this.x, this.y + this.speedInPixelsPerMove, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove, Math.PI);
   }
 
   public moveLeft(): Player {
-    return new Player(this.x - this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(this.x - this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove, -Math.PI / 2);
   }
 
   public moveRight(): Player {
-    return new Player(this.x + this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(this.x + this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove, Math.PI / 2);
+  }
+
+  public rotate(dx: number, dy: number): Player {
+    return new Player(this.x + this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove, Math.atan2(dy, dx));
   }
 }

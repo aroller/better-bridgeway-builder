@@ -1,5 +1,5 @@
-import { matrix } from "mathjs";
 import { matricesIntersect } from "./math";
+import * as math from "mathjs";
 
 /**
  * Base class for all game objects like the player, obstacles, etc.
@@ -14,37 +14,40 @@ export abstract class GameObject {
    * @param height The height of the object.
    * @param image The image to be displayed for the object.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
+   * @param angle The angle the image is rotated.
    */
-  constructor(
+  protected constructor(
     public readonly x: number,
     public readonly y: number,
     public readonly width: number,
     public readonly height: number,
     public readonly image: HTMLImageElement,
     public readonly flipHorizontally: boolean = true,
+    public readonly angle: number = 0,
   ) { }
 
   /**
    * Draws the game object on the canvas.
    * @param ctx The canvas rendering context to draw on.
+   * @param angle The angle the image is rotated.
    */
-  public draw(ctx: CanvasRenderingContext2D): void {
+  public draw(ctx: CanvasRenderingContext2D, angle: number = 0): void {
+    ctx.save();
     if (this.image.complete) {
+      ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+      ctx.rotate(angle);
       if (this.flipHorizontally) {
-        ctx.save();
-        ctx.translate(this.x + this.width, this.y);
         ctx.scale(-1, 1);
-        ctx.drawImage(this.image, 0, 0, this.width, this.height);
-        ctx.restore();
-      } else {
-        ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
       }
+      ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
     } else {
       this.image.onload = () => {
-        this.draw(ctx);
+        this.draw(ctx, angle);
       };
     }
+    ctx.restore();
   }
+
 
   /**
    * Checks if this game object intersects with another game object.
@@ -62,7 +65,7 @@ export abstract class GameObject {
    * @returns The matrix representing the rectangle occupied by the game object.
    */
   private getRectMatrix(): math.Matrix {
-    return matrix([
+    return math.matrix([
       [this.x, this.y],
       [this.x + this.width, this.y],
       [this.x + this.width, this.y + this.height],
