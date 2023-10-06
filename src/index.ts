@@ -1,5 +1,6 @@
 import { Street, LaneDirection } from "./street";
 import { Player } from "./player";
+import { Scenario, ScenarioProducer } from "./scenario";
 /**
  * Represents a point on the canvas with x and y coordinates.
  */
@@ -34,30 +35,17 @@ class Scene {
         const streetLength = canvas.width;
         const vehicleLaneWidth = 60;
         const bikeLaneWidth = 25;
+        const streetWidth = 170; //emperically determined to match the background image up to parking lane
 
         // The background image shows the familar street scene.
         canvas.style.backgroundImage = "url('images/scene/better-bridgeway-background.svg')";
         canvas.style.backgroundSize = "cover";
         // Create the street object with four lanes, two for vehicles and two for bikes.
-        this.street = new Street(this.topOfStreetY, streetLength)
-            .addLane(LaneDirection.LEFT, vehicleLaneWidth)
-            .addLane(LaneDirection.LEFT, 50)
-            .addLane(LaneDirection.RIGHT, vehicleLaneWidth);
 
-        // Create the player object in the middle of the street.
-        const playerSize = 30;
-        const playerImage = new Image();
-        playerImage.src = "images/players/frog.svg";
-        // place the player on the sidewalk.  the scene must be fixed in size
-        const playerX = 395;
-        const playerY = 450; 
-        this.player = new Player(
-            playerX,
-            playerY,
-            playerSize,
-            playerSize,
-            playerImage
-        );
+        const sceanio = new ScenarioProducer(streetWidth,streetLength,this.topOfStreetY).morningLightTaffic2023();
+        this.street = sceanio.street;
+        this.player = sceanio.player;
+
 
         // Listen for keyboard input to move the player.
         document.addEventListener("keydown", this.handleKeyDown.bind(this));
