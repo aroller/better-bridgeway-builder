@@ -13,14 +13,14 @@ export class Player extends GameObject {
    * @param image The image to be displayed for the player.
    */
   constructor(
-      public readonly x: number,
-      public readonly y: number,
-      public readonly width: number,
-      public readonly height: number,
-      public readonly image: HTMLImageElement,
-      public readonly flipHorizontally: boolean = false,
-      public readonly speedInPixelsPerMove: number = 10,
-      public readonly angle: number = 0,
+    public readonly x: number,
+    public readonly y: number,
+    public readonly width: number,
+    public readonly height: number,
+    public readonly image: HTMLImageElement,
+    public readonly flipHorizontally: boolean = false,
+    public readonly speedInPixelsPerMove: number = 10,
+    public readonly angle: number = 0,
   ) {
     super(x, y, width, height, image, flipHorizontally, angle);
   }
