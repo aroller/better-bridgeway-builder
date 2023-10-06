@@ -78,7 +78,20 @@ export class ObstacleProducer {
   }
 }
 
+/**
+ * Represents a lane in a street with lane lines and obstacles.
+ */
 export class Lane {
+  /**
+   * Creates a new instance of Lane.
+   * @param direction - The direction of the lane.
+   * @param laneWidth - The width of the lane.
+   * @param streetLength - The length of the street.
+   * @param centerY - The y-coordinate of the center of the lane.
+   * @param lineStyle - The style of the lane lines.
+   * @param obstacleProducers - The obstacle producers for the lane.
+   * @param obstacles - The obstacles in the lane.
+   */
   constructor(
     public readonly direction: LaneDirection,
     public readonly laneWidth: number,
@@ -89,6 +102,11 @@ export class Lane {
     public readonly obstacles: readonly Obstacle[] = [],
   ) {}
 
+  /**
+   * Adds an obstacle to the lane.
+   * @param obstacle - The obstacle to add.
+   * @returns A new instance of Lane with the added obstacle.
+   */
   public addObstacle(obstacle: Obstacle): Lane {
     const newObstacles = [...this.obstacles, obstacle];
     return new Lane(
@@ -102,6 +120,10 @@ export class Lane {
     );
   }
 
+  /**
+   * Updates the obstacles in the lane.
+   * @returns A new instance of Lane with the updated obstacles.
+   */
   public updateObstacles(): Lane {
     const newObstacles = this.obstacles
       .map((obstacle) => obstacle.moveObstacle())
@@ -126,8 +148,7 @@ export class Lane {
 
   /**
    * Draws the lane on the canvas with lane lines and obstacles.
-   * @param {CanvasRenderingContext2D} ctx - The canvas rendering context to draw on.
-   * @returns {void}
+   * @param ctx - The canvas rendering context to draw on.
    */
   public draw(ctx: CanvasRenderingContext2D): void {
     // Calculate the top position of the lane
@@ -142,6 +163,13 @@ export class Lane {
     }
   }
 
+  /**
+   * Draws a lane line on the canvas context.
+   * @param ctx - The canvas rendering context to draw on.
+   * @param positionY - The y-coordinate of the lane line.
+   * @param lineStyle - The style of the lane line.
+   * @param offset - The optional offset to avoid line overlapping.
+   */
   private drawLaneLine(
     ctx: CanvasRenderingContext2D,
     positionY: number,
@@ -168,16 +196,15 @@ export class Lane {
 
   /**
    * Detects collision between the player and the obstacles in the lane.
-   * @param {number} playerX - The x coordinate of the player.
-   * @param {number} playerY - The y coordinate of the player.
-   * @returns {boolean} - True if there is a collision, false otherwise.
+   * @param playerX - The x coordinate of the player.
+   * @param playerY - The y coordinate of the player.
+   * @returns True if there is a collision, false otherwise.
    */
   public detectCollision(playerX: number, playerY: number): boolean {
     // Calculate the top position of the lane
     const positionY = this.centerY - this.laneWidth / 2;
 
     for (const obstacle of this.obstacles) {
-      // console.log(`playerX: ${playerX}, playerY: ${playerY} obstacle: ${obstacle.x}, ${obstacle.y}`);
       if (
         playerX > obstacle.x &&
         playerX < obstacle.x + obstacle.width &&
