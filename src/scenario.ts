@@ -89,7 +89,7 @@ export class ScenarioProducer {
     playerImage.src = "images/players/frog.svg";
     // place the player on the sidewalk.  the scene must be fixed in size
     const playerX = 395;
-    const playerY = 450;
+    const playerY = 470;
     return new Player(playerX, playerY, playerSize, playerSize, playerImage);
   }
 
