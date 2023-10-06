@@ -27,7 +27,7 @@ export class ScenarioProducer {
     public readonly topOfStreetY: number,
   ) {}
 
-  private vehicleWagonObstacle(direction: LaneDirection): Obstacle {
+  private vehicleWagonObstacle(y:number, direction: LaneDirection): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
     const imageScale = 0.1;
     const objectWidth = 706.12 * imageScale;
@@ -38,7 +38,7 @@ export class ScenarioProducer {
     image.src = "images/obstacles/car-wagon.svg";
     return new Obstacle(
       0,
-      0,
+      y,
       objectWidth,
       objectHeight,
       speed,
@@ -48,9 +48,10 @@ export class ScenarioProducer {
   }
 
   private mixedTrafficObstacleProducers(
+	y:number,
     direction: LaneDirection,
   ): readonly ObstacleProducer[] {
-    const vehicleTemplate = this.vehicleWagonObstacle(direction);
+    const vehicleTemplate = this.vehicleWagonObstacle(y,direction);
     return [new ObstacleProducer(vehicleTemplate)];
   }
 
@@ -60,18 +61,22 @@ export class ScenarioProducer {
     //Pixels determined emperically...this should be a percentage of the streetWidth.
     const vehicleLaneWidth = 60;
     const turnLaneWidth = 50;
-    return new Street(this.topOfStreetY, this.streetLength)
-      .addLane(
+	let y = this.topOfStreetY + vehicleLaneWidth / 2;
+	let street = new Street(this.topOfStreetY, this.streetLength);
+	street = street.addLane(
         LaneDirection.LEFT,
         vehicleLaneWidth,
-        this.mixedTrafficObstacleProducers(LaneDirection.LEFT),
-      )
-      .addLane(LaneDirection.LEFT, turnLaneWidth, [])
-      .addLane(
+        this.mixedTrafficObstacleProducers(y,LaneDirection.LEFT),
+      );
+	y = y + turnLaneWidth;
+	street = street.addLane(LaneDirection.LEFT, turnLaneWidth, []);
+	y = y + vehicleLaneWidth;
+    street = street.addLane(
         LaneDirection.RIGHT,
         vehicleLaneWidth,
-        this.mixedTrafficObstacleProducers(LaneDirection.RIGHT),
+        this.mixedTrafficObstacleProducers(y,LaneDirection.RIGHT),
       );
+	return street;
   }
 
   /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene. 
