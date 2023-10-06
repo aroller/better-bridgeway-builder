@@ -13,8 +13,8 @@ export class LaneLineStyle {
     public readonly dashed: boolean = false,
     public readonly hidden: boolean = false,
     public readonly lineWidth: number = 2,
-    public readonly dashLength: number = 10,
-    public readonly dashOffLength: number = 10,
+    public readonly dashLength: number = 40,
+    public readonly dashOffLength: number = 80,
   ) {}
 }
 
