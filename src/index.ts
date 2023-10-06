@@ -45,12 +45,15 @@ class Scene {
             .addLane(LaneDirection.RIGHT, vehicleLaneWidth);
 
         // Create the player object in the middle of the street.
-        const playerSize = 40;
+        const playerSize = 30;
         const playerImage = new Image();
         playerImage.src = "images/players/frog.svg";
+        // place the player on the sidewalk.  the scene must be fixed in size
+        const playerX = 395;
+        const playerY = 450; 
         this.player = new Player(
-            streetLength / 2,
-            this.street.getStreetWidth() + playerSize + this.topOfStreetY,
+            playerX,
+            playerY,
             playerSize,
             playerSize,
             playerImage
