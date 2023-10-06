@@ -1,8 +1,29 @@
+import { string } from "mathjs";
 import { GameObject } from "./game";
 
 export const enum LaneDirection {
   LEFT = -1,
   RIGHT = 1,
+}
+
+/** Draws lines for lanes. Could be hidden or dashed.  */
+export class LaneLineStyle {
+  constructor(
+    public readonly color: string = "white",
+    public readonly dashed: boolean = false,
+    public readonly hidden: boolean = false,
+    public readonly lineWidth: number = 2,
+    public readonly dashLength: number = 10,
+    public readonly dashOffLength: number = 10,
+  ) {}
+}
+
+/** styles for both lines of a lane.  Top and bottom as oriented in the scene.  */
+export class LaneLinesStyles {
+  constructor(
+    public readonly top: LaneLineStyle = new LaneLineStyle(),
+    public readonly bottom: LaneLineStyle = new LaneLineStyle(),
+  ) {}
 }
 
 export class Obstacle extends GameObject {
@@ -63,6 +84,7 @@ export class Lane {
     public readonly laneWidth: number,
     public readonly streetLength: number,
     public readonly centerY: number,
+    public readonly lineStyle: LaneLinesStyles = new LaneLinesStyles(),
     public readonly obstacleProducers: readonly ObstacleProducer[] = [],
     public readonly obstacles: readonly Obstacle[] = [],
   ) {}
@@ -74,6 +96,7 @@ export class Lane {
       this.laneWidth,
       this.streetLength,
       this.centerY,
+      this.lineStyle,
       this.obstacleProducers,
       newObstacles,
     );
@@ -95,6 +118,7 @@ export class Lane {
       this.laneWidth,
       this.streetLength,
       this.centerY,
+      this.lineStyle,
       this.obstacleProducers,
       newObstacles,
     );
@@ -109,25 +133,36 @@ export class Lane {
     // Calculate the top position of the lane
     const positionY = this.centerY - this.laneWidth / 2;
 
-    // Draw lane lines
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-
-    // Draw left lane line
-    ctx.beginPath();
-    ctx.moveTo(0, positionY);
-    ctx.lineTo(this.streetLength, positionY);
-    ctx.stroke();
-
-    // Draw right lane line
-    ctx.beginPath();
-    ctx.moveTo(0, positionY + this.laneWidth);
-    ctx.lineTo(this.streetLength, positionY + this.laneWidth);
-    ctx.stroke();
+    this.drawLaneLine(ctx, positionY, this.lineStyle.top, 5);
+    this.drawLaneLine(ctx, positionY + this.laneWidth, this.lineStyle.bottom);
 
     // Draw obstacles
     for (const obstacle of this.obstacles) {
       obstacle.draw(ctx);
+    }
+  }
+
+  private drawLaneLine(
+    ctx: CanvasRenderingContext2D,
+    positionY: number,
+    lineStyle: LaneLineStyle,
+    offset: number = 0,
+  ) {
+    if (!lineStyle.hidden) {
+      ctx.strokeStyle = lineStyle.color;
+      ctx.lineWidth = lineStyle.lineWidth;
+
+      if (lineStyle.dashed) {
+        ctx.setLineDash([lineStyle.dashLength, lineStyle.dashOffLength]);
+      } else {
+        ctx.setLineDash([]);
+      }
+
+      ctx.beginPath();
+      const y = positionY + offset;
+      ctx.moveTo(0, y);
+      ctx.lineTo(this.streetLength, y);
+      ctx.stroke();
     }
   }
 
@@ -177,6 +212,7 @@ export class Street {
   public addLane(
     direction: LaneDirection,
     laneWidth: number,
+    style: LaneLinesStyles,
     obstacleProducers: readonly ObstacleProducer[] = [],
   ): Street {
     const newLanes = [
@@ -186,6 +222,7 @@ export class Street {
         laneWidth,
         this.streetLength,
         this.getCenterY(laneWidth),
+        style,
         obstacleProducers,
       ),
     ];

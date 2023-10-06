@@ -1,6 +1,11 @@
 import { Player } from "./player";
-import { Obstacle, ObstacleProducer, Street } from "./street";
+import { LaneLineStyle, LaneLinesStyles, Obstacle, ObstacleProducer, Street } from "./street";
 import { LaneDirection } from "./street";
+
+const solidWhiteLineStyle = new LaneLineStyle();
+const solidYellowLineStyle = new LaneLineStyle("yellow");
+const dashedYellowLineStyle = new LaneLineStyle("yellow", true);
+const hiddenLineStyle = new LaneLineStyle(solidWhiteLineStyle.color, false, true);
 /**
  * A class representing a scenario that educates the player about infrastructure challenges.
  */
@@ -20,6 +25,9 @@ export class Scenario {
   ) {}
 }
 
+/**
+ * Creates specific scenarios to be executed in the game.
+ */
 export class ScenarioProducer {
   constructor(
     public readonly streetWidth: number,
@@ -47,7 +55,7 @@ export class ScenarioProducer {
     );
   }
 
-  private mixedTrafficObstacleProducers(
+  private vehicleTrafficObstacleProducers(
 	y:number,
     direction: LaneDirection,
   ): readonly ObstacleProducer[] {
@@ -59,22 +67,24 @@ export class ScenarioProducer {
     obstacleProducers: readonly ObstacleProducer[],
   ): Street {
     //Pixels determined emperically...this should be a percentage of the streetWidth.
-    const vehicleLaneWidth = 60;
+    const vehicleLaneWidth = 65;
     const turnLaneWidth = 50;
 	let y = this.topOfStreetY + vehicleLaneWidth / 2;
 	let street = new Street(this.topOfStreetY, this.streetLength);
 	street = street.addLane(
         LaneDirection.LEFT,
         vehicleLaneWidth,
-        this.mixedTrafficObstacleProducers(y,LaneDirection.LEFT),
+		new LaneLinesStyles(hiddenLineStyle, solidYellowLineStyle),
+        this.vehicleTrafficObstacleProducers(y,LaneDirection.LEFT),
       );
 	y = y + turnLaneWidth;
-	street = street.addLane(LaneDirection.LEFT, turnLaneWidth, []);
+	street = street.addLane(LaneDirection.LEFT, turnLaneWidth, new LaneLinesStyles(dashedYellowLineStyle,dashedYellowLineStyle), []);
 	y = y + vehicleLaneWidth;
     street = street.addLane(
         LaneDirection.RIGHT,
         vehicleLaneWidth,
-        this.mixedTrafficObstacleProducers(y,LaneDirection.RIGHT),
+		new LaneLinesStyles(solidYellowLineStyle, hiddenLineStyle),
+        this.vehicleTrafficObstacleProducers(y,LaneDirection.RIGHT),
       );
 	return street;
   }
