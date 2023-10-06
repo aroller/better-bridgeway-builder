@@ -28,18 +28,20 @@ class Scene {
      */
     constructor(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
-        this.topOfStreetY = canvas.height / 10;
+        // requires a fixed background size to work
+        this.topOfStreetY = 220;
         this.isPlayerSquashed = false;
-
         const streetLength = canvas.width;
-        const vehicleLaneWidth = 120;
-        const bikeLaneWidth = 50;
+        const vehicleLaneWidth = 60;
+        const bikeLaneWidth = 25;
 
+        // The background image shows the familar street scene.
+        canvas.style.backgroundImage = "url('images/scene/better-bridgeway-background.svg')";
+        canvas.style.backgroundSize = "cover";
         // Create the street object with four lanes, two for vehicles and two for bikes.
         this.street = new Street(this.topOfStreetY, streetLength)
-            .addLane(LaneDirection.LEFT, bikeLaneWidth)
-            .addLane(LaneDirection.RIGHT, bikeLaneWidth)
             .addLane(LaneDirection.LEFT, vehicleLaneWidth)
+            .addLane(LaneDirection.LEFT, 50)
             .addLane(LaneDirection.RIGHT, vehicleLaneWidth);
 
         // Create the player object in the middle of the street.

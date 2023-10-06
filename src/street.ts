@@ -176,7 +176,7 @@ import { GameObject } from "./game";
       const newLanes = this.lanes.map((lane, index) => {
         if (index === randomLaneIndex) {
           // Place obstacles at the beginning or end of the lane based on the lane direction.
-          const imageScale = 0.2;
+          const imageScale = 0.1;
           const objectWidth = 706.12 * imageScale;
           const objectHeight = 314.33 * imageScale;
           const offsetOffCanvas = 3 * objectWidth;
