@@ -29,20 +29,26 @@ export abstract class GameObject {
   /**
    * Draws the game object on the canvas.
    * @param ctx The canvas rendering context to draw on.
-   * @param angle The angle the image is rotated.
    */
-  public draw(ctx: CanvasRenderingContext2D, angle: number = 0): void {
+  public draw(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     if (this.image.complete) {
+      // Translate to the center of the image
       ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
-      ctx.rotate(angle);
+
+      // Rotate the canvas
+      ctx.rotate(this.angle);
+
+      // Apply horizontal flip if needed
       if (this.flipHorizontally) {
         ctx.scale(-1, 1);
       }
+
+      // Draw the image centered at the origin
       ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
     } else {
       this.image.onload = () => {
-        this.draw(ctx, angle);
+        this.draw(ctx);
       };
     }
     ctx.restore();

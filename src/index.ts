@@ -193,7 +193,7 @@ class Scene {
         }
 
         // Draw the player and street.
-        this.player.draw(this.ctx, this.player.angle);
+        this.player.draw(this.ctx);
         // this.ctx.fillText(
         //     `x: ${this.player.x}, y: ${this.player.y}`,
         //     this.player.x,
