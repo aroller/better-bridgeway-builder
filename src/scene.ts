@@ -16,7 +16,7 @@ export class Point {
 /**
  * The Scene class manages the rendering of the canvas for the game,
  * as well as the street and player objects.
- * This is a mutable class that changes state for convenience and performance. 
+ * This is a mutable class that changes state for convenience and performance.
  */
 export class Scene {
   private ctx: CanvasRenderingContext2D;
@@ -24,6 +24,7 @@ export class Scene {
   private street: Street;
   /** The current view of the player, initially provided by scenario. */
   private player: Player;
+  private deadPlayers: Player[] = [];
   private topOfStreetY: number;
   private playerDestination: Point | null = null;
   private gameAttempts: GameAttempts;
@@ -193,16 +194,24 @@ export class Scene {
       //Fixme: it seems the player height should be used to reach the sidewalk
       if (this.player.y + this.player.height / 2 < this.topOfStreetY) {
         this.gameAttempts = this.gameAttempts.completeCurrentLevelAttempt(true);
-		//start the next scenario
+        //start the next scenario
+        this.deadPlayers = [];
       } else if (this.street.detectCollision(this.player.x, this.player.y)) {
         this.player = this.player.onCollisionDetected();
+        //keep track of the dead players so the spots remain on the street
+        this.deadPlayers.push(this.player);
         this.gameAttempts =
           this.gameAttempts.completeCurrentLevelAttempt(false);
-		this.player = this.scenario.player;
+        //reset the current player to the scenario start
+        this.player = this.scenario.player;
       }
     }
     // Draw the player and street.
     this.player.draw(this.ctx);
+    this.deadPlayers.forEach((player) => {
+      player.draw(this.ctx);
+    });
+
     // this.ctx.fillText(
     //     `x: ${this.player.x}, y: ${this.player.y}`,
     //     this.player.x,
@@ -212,31 +221,33 @@ export class Scene {
     this.displayScoreboard();
   }
 
-public displayScoreboard() {
-	// Add a fixed rectangular background.
-	this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-	this.ctx.fillRect(0, 0, this.ctx.canvas.width, 100);
-	const currentAttempts = this.gameAttempts.getCurrentLevelAttempts();
-	const currentLevel = currentAttempts.level;
-	const failedAttempts = currentAttempts.failureCount;
-	const scenarioTitle = this.scenario.title;
-	// Display the current level number and scenario title.
-	this.ctx.font = "bold 24px sans-serif";
-	this.ctx.fillStyle = "white";
-	this.ctx.fillText(`Level ${currentLevel} - ${scenarioTitle}`, 10, 30);
+  public displayScoreboard() {
+    // Add a fixed rectangular background.
+    this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    this.ctx.fillRect(0, 0, this.ctx.canvas.width, 100);
+    const currentAttempts = this.gameAttempts.getCurrentLevelAttempts();
+    const currentLevel = currentAttempts.level;
+    const failedAttempts = currentAttempts.failureCount;
+    const scenarioTitle = this.scenario.title;
+    // Display the current level number and scenario title.
+    this.ctx.font = "bold 24px sans-serif";
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(`Level ${currentLevel} - ${scenarioTitle}`, 10, 30);
 
-	// Display the failed attempts and time elapsed.
-	let x = 10;
-	let y = 50;
-	for (let i = 0; i < failedAttempts; i++) {
-		const image = Player.getSquashedImage();
-		this.ctx.drawImage(image, x, y, 50, 50);
-		x += 60;
-	}
+    // Display the failed attempts and time elapsed.
+    let x = 10;
+    let y = 50;
+    for (let i = 0; i < failedAttempts; i++) {
+      const image = Player.getSquashedImage();
+      this.ctx.drawImage(image, x, y, 50, 50);
+      x += 60;
+    }
 
-	const timeElapsed = Math.trunc(this.gameAttempts.getCurrentLevelAttempt().durationInSeconds);
-	this.ctx.font = "bold 24px sans-serif";
-	this.ctx.fillStyle = "white";
-	this.ctx.fillText(`${timeElapsed}`, x, y + 30);
-}
+    const timeElapsed = Math.trunc(
+      this.gameAttempts.getCurrentLevelAttempt().durationInSeconds,
+    );
+    this.ctx.font = "bold 24px sans-serif";
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(`${timeElapsed}`, x, y + 30);
+  }
 }

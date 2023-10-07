@@ -19,7 +19,7 @@ export class Player extends GameObject {
     public readonly height: number,
     public readonly image: HTMLImageElement,
     public readonly flipHorizontally: boolean = false,
-    public readonly speedInPixelsPerMove: number = 10
+    public readonly speedInPixelsPerMove: number = 10,
   ) {
     super(x, y, width, height, image, flipHorizontally);
   }
@@ -36,22 +36,62 @@ export class Player extends GameObject {
   public onCollisionDetected(): Player {
     // show the squashed image
     const redImage = Player.getSquashedImage();
-    return new Player(this.x, this.y, this.width, this.height, redImage, this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(
+      this.x,
+      this.y,
+      this.width,
+      this.height,
+      redImage,
+      this.flipHorizontally,
+      this.speedInPixelsPerMove,
+    );
   }
 
   public moveUp(): Player {
-    return new Player(this.x, this.y - this.speedInPixelsPerMove, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(
+      this.x,
+      this.y - this.speedInPixelsPerMove,
+      this.width,
+      this.height,
+      this.image,
+      !this.flipHorizontally,
+      this.speedInPixelsPerMove,
+    );
   }
 
   public moveDown(): Player {
-    return new Player(this.x, this.y + this.speedInPixelsPerMove, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(
+      this.x,
+      this.y + this.speedInPixelsPerMove,
+      this.width,
+      this.height,
+      this.image,
+      !this.flipHorizontally,
+      this.speedInPixelsPerMove,
+    );
   }
 
   public moveLeft(): Player {
-    return new Player(this.x - this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(
+      this.x - this.speedInPixelsPerMove,
+      this.y,
+      this.width,
+      this.height,
+      this.image,
+      !this.flipHorizontally,
+      this.speedInPixelsPerMove,
+    );
   }
 
   public moveRight(): Player {
-    return new Player(this.x + this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(
+      this.x + this.speedInPixelsPerMove,
+      this.y,
+      this.width,
+      this.height,
+      this.image,
+      !this.flipHorizontally,
+      this.speedInPixelsPerMove,
+    );
   }
 }

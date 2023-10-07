@@ -5,7 +5,6 @@ import { matricesIntersect } from "./math";
  * Base class for all game objects like the player, obstacles, etc.
  */
 export abstract class GameObject {
-
   /**
    * Creates a new game object.
    * @param x The x-coordinate of the object.
@@ -22,7 +21,7 @@ export abstract class GameObject {
     public readonly height: number,
     public readonly image: HTMLImageElement,
     public readonly flipHorizontally: boolean = true,
-  ) { }
+  ) {}
 
   /**
    * Draws the game object on the canvas.
@@ -55,7 +54,7 @@ export abstract class GameObject {
   public intersects(other: GameObject): boolean {
     const rect1 = this.getRectMatrix();
     const rect2 = other.getRectMatrix();
-    return matricesIntersect(rect1,rect2)
+    return matricesIntersect(rect1, rect2);
   }
 
   /**
@@ -104,7 +103,7 @@ export class LevelAttempt {
 export class LevelAttempts {
   constructor(
     public readonly level: number,
-    public readonly attempts: ReadonlyArray<LevelAttempt> = []
+    public readonly attempts: ReadonlyArray<LevelAttempt> = [],
   ) {}
 
   public get successCount(): number {
@@ -119,7 +118,10 @@ export class LevelAttempts {
     if (this.attempts.length === 0) {
       return 0;
     }
-    const totalDuration = this.attempts.reduce((sum, attempt) => sum + attempt.durationInSeconds, 0);
+    const totalDuration = this.attempts.reduce(
+      (sum, attempt) => sum + attempt.durationInSeconds,
+      0,
+    );
     return totalDuration / this.attempts.length;
   }
 
@@ -161,16 +163,20 @@ export class LevelAttempts {
  * Represents a set of attempts by a player to complete a game.
  */
 export class GameAttempts {
-  constructor(
-    public readonly attempts: ReadonlyArray<LevelAttempts> =[]
-  ) {}
+  constructor(public readonly attempts: ReadonlyArray<LevelAttempts> = []) {}
 
   public get successCount(): number {
-    return this.attempts.reduce((sum, levelAttempts) => sum + levelAttempts.successCount, 0);
+    return this.attempts.reduce(
+      (sum, levelAttempts) => sum + levelAttempts.successCount,
+      0,
+    );
   }
 
   public get failureCount(): number {
-    return this.attempts.reduce((sum, levelAttempts) => sum + levelAttempts.failureCount, 0);
+    return this.attempts.reduce(
+      (sum, levelAttempts) => sum + levelAttempts.failureCount,
+      0,
+    );
   }
 
   public get averageLevelAttempts(): number {
@@ -186,7 +192,10 @@ export class GameAttempts {
       return 0;
     }
     const totalSuccessCount = this.successCount;
-    const totalAttempts = this.attempts.reduce((sum, levelAttempts) => sum + levelAttempts.attempts.length, 0);
+    const totalAttempts = this.attempts.reduce(
+      (sum, levelAttempts) => sum + levelAttempts.attempts.length,
+      0,
+    );
     return totalSuccessCount / totalAttempts;
   }
 
@@ -234,20 +243,24 @@ export class GameAttempts {
   /**
    * Completes the current level attempt, which is the last attempt of the last level in the array.
    * If succesful, starts a new level.  If failure, starts a new attempt for the current level.
-   * 
+   *
    * @param success Whether or not the attempt was successful.
    * @returns The new GameAttempts object with the completed attempt updated.
    * @throws An error if no attempts have been started yet.
    */
   public completeCurrentLevelAttempt(success: boolean): GameAttempts {
     const currentLevelAttempts = this.getCurrentLevelAttempts();
-    const updatedLevelAttempts = currentLevelAttempts.completeCurrentAttempt(success);
+    const updatedLevelAttempts =
+      currentLevelAttempts.completeCurrentAttempt(success);
     let updatedAttempts;
     if (success) {
       updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts];
       this.startNewLevel();
     } else {
-      updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts.startNewAttempt()];
+      updatedAttempts = [
+        ...this.attempts.slice(0, -1),
+        updatedLevelAttempts.startNewAttempt(),
+      ];
     }
     return new GameAttempts(updatedAttempts);
   }
