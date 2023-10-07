@@ -1,6 +1,6 @@
 import { Street } from "./street";
 import { Player } from "./player";
-import { ScenarioProducer } from "./scenario";
+import { Scenario, ScenarioProducer } from "./scenario";
 import { GameAttempts } from "./game";
 
 /**
@@ -19,12 +19,14 @@ export class Point {
  */
 export class Scene {
   private ctx: CanvasRenderingContext2D;
+  /** @deprecated provided by scenario */
   private street: Street;
+  /** @deprecated provided by scenario */
   private player: Player;
   private topOfStreetY: number;
   private playerDestination: Point | null = null;
   private gameAttempts: GameAttempts;
-
+  private scenario: Scenario;
   /**
    * Creates a new Scene instance.
    * @param ctx - The CanvasRenderingContext2D to use for rendering.
@@ -43,13 +45,13 @@ export class Scene {
     canvas.style.backgroundSize = "cover";
     // Create the street object with four lanes, two for vehicles and two for bikes.
 
-    const sceanio = new ScenarioProducer(
+    this.scenario = new ScenarioProducer(
       streetWidth,
       streetLength,
       this.topOfStreetY,
     ).morningLightTaffic2023();
-    this.street = sceanio.street;
-    this.player = sceanio.player;
+    this.street = this.scenario.street;
+    this.player = this.scenario.player;
 
     // Initialize the game attempts
     this.gameAttempts = new GameAttempts().startNewLevel();
@@ -207,26 +209,27 @@ export class Scene {
     this.displayScoreboard();
   }
 
-  public displayScoreboard() {
-    // Add a fixed rectangular background.
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    this.ctx.fillRect(0, 0, 200, 100);
-    const currentAttempts = this.gameAttempts.getCurrentLevelAttempts();
-    const currentLevel = currentAttempts.level;
-    const failedAttempts = currentAttempts.failureCount;
+public displayScoreboard() {
+	// Add a fixed rectangular background.
+	this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+	this.ctx.fillRect(0, 0, this.ctx.canvas.width, 100);
+	const currentAttempts = this.gameAttempts.getCurrentLevelAttempts();
+	const currentLevel = currentAttempts.level;
+	const failedAttempts = currentAttempts.failureCount;
+	const scenarioTitle = this.scenario.title;
+	console.log(`currentLevel: ${currentLevel}, failedAttempts: ${failedAttempts}`)
+	// Display the current level number and scenario title.
+	this.ctx.font = "bold 24px sans-serif";
+	this.ctx.fillStyle = "white";
+	this.ctx.fillText(`Level ${currentLevel} - ${scenarioTitle}`, 10, 30);
 
-    // Display the current level number.
-    this.ctx.font = "bold 24px sans-serif";
-    this.ctx.fillStyle = "white";
-    this.ctx.fillText(`Level ${currentLevel}`, 10, 30);
-
-    // Display the failed attempts.
-    let x = 10;
-    let y = 50;
-    for (let i = 0; i < failedAttempts; i++) {
-      const image = Player.getSquashedImage();
-      this.ctx.drawImage(image, x, y, 50, 50);
-      x += 60;
-    }
-  }
+	// Display the failed attempts.
+	let x = 10;
+	let y = 50;
+	for (let i = 0; i < failedAttempts; i++) {
+		const image = Player.getSquashedImage();
+		this.ctx.drawImage(image, x, y, 50, 50);
+		x += 60;
+	}
+}
 }

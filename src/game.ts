@@ -108,11 +108,11 @@ export class LevelAttempts {
   ) {}
 
   public get successCount(): number {
-    return this.attempts.filter((attempt) => attempt.success).length;
+    return this.attempts.filter((attempt) => attempt.success === true).length;
   }
 
   public get failureCount(): number {
-    return this.attempts.filter((attempt) => !attempt.success).length;
+    return this.attempts.filter((attempt) => attempt.success === false).length;
   }
 
   public get averageDuration(): number {
