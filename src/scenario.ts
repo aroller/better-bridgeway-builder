@@ -47,7 +47,7 @@ export class ScenarioProducer {
 		const image = new Image();
 		image.src = "images/obstacles/car-wagon.svg";
 		return new Obstacle(
-			0,
+			0, //x is updated to the position in the lane and movemement
 			y,
 			objectWidth,
 			objectHeight,

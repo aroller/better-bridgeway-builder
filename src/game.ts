@@ -71,3 +71,176 @@ export abstract class GameObject {
     ]);
   }
 }
+
+/**
+ * Represents a single attempt by a player to complete a level.
+ */
+export class LevelAttempt {
+  constructor(
+    public readonly success: boolean,
+    public readonly startTime: Date = new Date(),
+    public readonly endTime?: Date
+  ) {}
+
+  public get duration(): number {
+    if (!this.endTime) {
+      return new Date().getTime() - this.startTime.getTime();
+    }
+    return this.endTime.getTime() - this.startTime.getTime();
+  }
+
+  public isInProgress(): boolean {
+    return !this.endTime;
+  }
+
+  public completeAttempt(success: boolean): LevelAttempt {
+    return new LevelAttempt(success, this.startTime, new Date());
+  }
+}
+
+/**
+ * Represents a set of attempts by a player to complete a level.
+ */
+export class LevelAttempts {
+  constructor(
+    public readonly level: number,
+    public readonly attempts: ReadonlyArray<LevelAttempt> = []
+  ) {}
+
+  public get successCount(): number {
+    return this.attempts.filter((attempt) => attempt.success).length;
+  }
+
+  public get failureCount(): number {
+    return this.attempts.filter((attempt) => !attempt.success).length;
+  }
+
+  public get averageDuration(): number {
+    if (this.attempts.length === 0) {
+      return 0;
+    }
+    const totalDuration = this.attempts.reduce((sum, attempt) => sum + attempt.duration, 0);
+    return totalDuration / this.attempts.length;
+  }
+
+  /**
+   * Starts a new attempt for this level.
+   * @returns The new LevelAttempts object with the new attempt added to it.
+   */
+  public startNewAttempt(): LevelAttempts {
+    const newAttempt = new LevelAttempt(false, new Date());
+    const newAttempts = [...this.attempts, newAttempt];
+    return new LevelAttempts(this.level, newAttempts);
+  }
+
+  /**
+   * Completes the current attempt, which is the last attempt in the array.
+   * @param success Whether or not the attempt was successful.
+   * @returns The new LevelAttempts object with the completed attempt updated.
+   */
+  public completeCurrentAttempt(success: boolean): LevelAttempts {
+    const currentAttempt = this.getCurrentAttempt();
+    const updatedAttempt = currentAttempt.completeAttempt(success);
+    const newAttempts = [...this.attempts.slice(0, -1), updatedAttempt];
+    return new LevelAttempts(this.level, newAttempts);
+  }
+
+  /**
+   * Gets the current attempt, which is the last attempt in the array.
+   * @returns The current LevelAttempt object.
+   */
+  public getCurrentAttempt(): LevelAttempt {
+    if (this.attempts.length === 0) {
+      throw new Error("No attempts have been started yet.");
+    }
+    return this.attempts[this.attempts.length - 1];
+  }
+}
+
+/**
+ * Represents a set of attempts by a player to complete a game.
+ */
+export class GameAttempts {
+  constructor(
+    public readonly attempts: ReadonlyArray<LevelAttempts> =[]
+  ) {}
+
+  public get successCount(): number {
+    return this.attempts.reduce((sum, levelAttempts) => sum + levelAttempts.successCount, 0);
+  }
+
+  public get failureCount(): number {
+    return this.attempts.reduce((sum, levelAttempts) => sum + levelAttempts.failureCount, 0);
+  }
+
+  public get averageLevelAttempts(): number {
+    if (this.attempts.length === 0) {
+      return 0;
+    }
+    const totalLevelAttempts = this.attempts.length;
+    return totalLevelAttempts / this.attempts.length;
+  }
+
+  public get averageLevelSuccessRate(): number {
+    if (this.attempts.length === 0) {
+      return 0;
+    }
+    const totalSuccessCount = this.successCount;
+    const totalAttempts = this.attempts.reduce((sum, levelAttempts) => sum + levelAttempts.attempts.length, 0);
+    return totalSuccessCount / totalAttempts;
+  }
+
+  public get currentLevel(): number {
+    return this.attempts.length;
+  }
+
+  /**
+   * Starts a new level attempt.
+   * @returns The new GameAttempts object with the new level attempt added to it.
+   */
+  public startNewLevel(): GameAttempts {
+    const newLevel = this.currentLevel + 1;
+    const newLevelAttempts = new LevelAttempts(newLevel);
+    const newAttempts = [...this.attempts, newLevelAttempts.startNewAttempt()];
+    return new GameAttempts(newAttempts);
+  }
+
+  /**
+   * Gets the current level attempt, which is the last attempt of the last level in the array.
+   * @returns The current LevelAttempt object.
+   * @throws An error if no attempts have been started yet.
+   */
+  public getCurrentLevelAttempt(): LevelAttempt {
+    if (this.attempts.length === 0) {
+      throw new Error("No attempts have been started yet.");
+    }
+    const lastLevelAttempts = this.attempts[this.attempts.length - 1];
+    return lastLevelAttempts.getCurrentAttempt();
+  }
+
+  /**
+   * Gets the current level attempts, which is the last level attempts in the array.
+   * @returns The current LevelAttempts object.
+   * @throws An error if no attempts have been started yet.
+   */
+  public getCurrentLevelAttempts(): LevelAttempts {
+    if (this.attempts.length === 0) {
+      throw new Error("No attempts have been started yet.");
+    }
+    const lastLevelAttempts = this.attempts[this.attempts.length - 1];
+    return lastLevelAttempts;
+  }
+
+  /**
+   * Completes the current level attempt, which is the last attempt of the last level in the array.
+   * @param success Whether or not the attempt was successful.
+   * @returns The new GameAttempts object with the completed attempt updated.
+   * @throws An error if no attempts have been started yet.
+   */
+  public completeCurrentLevelAttempt(success: boolean): GameAttempts {
+    const currentLevelAttempts = this.getCurrentLevelAttempts();
+    const updatedLevelAttempts = currentLevelAttempts.completeCurrentAttempt(success);
+    const updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts];
+    return new GameAttempts(updatedAttempts);
+  }
+}
