@@ -233,6 +233,8 @@ export class GameAttempts {
 
   /**
    * Completes the current level attempt, which is the last attempt of the last level in the array.
+   * If succesful, starts a new level.  If failure, starts a new attempt for the current level.
+   * 
    * @param success Whether or not the attempt was successful.
    * @returns The new GameAttempts object with the completed attempt updated.
    * @throws An error if no attempts have been started yet.
@@ -240,7 +242,12 @@ export class GameAttempts {
   public completeCurrentLevelAttempt(success: boolean): GameAttempts {
     const currentLevelAttempts = this.getCurrentLevelAttempts();
     const updatedLevelAttempts = currentLevelAttempts.completeCurrentAttempt(success);
-    const updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts];
+    let updatedAttempts;
+    if (success) {
+      updatedAttempts = [...this.attempts, updatedLevelAttempts.startNewAttempt()];
+    } else {
+      updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts.startNewAttempt()];
+    }
     return new GameAttempts(updatedAttempts);
   }
 }

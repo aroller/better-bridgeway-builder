@@ -19,9 +19,9 @@ export class Point {
  */
 export class Scene {
   private ctx: CanvasRenderingContext2D;
-  /** @deprecated provided by scenario */
+  /** The current view of the street, initially provided by scenario. */
   private street: Street;
-  /** @deprecated provided by scenario */
+  /** The current view of the player, initially provided by scenario. */
   private player: Player;
   private topOfStreetY: number;
   private playerDestination: Point | null = null;
@@ -196,6 +196,7 @@ export class Scene {
         this.player = this.player.onCollisionDetected();
         this.gameAttempts =
           this.gameAttempts.completeCurrentLevelAttempt(false);
+		this.player = this.scenario.player;
       }
     }
     // Draw the player and street.
@@ -217,7 +218,6 @@ public displayScoreboard() {
 	const currentLevel = currentAttempts.level;
 	const failedAttempts = currentAttempts.failureCount;
 	const scenarioTitle = this.scenario.title;
-	console.log(`currentLevel: ${currentLevel}, failedAttempts: ${failedAttempts}`)
 	// Display the current level number and scenario title.
 	this.ctx.font = "bold 24px sans-serif";
 	this.ctx.fillStyle = "white";
