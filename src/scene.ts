@@ -185,14 +185,16 @@ export class Scene {
     // move to the position if controls instruct to do so
     this.navigateToDestination();
 
-    if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) 
-	{
+    if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
+		//check for the goal of reaching the finish
+		//Fixme: it seems the player height should be used to reach the sidewalk
+      if (this.player.y + this.player.height / 2 < this.topOfStreetY) {
+        this.gameAttempts = this.gameAttempts.completeCurrentLevelAttempt(true);
+      } else 
       if (this.street.detectCollision(this.player.x, this.player.y)) {
         this.player = this.player.onCollisionDetected();
         this.gameAttempts =
           this.gameAttempts.completeCurrentLevelAttempt(false);
-      } else if (this.player.y + this.player.height < this.topOfStreetY) {
-        this.gameAttempts = this.gameAttempts.completeCurrentLevelAttempt(true);
       }
     }
     // Draw the player and street.
