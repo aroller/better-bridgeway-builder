@@ -47,13 +47,15 @@ export class ScenarioProducer {
     public readonly topOfStreetY: number,
   ) {}
 
-  private vehicleWagonObstacle(y: number, direction: LaneDirection): Obstacle {
+  private vehicleWagonObstacle(
+    y: number,
+    direction: LaneDirection,
+    speed: number = 5,
+  ): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
     const imageScale = 0.1;
     const objectWidth = 706.12 * imageScale;
     const objectHeight = 314.33 * imageScale;
-    const offsetOffCanvas = 3 * objectWidth;
-    const speed = 5; //pixels per meter...this will need to be adjusted
     const image = new Image();
     image.src = "images/obstacles/car-wagon.svg";
     return new Obstacle(
@@ -70,14 +72,14 @@ export class ScenarioProducer {
   private vehicleTrafficObstacleProducers(
     y: number,
     direction: LaneDirection,
+    maxFrequencyInSeconds: number = 1,
   ): readonly ObstacleProducer[] {
     const vehicleTemplate = this.vehicleWagonObstacle(y, direction);
-    return [new ObstacleProducer(vehicleTemplate)];
+    return [new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds)];
   }
 
-  private bridgeway2023(
-    obstacleProducers: readonly ObstacleProducer[],
-  ): Street {
+  private bridgeway2023(lightTraffic: boolean = false): Street {
+    const frequency = lightTraffic ? 5 : 1;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
     const vehicleLaneWidth = 65;
     const turnLaneWidth = 50;
@@ -87,7 +89,7 @@ export class ScenarioProducer {
       LaneDirection.LEFT,
       vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, solidYellowLineStyle),
-      this.vehicleTrafficObstacleProducers(y, LaneDirection.LEFT),
+      this.vehicleTrafficObstacleProducers(y, LaneDirection.LEFT, frequency),
     );
     y = y + turnLaneWidth;
     street = street.addLane(
@@ -101,7 +103,7 @@ export class ScenarioProducer {
       LaneDirection.RIGHT,
       vehicleLaneWidth,
       new LaneLinesStyles(solidYellowLineStyle, hiddenLineStyle),
-      this.vehicleTrafficObstacleProducers(y, LaneDirection.RIGHT),
+      this.vehicleTrafficObstacleProducers(y, LaneDirection.RIGHT, frequency),
     );
     return street;
   }
@@ -121,12 +123,21 @@ export class ScenarioProducer {
   }
 
   public morningLightTaffic2023(): Scenario {
-    const title = "Morning Light Traffic 2023";
-    const description =
-      "Bridgeway Blvd. early morning has little traffic. Cross the street to walk along the waterfront and enjoy the morning sunrise.";
+    return this.carTraffic20203(true);
+  }
+
+  public heavyTraffic2023(): Scenario {
+    return this.carTraffic20203(false);
+  }
+
+  public carTraffic20203(lightTraffic: boolean): Scenario {
+    const title = lightTraffic
+      ? "Morning Light Traffic 2023"
+      : "Heavy Traffic 2023";
+    const description = "";
 
     const player = this.frogPlayer();
-    const street = this.bridgeway2023([]);
+    const street = this.bridgeway2023();
     const finishLineY = this.topOfStreetY;
     const scenario = new Scenario(
       title,
@@ -137,5 +148,16 @@ export class ScenarioProducer {
     );
 
     return scenario;
+  }
+
+  public getScenarioForLevel(level: number): Scenario {
+    switch (level) {
+      case 1:
+        return this.morningLightTaffic2023();
+      case 2:
+        return this.heavyTraffic2023();
+      default:
+        return this.morningLightTaffic2023();
+    }
   }
 }

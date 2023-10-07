@@ -29,6 +29,8 @@ export class Scene {
   private playerDestination: Point | null = null;
   private gameAttempts: GameAttempts;
   private scenario: Scenario;
+  private scenarioProducer: ScenarioProducer;
+
   /**
    * Creates a new Scene instance.
    * @param ctx - The CanvasRenderingContext2D to use for rendering.
@@ -40,31 +42,23 @@ export class Scene {
     const canvas = this.ctx.canvas;
     const streetLength = canvas.width;
     const streetWidth = 170; //emperically determined to match the background image up to parking lane
+    this.scenarioProducer = new ScenarioProducer(
+      streetWidth,
+      streetLength,
+      this.topOfStreetY,
+    );
+    //assign defaults to make instances happy
+    this.scenario = this.scenarioProducer.morningLightTaffic2023();
+    this.player = this.scenario.player;
+    this.street = this.scenario.street;
+    this.gameAttempts = new GameAttempts();
 
+    this.playNextLevel();
     // The background image shows the familar street scene.
     canvas.style.backgroundImage =
       "url('images/scene/better-bridgeway-background.svg')";
     canvas.style.backgroundSize = "cover";
     // Create the street object with four lanes, two for vehicles and two for bikes.
-
-    this.displayDialogWithHtmlFromFile(
-      "dialogs/welcome.html",
-      "OK",
-      () => {
-        // Start the game.
-      },
-    );
-
-    this.scenario = new ScenarioProducer(
-      streetWidth,
-      streetLength,
-      this.topOfStreetY,
-    ).morningLightTaffic2023();
-    this.street = this.scenario.street;
-    this.player = this.scenario.player;
-
-    // Initialize the game attempts
-    this.gameAttempts = new GameAttempts().startNewLevel();
 
     // Listen for keyboard input to move the player.
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
@@ -81,6 +75,24 @@ export class Scene {
     setInterval(() => {
       this.street = this.street.generateObstacles();
     }, 1000);
+  }
+
+
+  private playNextLevel() {
+    
+    this.gameAttempts = new GameAttempts().startNewLevel();
+    this.scenario = this.scenarioProducer.getScenarioForLevel(this.gameAttempts.currentLevel);
+    this.street = this.scenario.street;
+    this.player = this.scenario.player;
+    this.displayDialogWithHtmlFromFile(
+      "dialogs/level1.html",
+      "Play",
+      () => {
+        this.gameAttempts = new GameAttempts().startNewLevel();
+        this.player = this.scenario.player;
+        this.street = this.scenario.street;
+      },
+      );
   }
 
   /**
@@ -204,6 +216,7 @@ export class Scene {
         this.gameAttempts = this.gameAttempts.completeCurrentLevelAttempt(true);
         //start the next scenario
         this.deadPlayers = [];
+        this.playNextLevel();
       } else if (this.street.detectCollision(this.player.x, this.player.y)) {
         this.player = this.player.onCollisionDetected();
         //keep track of the dead players so the spots remain on the street
