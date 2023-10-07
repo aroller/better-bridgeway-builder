@@ -77,9 +77,9 @@ export abstract class GameObject {
  */
 export class LevelAttempt {
   constructor(
-    public readonly success: boolean,
+    public readonly success: boolean | undefined = undefined,
     public readonly startTime: Date = new Date(),
-    public readonly endTime?: Date
+    public readonly endTime: Date | undefined = undefined,
   ) {}
 
   public get duration(): number {
@@ -128,7 +128,7 @@ export class LevelAttempts {
    * @returns The new LevelAttempts object with the new attempt added to it.
    */
   public startNewAttempt(): LevelAttempts {
-    const newAttempt = new LevelAttempt(false, new Date());
+    const newAttempt = new LevelAttempt();
     const newAttempts = [...this.attempts, newAttempt];
     return new LevelAttempts(this.level, newAttempts);
   }
