@@ -32,16 +32,20 @@ module.exports = {
   resolve: {
     extensions: ["*", ".js", ".ts"],
   },
-
+  devServer: {
+    static: {
+      directory: path.join(__dirname, "public"),
+    },
+    port: 3000,
+  },
   devtool: "inline-source-map",
-
   plugins: [
     new HtmlWebpackPlugin({
       template: path.join(publicPath, "index.html"),
       filename: "index.html",
     }),
     new CopyWebpackPlugin({
-      patterns: [
+      patterns: [ 
         {
           from: publicPath,
           to: buildPath,
