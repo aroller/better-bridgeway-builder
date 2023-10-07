@@ -186,12 +186,11 @@ export class Scene {
     this.navigateToDestination();
 
     if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
-		//check for the goal of reaching the finish
-		//Fixme: it seems the player height should be used to reach the sidewalk
+      //check for the goal of reaching the finish
+      //Fixme: it seems the player height should be used to reach the sidewalk
       if (this.player.y + this.player.height / 2 < this.topOfStreetY) {
         this.gameAttempts = this.gameAttempts.completeCurrentLevelAttempt(true);
-      } else 
-      if (this.street.detectCollision(this.player.x, this.player.y)) {
+      } else if (this.street.detectCollision(this.player.x, this.player.y)) {
         this.player = this.player.onCollisionDetected();
         this.gameAttempts =
           this.gameAttempts.completeCurrentLevelAttempt(false);
@@ -205,5 +204,29 @@ export class Scene {
     //     this.player.y - 10,
     // );
     this.street.draw(this.ctx);
+    this.displayScoreboard();
+  }
+
+  public displayScoreboard() {
+    // Add a fixed rectangular background.
+    this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    this.ctx.fillRect(0, 0, 200, 100);
+    const currentAttempts = this.gameAttempts.getCurrentLevelAttempts();
+    const currentLevel = currentAttempts.level;
+    const failedAttempts = currentAttempts.failureCount;
+
+    // Display the current level number.
+    this.ctx.font = "bold 24px sans-serif";
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(`Level ${currentLevel}`, 10, 30);
+
+    // Display the failed attempts.
+    let x = 10;
+    let y = 50;
+    for (let i = 0; i < failedAttempts; i++) {
+      const image = Player.getSquashedImage();
+      this.ctx.drawImage(image, x, y, 50, 50);
+      x += 60;
+    }
   }
 }
