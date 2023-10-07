@@ -14,6 +14,7 @@ export abstract class GameObject {
    * @param height The height of the object.
    * @param image The image to be displayed for the object.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
+   * @param angle The angle in which to rotate the object
    */
   constructor(
     public readonly x: number,
@@ -22,6 +23,7 @@ export abstract class GameObject {
     public readonly height: number,
     public readonly image: HTMLImageElement,
     public readonly flipHorizontally: boolean = true,
+    public readonly angle: number = 0,
   ) { }
 
   /**
@@ -31,21 +33,35 @@ export abstract class GameObject {
   public draw(ctx: CanvasRenderingContext2D): void {
     if (this.image.complete) {
       const y = this.y - this.height / 2;
+
+      // Save the current state
+      ctx.save();
+
+      // Translate to the center of the object
+      ctx.translate(this.x + this.width / 2, y + this.height / 2);
+
+      // Rotate based on this.angle
+      ctx.rotate(this.angle);
+
       if (this.flipHorizontally) {
-        ctx.save();
-        ctx.translate(this.x + this.width, y);
+        // Flip horizontally
         ctx.scale(-1, 1);
-        ctx.drawImage(this.image, 0, 0, this.width, this.height);
-        ctx.restore();
-      } else {
-        ctx.drawImage(this.image, this.x, y, this.width, this.height);
       }
+
+      // Draw the image at (0, 0) relative to the translated and rotated context
+      ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+
+      // Restore the original state
+      ctx.restore();
     } else {
       this.image.onload = () => {
         this.draw(ctx);
       };
     }
   }
+
+
+
 
   /**
    * Checks if this game object intersects with another game object.
