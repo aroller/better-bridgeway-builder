@@ -82,11 +82,11 @@ export class LevelAttempt {
     public readonly endTime: Date | undefined = undefined,
   ) {}
 
-  public get duration(): number {
+  public get durationInSeconds(): number {
     if (!this.endTime) {
-      return new Date().getTime() - this.startTime.getTime();
+      return (new Date().getTime() - this.startTime.getTime()) / 1000;
     }
-    return this.endTime.getTime() - this.startTime.getTime();
+    return (this.endTime.getTime() - this.startTime.getTime()) / 1000;
   }
 
   public isInProgress(): boolean {
@@ -115,11 +115,11 @@ export class LevelAttempts {
     return this.attempts.filter((attempt) => attempt.success === false).length;
   }
 
-  public get averageDuration(): number {
+  public get averageDurationInSeconds(): number {
     if (this.attempts.length === 0) {
       return 0;
     }
-    const totalDuration = this.attempts.reduce((sum, attempt) => sum + attempt.duration, 0);
+    const totalDuration = this.attempts.reduce((sum, attempt) => sum + attempt.durationInSeconds, 0);
     return totalDuration / this.attempts.length;
   }
 
@@ -244,7 +244,8 @@ export class GameAttempts {
     const updatedLevelAttempts = currentLevelAttempts.completeCurrentAttempt(success);
     let updatedAttempts;
     if (success) {
-      updatedAttempts = [...this.attempts, updatedLevelAttempts.startNewAttempt()];
+      updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts];
+      this.startNewLevel();
     } else {
       updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts.startNewAttempt()];
     }
