@@ -74,7 +74,7 @@ export class Scene {
     }, 50);
     setInterval(() => {
       this.street = this.street.generateObstacles();
-    }, 1000);
+    }, 100);
   }
 
 
