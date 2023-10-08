@@ -255,13 +255,13 @@ export class GameAttempts {
     let updatedAttempts;
     if (success) {
       updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts];
-      this.startNewLevel();
+      return new GameAttempts(updatedAttempts).startNewLevel();
     } else {
       updatedAttempts = [
         ...this.attempts.slice(0, -1),
         updatedLevelAttempts.startNewAttempt(),
       ];
+      return new GameAttempts(updatedAttempts);
     }
-    return new GameAttempts(updatedAttempts);
   }
 }
