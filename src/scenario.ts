@@ -51,6 +51,7 @@ export class ScenarioProducer {
     y: number,
     direction: LaneDirection,
     speed: number = 5,
+    x: number = 0,
   ): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
     const imageScale = 0.1;
@@ -59,7 +60,7 @@ export class ScenarioProducer {
     const image = new Image();
     image.src = "images/obstacles/car-wagon.svg";
     return new Obstacle(
-      0, //x is updated to the position in the lane and movemement
+      x,
       y,
       objectWidth,
       objectHeight,
@@ -78,7 +79,10 @@ export class ScenarioProducer {
     return [new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds)];
   }
 
-  private bridgeway2023(lightTraffic: boolean = false): Street {
+  private bridgeway2023(
+    lightTraffic: boolean = false,
+    parkingIncluded: boolean = false,
+  ): Street {
     const frequency = lightTraffic ? 5 : 1;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
     const vehicleLaneWidth = 65;
@@ -105,8 +109,36 @@ export class ScenarioProducer {
       new LaneLinesStyles(solidYellowLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(y, LaneDirection.RIGHT, frequency),
     );
+    if (parkingIncluded) {
+      const parkingLaneWidth = 60;
+      y = y + parkingLaneWidth;
+      street = street.addLane(
+        LaneDirection.RIGHT, 
+        parkingLaneWidth,
+        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+        this.parkingLaneObstacleProducers(y),
+      );
+    }
     return street;
   }
+
+  private parkingLaneObstacleProducers(y:number): readonly ObstacleProducer[] {
+    const frequency = 10;
+    const speed = 0;
+    const xForEach = [-40,80,200,320,520, 800, 900, 1000, 1100];
+    const producers: ObstacleProducer[] = [];
+    for (const x of xForEach) {
+      const obstacle = this.vehicleWagonObstacle(
+        y,
+        LaneDirection.RIGHT,
+        speed,
+        x,
+      );
+      producers.push(new ObstacleProducer(obstacle, frequency, false));
+    }
+    return producers;
+  }
+
 
   /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene.
    *
@@ -122,22 +154,14 @@ export class ScenarioProducer {
     return new Player(playerX, playerY, playerSize, playerSize, playerImage);
   }
 
-  public morningLightTaffic2023(): Scenario {
-    return this.carTraffic20203(true);
-  }
-
-  public heavyTraffic2023(): Scenario {
-    return this.carTraffic20203(false);
-  }
-
-  public carTraffic20203(lightTraffic: boolean): Scenario {
+  public carTraffic20203(lightTraffic: boolean, parking:boolean=false): Scenario {
     const title = lightTraffic
       ? "Morning Light Traffic 2023"
       : "Heavy Traffic 2023";
     const description = "";
 
     const player = this.frogPlayer();
-    const street = this.bridgeway2023(lightTraffic);
+    const street = this.bridgeway2023(lightTraffic,parking);
     const finishLineY = this.topOfStreetY;
     const scenario = new Scenario(
       title,
@@ -150,12 +174,29 @@ export class ScenarioProducer {
     return scenario;
   }
 
+  /** Light traffic simplest scenario. No traffic in center lane. */
+  public morningLightTaffic2023(): Scenario {
+    return this.carTraffic20203(true);
+  }
+
+  /** Heavy traffic difficult to cross.  No traffic in center lane.  */
+  public heavyTraffic2023(): Scenario {
+    return this.carTraffic20203(false);
+  }
+
+  public lightTrafficParking2023(): Scenario {
+    return this.carTraffic20203(true,true);
+  }
+
   public getScenarioForLevel(level: number): Scenario {
     switch (level) {
       case 1:
-        return this.morningLightTaffic2023();
+        return this.lightTrafficParking2023();
+        // return this.morningLightTaffic2023();
       case 2:
         return this.heavyTraffic2023();
+      case 3:
+        return this.lightTrafficParking2023();
       default:
         return this.morningLightTaffic2023();
     }

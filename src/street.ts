@@ -65,10 +65,12 @@ export class ObstacleProducer {
    * Creates an instance of ObstacleProducer.
    * @param template The obstacle template to produce others.
    * @param maxFrequencyInSeconds The maximum frequency in seconds at which obstacles can be produced. It helps throttle the level of traffic.
+   * @param assignX If true, the x value will be assigned in the next method.  False keeps the x value of the template.
    */
   constructor(
     public readonly template: Obstacle,
     public readonly maxFrequencyInSeconds: number = 1,
+    public readonly assignX: boolean = true,
   ) {}
 
   /**
@@ -82,6 +84,10 @@ export class ObstacleProducer {
   }
 
   public next(x: number): Obstacle {
+    //override x unless told not to
+    if (!this.assignX) {
+      x = this.template.x;
+    }
     const obstacle = new Obstacle(
       x,
       this.template.y,
