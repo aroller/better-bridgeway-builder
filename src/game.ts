@@ -33,32 +33,41 @@ export abstract class GameObject {
   public draw(ctx: CanvasRenderingContext2D): void {
     if (this.image.complete) {
       const y = this.y - this.height / 2;
+      const shouldTransform = this.angle !== 0 || this.flipHorizontally;
 
-      // Save the current state
-      ctx.save();
+      if (shouldTransform) {
+        // Save the current state
+        ctx.save();
 
-      // Translate to the center of the object
-      ctx.translate(this.x + this.width / 2, y + this.height / 2);
+        // Translate to the center of the object
+        ctx.translate(this.x + this.width / 2, y + this.height / 2);
 
-      // Rotate based on this.angle
-      ctx.rotate(this.angle);
+        // Rotate based on this.angle
+        if (this.angle !== 0) {
+          ctx.rotate(this.angle);
+        }
 
-      if (this.flipHorizontally) {
-        // Flip horizontally
-        ctx.scale(-1, 1);
+        if (this.flipHorizontally) {
+          // Flip horizontally
+          ctx.scale(-1, 1);
+        }
+
+        // Draw the image at (0, 0) relative to the translated and rotated context
+        ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+
+        // Restore the original state
+        ctx.restore();
+      } else {
+        // Draw without transformations
+        ctx.drawImage(this.image, this.x, y, this.width, this.height);
       }
-
-      // Draw the image at (0, 0) relative to the translated and rotated context
-      ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
-
-      // Restore the original state
-      ctx.restore();
     } else {
       this.image.onload = () => {
         this.draw(ctx);
       };
     }
   }
+
 
 
 
