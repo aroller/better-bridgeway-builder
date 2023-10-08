@@ -31,6 +31,7 @@ export abstract class GameObject {
    */
   public draw(ctx: CanvasRenderingContext2D): void {
     if (this.image.complete) {
+      const x = this.x - this.width / 2;
       const y = this.y - this.height / 2;
       const shouldTransform = this.angle !== 0 || this.flipHorizontally;
 
@@ -39,7 +40,7 @@ export abstract class GameObject {
         ctx.save();
 
         // Translate to the center of the object
-        ctx.translate(this.x + this.width / 2, y + this.height / 2);
+        ctx.translate(x + this.width / 2, y + this.height / 2);
 
         // Rotate based on this.angle
         if (this.angle !== 0) {
@@ -58,7 +59,7 @@ export abstract class GameObject {
         ctx.restore();
       } else {
         // Draw without transformations
-        ctx.drawImage(this.image, this.x, y, this.width, this.height);
+        ctx.drawImage(this.image, x, y, this.width, this.height);
       }
     } else {
       this.image.onload = () => {
