@@ -68,10 +68,6 @@ export abstract class GameObject {
     }
   }
 
-
-
-
-
   /**
    * Checks if this game object intersects with another game object.
    * @param other The other game object to check for intersection.
