@@ -137,7 +137,7 @@ export class ScenarioProducer {
     const description = "";
 
     const player = this.frogPlayer();
-    const street = this.bridgeway2023();
+    const street = this.bridgeway2023(lightTraffic);
     const finishLineY = this.topOfStreetY;
     const scenario = new Scenario(
       title,

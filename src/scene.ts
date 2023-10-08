@@ -51,7 +51,7 @@ export class Scene {
     this.scenario = this.scenarioProducer.morningLightTaffic2023();
     this.player = this.scenario.player;
     this.street = this.scenario.street;
-    this.gameAttempts = new GameAttempts();
+    this.gameAttempts = new GameAttempts().startNewLevel();
 
     this.playNextLevel();
     // The background image shows the familar street scene.
@@ -74,23 +74,20 @@ export class Scene {
     }, 50);
     setInterval(() => {
       this.street = this.street.generateObstacles();
-    }, 1000);
+    }, 100);
   }
 
 
   private playNextLevel() {
     
-    this.gameAttempts = new GameAttempts().startNewLevel();
+    const level = this.gameAttempts.currentLevel;
     this.scenario = this.scenarioProducer.getScenarioForLevel(this.gameAttempts.currentLevel);
     this.street = this.scenario.street;
     this.player = this.scenario.player;
     this.displayDialogWithHtmlFromFile(
-      "dialogs/level1.html",
+      `dialogs/level${level}.html`,
       "Play",
       () => {
-        this.gameAttempts = new GameAttempts().startNewLevel();
-        this.player = this.scenario.player;
-        this.street = this.scenario.street;
       },
       );
   }

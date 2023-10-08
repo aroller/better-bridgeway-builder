@@ -284,17 +284,21 @@ export class Street {
    * and be added to the list of obstacles for the lane.
    */
   public generateObstacles(): Street {
+    const maxPerLane = 5;
     const randomLaneIndex = Math.floor(Math.random() * this.lanes.length);
     const newLanes = this.lanes.map((lane, index) => {
       if (index === randomLaneIndex) {
-        const offsetOffCanvas = 50;
-        const x =
-          lane.direction === LaneDirection.LEFT
-            ? lane.streetLength + offsetOffCanvas
-            : 0 - offsetOffCanvas;
-        let newObstacle: Obstacle | undefined;
-        for (const obstacleProducer of lane.obstacleProducers) {
-          lane = lane.addObstacle(obstacleProducer.next(x));
+        if (lane.obstacles.length < maxPerLane) {
+          const offsetOffCanvas = 50;
+          const x =
+            lane.direction === LaneDirection.LEFT
+              ? lane.streetLength + offsetOffCanvas
+              : 0 - offsetOffCanvas;
+          for (const obstacleProducer of lane.obstacleProducers) {
+            if(obstacleProducer.readyForNext()){
+              lane = lane.addObstacle(obstacleProducer.next(x));
+            }
+          }
         }
       }
       return lane;
