@@ -73,7 +73,7 @@ export class Scene {
       this.updateCanvas();
     }, 50);
     setInterval(() => {
-      this.street = this.street.generateObstacles();
+      this.street = this.street.generateObstacles(this.player);
     }, 100);
   }
 

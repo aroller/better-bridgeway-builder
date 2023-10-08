@@ -1,5 +1,6 @@
 import { string } from "mathjs";
 import { GameObject } from "./game";
+import { Player } from "./player";
 
 export const enum LaneDirection {
   LEFT = -1,
@@ -74,10 +75,10 @@ export class ObstacleProducer {
   ) {}
 
   /**
-   *
+   * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    * @returns True if the producer is ready to produce another obstacle, false otherwise.
    */
-  public readyForNext(): boolean {
+  public readyForNext(player:Player): boolean {
     const currentTime = Date.now();
     const timeSinceLastObstacle = (currentTime - this.lastObstacleTime) / 1000;
     return timeSinceLastObstacle > this.maxFrequencyInSeconds;
@@ -101,6 +102,7 @@ export class ObstacleProducer {
     return obstacle;
   }
 }
+
 
 /**
  * Represents a lane in a street with lane lines and obstacles.
@@ -288,8 +290,9 @@ export class Street {
   /** Called periodically, this iterates each lane's ObstacleProducer which
    * will generate an obstacle at the appropriate moment in the scenario
    * and be added to the list of obstacles for the lane.
+   * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    */
-  public generateObstacles(): Street {
+  public generateObstacles(player:Player): Street {
     const maxPerLane = 5;
     const randomLaneIndex = Math.floor(Math.random() * this.lanes.length);
     const newLanes = this.lanes.map((lane, index) => {
@@ -301,7 +304,7 @@ export class Street {
               ? lane.streetLength + offsetOffCanvas
               : 0 - offsetOffCanvas;
           for (const obstacleProducer of lane.obstacleProducers) {
-            if(obstacleProducer.readyForNext()){
+            if(obstacleProducer.readyForNext(player)){
               lane = lane.addObstacle(obstacleProducer.next(x));
             }
           }
