@@ -1,6 +1,6 @@
 import { Street } from "./street";
 import { Player } from "./player";
-import { ScenarioProducer } from "./scenario";
+import { Scenario, ScenarioProducer } from "./scenario";
 import { GameAttempts } from "./game";
 
 /**
@@ -16,14 +16,20 @@ export class Point {
 /**
  * The Scene class manages the rendering of the canvas for the game,
  * as well as the street and player objects.
+ * This is a mutable class that changes state for convenience and performance.
  */
 export class Scene {
   private ctx: CanvasRenderingContext2D;
+  /** The current view of the street, initially provided by scenario. */
   private street: Street;
+  /** The current view of the player, initially provided by scenario. */
   private player: Player;
+  private deadPlayers: Player[] = [];
   private topOfStreetY: number;
   private playerDestination: Point | null = null;
   private gameAttempts: GameAttempts;
+  private scenario: Scenario;
+  private scenarioProducer: ScenarioProducer;
 
   /**
    * Creates a new Scene instance.
@@ -36,23 +42,23 @@ export class Scene {
     const canvas = this.ctx.canvas;
     const streetLength = canvas.width;
     const streetWidth = 170; //emperically determined to match the background image up to parking lane
+    this.scenarioProducer = new ScenarioProducer(
+      streetWidth,
+      streetLength,
+      this.topOfStreetY,
+    );
+    //assign defaults to make instances happy
+    this.scenario = this.scenarioProducer.morningLightTaffic2023();
+    this.player = this.scenario.player;
+    this.street = this.scenario.street;
+    this.gameAttempts = new GameAttempts();
 
+    this.playNextLevel();
     // The background image shows the familar street scene.
     canvas.style.backgroundImage =
       "url('images/scene/better-bridgeway-background.svg')";
     canvas.style.backgroundSize = "cover";
     // Create the street object with four lanes, two for vehicles and two for bikes.
-
-    const sceanio = new ScenarioProducer(
-      streetWidth,
-      streetLength,
-      this.topOfStreetY,
-    ).morningLightTaffic2023();
-    this.street = sceanio.street;
-    this.player = sceanio.player;
-
-    // Initialize the game attempts
-    this.gameAttempts = new GameAttempts().startNewLevel();
 
     // Listen for keyboard input to move the player.
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
@@ -69,6 +75,24 @@ export class Scene {
     setInterval(() => {
       this.street = this.street.generateObstacles();
     }, 1000);
+  }
+
+
+  private playNextLevel() {
+    
+    this.gameAttempts = new GameAttempts().startNewLevel();
+    this.scenario = this.scenarioProducer.getScenarioForLevel(this.gameAttempts.currentLevel);
+    this.street = this.scenario.street;
+    this.player = this.scenario.player;
+    this.displayDialogWithHtmlFromFile(
+      "dialogs/level1.html",
+      "Play",
+      () => {
+        this.gameAttempts = new GameAttempts().startNewLevel();
+        this.player = this.scenario.player;
+        this.street = this.scenario.street;
+      },
+      );
   }
 
   /**
@@ -186,24 +210,104 @@ export class Scene {
     this.navigateToDestination();
 
     if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
-		//check for the goal of reaching the finish
-		//Fixme: it seems the player height should be used to reach the sidewalk
+      //check for the goal of reaching the finish
+      //Fixme: it seems the player height should be used to reach the sidewalk
       if (this.player.y + this.player.height / 2 < this.topOfStreetY) {
         this.gameAttempts = this.gameAttempts.completeCurrentLevelAttempt(true);
-      } else 
-      if (this.street.detectCollision(this.player.x, this.player.y)) {
+        //start the next scenario
+        this.deadPlayers = [];
+        this.playNextLevel();
+      } else if (this.street.detectCollision(this.player.x, this.player.y)) {
         this.player = this.player.onCollisionDetected();
+        //keep track of the dead players so the spots remain on the street
+        this.deadPlayers.push(this.player);
         this.gameAttempts =
           this.gameAttempts.completeCurrentLevelAttempt(false);
+        //reset the current player to the scenario start
+        this.player = this.scenario.player;
       }
     }
     // Draw the player and street.
     this.player.draw(this.ctx);
+    this.deadPlayers.forEach((player) => {
+      player.draw(this.ctx);
+    });
+
     // this.ctx.fillText(
     //     `x: ${this.player.x}, y: ${this.player.y}`,
     //     this.player.x,
     //     this.player.y - 10,
     // );
     this.street.draw(this.ctx);
+    this.displayScoreboard();
+  }
+
+  public displayScoreboard() {
+    // Add a fixed rectangular background.
+    this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    this.ctx.fillRect(0, 0, this.ctx.canvas.width, 100);
+    const currentAttempts = this.gameAttempts.getCurrentLevelAttempts();
+    const currentLevel = currentAttempts.level;
+    const failedAttempts = currentAttempts.failureCount;
+    const scenarioTitle = this.scenario.title;
+    // Display the current level number and scenario title.
+    this.ctx.font = "bold 24px sans-serif";
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(`Level ${currentLevel} - ${scenarioTitle}`, 10, 30);
+
+    // Display the failed attempts and time elapsed.
+    let x = 10;
+    let y = 50;
+    for (let i = 0; i < failedAttempts; i++) {
+      const image = Player.getSquashedImage();
+      this.ctx.drawImage(image, x, y, 50, 50);
+      x += 60;
+    }
+
+    const timeElapsed = Math.trunc(
+      this.gameAttempts.getCurrentLevelAttempt().durationInSeconds,
+    );
+    this.ctx.font = "bold 24px sans-serif";
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(`${timeElapsed}`, x, y + 30);
+  }
+
+  public displayDialogWithHtmlFromFile(
+    filePath: string,
+    buttonText: string,
+    callback: () => void,
+  ) {
+    // Create a div element for the dialog.
+    const dialog = document.createElement("div");
+    dialog.style.position = "absolute";
+    dialog.style.top = "50%";
+    dialog.style.left = "50%";
+    dialog.style.transform = "translate(-50%, -50%)";
+    dialog.style.width = "75%";
+    dialog.style.backgroundColor = "white";
+    dialog.style.border = "1px solid black";
+    dialog.style.padding = "20px";
+    dialog.style.textAlign = "center";
+
+    // Create an iframe element for the HTML page.
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = "400px";
+    iframe.src = filePath;
+    dialog.appendChild(iframe);
+
+    // Add the continue button to the dialog.
+    const button = document.createElement("button");
+    button.textContent = buttonText;
+    button.addEventListener("click", () => {
+      // Remove the dialog from the DOM.
+      dialog.remove();
+      // Call the callback function.
+      callback();
+    });
+    dialog.appendChild(button);
+
+    // Add the dialog to the DOM.
+    document.body.appendChild(dialog);
   }
 }

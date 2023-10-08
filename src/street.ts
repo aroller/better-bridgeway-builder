@@ -59,14 +59,30 @@ export class Obstacle extends GameObject {
  * Produces obstacles in a lane based on the given template.
  */
 export class ObstacleProducer {
+  private lastObstacleTime: number = 0;
+
   /**
    * Creates an instance of ObstacleProducer.
    * @param template The obstacle template to produce others.
+   * @param maxFrequencyInSeconds The maximum frequency in seconds at which obstacles can be produced. It helps throttle the level of traffic.
    */
-  constructor(public readonly template: Obstacle) {}
+  constructor(
+    public readonly template: Obstacle,
+    public readonly maxFrequencyInSeconds: number = 1,
+  ) {}
+
+  /**
+   *
+   * @returns True if the producer is ready to produce another obstacle, false otherwise.
+   */
+  public readyForNext(): boolean {
+    const currentTime = Date.now();
+    const timeSinceLastObstacle = (currentTime - this.lastObstacleTime) / 1000;
+    return timeSinceLastObstacle > this.maxFrequencyInSeconds;
+  }
 
   public next(x: number): Obstacle {
-    return new Obstacle(
+    const obstacle = new Obstacle(
       x,
       this.template.y,
       this.template.width,
@@ -75,6 +91,8 @@ export class ObstacleProducer {
       this.template.direction,
       this.template.image,
     );
+    this.lastObstacleTime = Date.now();
+    return obstacle;
   }
 }
 

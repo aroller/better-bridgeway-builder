@@ -32,16 +32,14 @@ module.exports = {
   resolve: {
     extensions: ["*", ".js", ".ts"],
   },
-
   devtool: "inline-source-map",
-
   plugins: [
     new HtmlWebpackPlugin({
       template: path.join(publicPath, "index.html"),
       filename: "index.html",
     }),
     new CopyWebpackPlugin({
-      patterns: [
+      patterns: [ 
         {
           from: publicPath,
           to: buildPath,

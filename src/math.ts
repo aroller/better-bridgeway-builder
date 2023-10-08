@@ -1,6 +1,9 @@
-import * as math from 'mathjs';
+import * as math from "mathjs";
 
-export function matricesIntersect(matrix1: math.Matrix, matrix2: math.Matrix): boolean {
+export function matricesIntersect(
+  matrix1: math.Matrix,
+  matrix2: math.Matrix,
+): boolean {
   const array1: number[] = math.flatten(matrix1.toArray()) as number[];
   const array2: number[] = math.flatten(matrix2.toArray()) as number[];
 

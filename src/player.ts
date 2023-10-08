@@ -29,26 +29,74 @@ export class Player extends GameObject {
   /**
    * Changes the player's image to a red splat when a collision is detected.
    */
-  public onCollisionDetected(): Player {
-    // show the squashed image
+  public static getSquashedImage(): HTMLImageElement {
     const redImage = new Image();
     redImage.src = "images/players/squashed.svg";
-    return new Player(this.x, this.y, this.width, this.height, redImage, this.flipHorizontally, this.speedInPixelsPerMove);
+    return redImage;
+  }
+
+  public onCollisionDetected(): Player {
+    // show the squashed image
+    const redImage = Player.getSquashedImage();
+    return new Player(
+      this.x,
+      this.y,
+      this.width,
+      this.height,
+      redImage,
+      this.flipHorizontally,
+      this.speedInPixelsPerMove,
+    );
   }
 
   public moveUp(): Player {
-    return new Player(this.x, this.y - this.speedInPixelsPerMove, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove);
+    return new Player(
+      this.x,
+      this.y - this.speedInPixelsPerMove,
+      this.width,
+      this.height,
+      this.image,
+      !this.flipHorizontally,
+      this.speedInPixelsPerMove,
+    );
   }
 
   public moveDown(): Player {
-    return new Player(this.x, this.y + this.speedInPixelsPerMove, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove, -Math.PI);
+    return new Player(
+      this.x,
+      this.y + this.speedInPixelsPerMove,
+      this.width,
+      this.height,
+      this.image,
+      !this.flipHorizontally,
+      this.speedInPixelsPerMove,
+      -Math.PI,
+    );
   }
 
   public moveLeft(): Player {
-    return new Player(this.x - this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove, -Math.PI / 2);
+    return new Player(
+      this.x - this.speedInPixelsPerMove,
+      this.y,
+      this.width,
+      this.height,
+      this.image,
+      !this.flipHorizontally,
+      this.speedInPixelsPerMove,
+      -Math.PI / 2,
+    );
   }
 
   public moveRight(): Player {
-    return new Player(this.x + this.speedInPixelsPerMove, this.y, this.width, this.height, this.image, !this.flipHorizontally, this.speedInPixelsPerMove, Math.PI / 2);
+    return new Player(
+      this.x + this.speedInPixelsPerMove,
+      this.y,
+      this.width,
+      this.height,
+      this.image,
+      !this.flipHorizontally,
+      this.speedInPixelsPerMove,
+      Math.PI / 2,
+    );
   }
 }
