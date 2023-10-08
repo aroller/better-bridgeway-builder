@@ -11,6 +11,8 @@ export class Player extends GameObject {
    * @param width The width of the player's rectangle.
    * @param height The height of the player's rectangle.
    * @param image The image to be displayed for the player.
+   * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
+   * @param speedInPixelsPerMove Speed of the player, in pixels per move.
    * @param angle The angle in which to rotate the player.
    */
   constructor(
