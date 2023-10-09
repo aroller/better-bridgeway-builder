@@ -62,6 +62,7 @@ export class Scene {
 
     // Listen for keyboard input to move the player.
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
+    document.addEventListener("keyup", this.handleKeyUp.bind(this));
     document.addEventListener("mousedown", this.handleMouseDown.bind(this));
     document.addEventListener("mouseup", this.handleMouseUp.bind(this));
     document.addEventListener("touchstart", this.handleTouchStart.bind(this));
@@ -120,6 +121,11 @@ export class Scene {
         this.updateCanvas();
       }
     
+  }
+
+  /** Stop moving when the key is no longer pressed. */
+  private handleKeyUp(event: KeyboardEvent) {
+    this.playerDestination = null;
   }
 
   /**
