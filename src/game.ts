@@ -12,6 +12,7 @@ export class GameObject {
    * @param height The height of the object as measured down from y.
    * @param image The image to be displayed for the object. Optionally provide nothing drawn if undefined.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
+   * @param angle The angle in which this object should be rotated, in radians.
    */
   constructor(
     public readonly x: number,
@@ -20,6 +21,7 @@ export class GameObject {
     public readonly height: number,
     public readonly image?: HTMLImageElement,
     public readonly flipHorizontally: boolean = false,
+    public readonly angle: number = 0,
   ) {}
 
   /**
@@ -29,15 +31,34 @@ export class GameObject {
   public draw(ctx: CanvasRenderingContext2D): void {
     if (this.image) {
       if (this.image.complete) {
+        const x = this.x - this.width / 2;
         const y = this.y - this.height / 2;
-        if (this.flipHorizontally) {
+        const shouldTransform = this.angle !== 0 || this.flipHorizontally;
+
+        if (shouldTransform) {
+          // Save the current state
           ctx.save();
-          ctx.translate(this.x + this.width, y);
-          ctx.scale(-1, 1);
-          ctx.drawImage(this.image, 0, 0, this.width, this.height);
+
+          // Translate to the center of the object
+          ctx.translate(x + this.width / 2, y + this.height / 2);
+          // Rotate based on this.angle
+          if (this.angle !== 0) {
+            ctx.rotate(this.angle);
+          }
+
+          if (this.flipHorizontally) {
+            // Flip horizontally
+            ctx.scale(-1, 1);
+          }
+
+          // Draw the image at (0, 0) relative to the translated and rotated context
+          ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+
+          // Restore the original state
           ctx.restore();
         } else {
-          ctx.drawImage(this.image, this.x, y, this.width, this.height);
+          // Draw without transformations
+          ctx.drawImage(this.image, x, y, this.width, this.height);
         }
       } else {
         this.image.onload = () => {
