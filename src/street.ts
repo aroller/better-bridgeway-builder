@@ -7,6 +7,13 @@ export const enum LaneDirection {
   RIGHT = 1,
 }
 
+export const enum ObstacleSpeeds {
+  STOPPED = 0,
+  SLOW = 2,
+  MEDIUM = 5,
+  FAST = 7,
+}
+
 /** Draws lines for lanes. Could be hidden or dashed.  */
 export class LaneLineStyle {
   constructor(
@@ -35,8 +42,11 @@ export class Obstacle extends GameObject {
     height: number,
     public readonly speed: number,
     public readonly direction: LaneDirection,
-    image: HTMLImageElement,
+    image?: HTMLImageElement,
   ) {
+    if (!image) {
+      throw new Error("Image is required, but missing");
+    }
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
     this.speed = speed;
     this.direction = direction;
@@ -103,6 +113,45 @@ export class ObstacleProducer {
   }
 }
 
+
+/**
+ * A class that produces obstacles at a certain frequency, 
+ * but only when the player intersects with a target object.
+ * @extends ObstacleProducer
+ */
+export class TargetObstacleProducer extends ObstacleProducer {
+
+  /**
+   * Creates a new instance of TargetObstacleProducer.
+   * @param template - The obstacle template to use.
+   * @param maxFrequencyInSeconds - The maximum frequency at which to produce obstacles.
+   * @param assignX - Whether to assign the obstacle's X position randomly.
+   * @param target - The target object that the player must intersect with in order for obstacles to be produced.
+   */
+  constructor(
+    template: Obstacle,
+    maxFrequencyInSeconds: number,
+    assignX: boolean,
+    public readonly target: GameObject,
+  ) {
+    super(template, maxFrequencyInSeconds, assignX);
+  }
+
+  /**
+   * Determines whether the producer is ready to produce the next obstacle.
+   * @param player - The player object to check for intersection with the target object.
+   * @returns True if the producer is ready and the player intersects with the target object, false otherwise.
+   */
+  public readyForNext(player: Player): boolean {
+    const ready = super.readyForNext(player);
+    if (ready) {
+      const intersects = player.intersects(this.target);
+      console.log("target is ready ", intersects);
+      return intersects;
+    }
+    return false;
+  }
+}
 
 /**
  * Represents a lane in a street with lane lines and obstacles.

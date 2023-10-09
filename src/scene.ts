@@ -230,6 +230,7 @@ export class Scene {
       player.draw(this.ctx);
     });
 
+    // debug code displaying x,y for the player
     // this.ctx.fillText(
     //     `x: ${this.player.x}, y: ${this.player.y}`,
     //     this.player.x,

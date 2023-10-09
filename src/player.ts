@@ -5,7 +5,7 @@ import { GameObject } from "./game";
 
 export class Player extends GameObject {
   /**
-   * Creates a new player instance.
+   * Creates a new player instance.  See GameObject for parameter descriptions.
    * @param x The x-coordinate of the player's position.
    * @param y The y-coordinate of the player's position.
    * @param width The width of the player's rectangle.

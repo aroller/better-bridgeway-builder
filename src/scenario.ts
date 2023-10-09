@@ -1,16 +1,19 @@
 import { Player } from "./player";
+import { GameObject } from "./game";
 import {
   LaneLineStyle,
   LaneLinesStyles,
   Obstacle,
   ObstacleProducer,
+  ObstacleSpeeds,
+  TargetObstacleProducer,
   Street,
 } from "./street";
 import { LaneDirection } from "./street";
 
 const solidWhiteLineStyle = new LaneLineStyle();
 const solidYellowLineStyle = new LaneLineStyle("yellow");
-const dashedYellowLineStyle = new LaneLineStyle("yellow", true);
+const dashedYellowLineStyle = new LaneLineStyle(solidYellowLineStyle.color, true);
 const hiddenLineStyle = new LaneLineStyle(
   solidWhiteLineStyle.color,
   false,
@@ -50,7 +53,7 @@ export class ScenarioProducer {
   private vehicleWagonObstacle(
     y: number,
     direction: LaneDirection,
-    speed: number = 5,
+    speed: number = ObstacleSpeeds.MEDIUM,
     x: number = 0,
   ): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
@@ -70,15 +73,57 @@ export class ScenarioProducer {
     );
   }
 
+  /**
+   * Returns an array of obstacle producers that produce vehicle obstacles.
+   * If parkingLineOfSightTriggeredVehicles is true, vehicles will be produced 
+   * conditionally on the player's location at spots where the players view was blocked
+   * by a parked car.
+   * 
+   * @param y The y-coordinate of the obstacles.
+   * @param direction The direction of the lane.
+   * @param maxFrequencyInSeconds The maximum frequency of obstacle production in seconds.
+   * @param parkingLineOfSightTriggeredVehicles If true, vehicles will appear abruptly depending on crossing spot
+   * @returns An array of obstacle producers.
+   */
   private vehicleTrafficObstacleProducers(
     y: number,
     direction: LaneDirection,
     maxFrequencyInSeconds: number = 1,
+    parkingLineOfSightTriggeredVehicles: boolean = false,
   ): readonly ObstacleProducer[] {
     const vehicleTemplate = this.vehicleWagonObstacle(y, direction);
-    return [new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds)];
+    const producers = [new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds)];
+    if (parkingLineOfSightTriggeredVehicles) {
+      producers.push(...this.parkingLineOfSightTriggeredProducers(y));
+    }
+    return producers;
   }
 
+  /**
+   * Obstacle producers that trigger cars to appear when the player exits the parking
+   * lane close to the parked cars.  This is to simulate the player's view being blocked.
+   * 
+   * @param vehicleLaneY The y-coordinate of the vehicle lane.
+   * @returns An array of obstacle producers.
+   */
+  private parkingLineOfSightTriggeredProducers(vehicleLaneY:number): readonly ObstacleProducer[]{
+    const producers: ObstacleProducer[] = [];
+         // these x values are hard coded to the scene to match parked cars
+         const closeToParkedCarX = 395;
+         const yTriggerPoint = 380;
+         const targetWidth = 80;
+         const targetHeight = 25;
+         const targets = [new GameObject(closeToParkedCarX, yTriggerPoint, targetWidth, targetHeight)];
+         const maxFrequencyForTargetTrigger = 2;
+         const speed = ObstacleSpeeds.MEDIUM;
+         // this vehicle appears when the player reaches the lane
+         const hiddenVehicleStartingX = 250;
+         const hiddenVehicleTemplate = this.vehicleWagonObstacle(vehicleLaneY, LaneDirection.RIGHT, speed, hiddenVehicleStartingX);
+         for (const target of targets) {
+           producers.push(new TargetObstacleProducer(hiddenVehicleTemplate,maxFrequencyForTargetTrigger,false,target));
+         }
+         return producers;
+  }
   private bridgeway2023(
     lightTraffic: boolean = false,
     parkingIncluded: boolean = false,
@@ -107,7 +152,7 @@ export class ScenarioProducer {
       LaneDirection.RIGHT,
       vehicleLaneWidth,
       new LaneLinesStyles(solidYellowLineStyle, hiddenLineStyle),
-      this.vehicleTrafficObstacleProducers(y, LaneDirection.RIGHT, frequency),
+      this.vehicleTrafficObstacleProducers(y, LaneDirection.RIGHT, frequency, parkingIncluded),
     );
     if (parkingIncluded) {
       const parkingLaneWidth = 60;
