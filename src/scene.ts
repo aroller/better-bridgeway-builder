@@ -77,19 +77,18 @@ export class Scene {
     }, 100);
   }
 
-
   private playNextLevel() {
-    
     const level = this.gameAttempts.currentLevel;
-    this.scenario = this.scenarioProducer.getScenarioForLevel(this.gameAttempts.currentLevel);
+    this.scenario = this.scenarioProducer.getScenarioForLevel(
+      this.gameAttempts.currentLevel,
+    );
     this.street = this.scenario.street;
     this.player = this.scenario.player;
     this.displayDialogWithHtmlFromFile(
       `dialogs/level${level}.html`,
       "Play",
-      () => {
-      },
-      );
+      () => {},
+    );
   }
 
   /**
@@ -98,23 +97,29 @@ export class Scene {
    */
   private handleKeyDown(event: KeyboardEvent) {
     if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
-      switch (event.code) {
-        case "ArrowUp":
-          this.player = this.player.moveUp();
-          break;
-        case "ArrowDown":
-          this.player = this.player.moveDown();
-          break;
-        case "ArrowLeft":
-          this.player = this.player.moveLeft();
-          break;
-        case "ArrowRight":
-          this.player = this.player.moveRight();
-          break;
+      const pixelsToMove = this.player.speedInPixelsPerMove;
+      
+      let x = this.playerDestination?.x ? this.playerDestination.x : this.player.x;
+      let y = this.playerDestination?.y ? this.playerDestination.y : this.player.y;
+      
+        switch (event.code) {
+          case "ArrowUp":
+            y -= pixelsToMove;
+            break;
+          case "ArrowDown":
+            y += pixelsToMove;
+            break;
+          case "ArrowLeft":
+            x -= pixelsToMove;
+            break;
+          case "ArrowRight":
+            x += pixelsToMove;
+            break;
+        }
+        this.playerDestination = new Point(x, y);
+        this.updateCanvas();
       }
-
-      this.updateCanvas();
-    }
+    
   }
 
   /**
@@ -155,7 +160,7 @@ export class Scene {
 
   /**
    * Navigates the player to their destination if they are not squashed and a destination is set.
-   * This is useful for touch input for mobile devices.
+   * This is useful for touch input for mobile devices and creating consistent speed capabilities.
    * @returns void
    */
 
