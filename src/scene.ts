@@ -153,7 +153,6 @@ export class Scene {
     const scaleY = this.ctx.canvas.height / rect.height;
     const x = (clientX - rect.left) * scaleX;
     const y = (clientY - rect.top) * scaleY;
-    console.log(`x: ${x}, y: ${y}`);
     this.playerDestination = new Point(x, y);
   }
   /**
@@ -242,11 +241,11 @@ export class Scene {
     });
 
     // debug code displaying x,y for the player
-    this.ctx.fillText(
-        `x: ${this.player.x}, y: ${this.player.y}`,
-        this.player.x,
-        this.player.y - 10,
-    );
+    // this.ctx.fillText(
+    //     `x: ${this.player.x}, y: ${this.player.y}`,
+    //     this.player.x,
+    //     this.player.y - 10,
+    // );
     this.street.draw(this.ctx);
     this.displayScoreboard();
   }
