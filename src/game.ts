@@ -166,7 +166,8 @@ export class LevelAttempts {
  * Represents a set of attempts by a player to complete a game.
  */
 export class GameAttempts {
-  constructor(public readonly attempts: ReadonlyArray<LevelAttempts> = []) {}
+  constructor(public readonly attempts: ReadonlyArray<LevelAttempts> = [],
+    public readonly maxAttemptCount:number = 3) {}
 
   public get successCount(): number {
     return this.attempts.reduce(
@@ -256,7 +257,7 @@ export class GameAttempts {
     const updatedLevelAttempts =
       currentLevelAttempts.completeCurrentAttempt(success);
     let updatedAttempts;
-    if (success) {
+    if (success || this.getCurrentLevelAttempts().failureCount >= this.maxAttemptCount) {
       updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts];
       return new GameAttempts(updatedAttempts).startNewLevel();
     } else {

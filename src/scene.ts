@@ -48,7 +48,7 @@ export class Scene {
       this.topOfStreetY,
     );
     //assign defaults to make instances happy
-    this.scenario = this.scenarioProducer.morningLightTaffic2023();
+    this.scenario = this.scenarioProducer.getScenarioForLevel(1);
     this.player = this.scenario.player;
     this.street = this.scenario.street;
     this.gameAttempts = new GameAttempts().startNewLevel();
@@ -80,6 +80,8 @@ export class Scene {
 
   private playNextLevel() {
     const level = this.gameAttempts.currentLevel;
+            //start the next scenario
+    this.deadPlayers = [];
     this.scenario = this.scenarioProducer.getScenarioForLevel(
       this.gameAttempts.currentLevel,
     );
@@ -222,24 +224,8 @@ export class Scene {
     // move to the position if controls instruct to do so
     this.navigateToDestination();
 
-    if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
-      //check for the goal of reaching the finish
-      //Fixme: it seems the player height should be used to reach the sidewalk
-      if (this.player.y + this.player.height / 2 < this.topOfStreetY) {
-        this.gameAttempts = this.gameAttempts.completeCurrentLevelAttempt(true);
-        //start the next scenario
-        this.deadPlayers = [];
-        this.playNextLevel();
-      } else if (this.street.detectCollision(this.player)) {
-        this.player = this.player.onCollisionDetected();
-        //keep track of the dead players so the spots remain on the street
-        this.deadPlayers.push(this.player);
-        this.gameAttempts =
-          this.gameAttempts.completeCurrentLevelAttempt(false);
-        //reset the current player to the scenario start
-        this.player = this.scenario.player;
-      }
-    }
+    this.nextAttemptOrLevelIfReady();
+
     // Draw the player and street.
     this.player.draw(this.ctx);
     this.deadPlayers.forEach((player) => {
@@ -255,6 +241,33 @@ export class Scene {
     this.street.draw(this.ctx);
     this.displayScoreboard();
   }
+
+  private nextAttemptOrLevelIfReady(){
+    if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
+      //check for the goal of reaching the finish
+      //Fixme: it seems the player height should be used to reach the sidewalk
+      if (this.player.y + this.player.height / 2 < this.topOfStreetY) {
+        this.gameAttempts = this.gameAttempts.completeCurrentLevelAttempt(true);
+        this.playNextLevel();
+      } else if (this.street.detectCollision(this.player)) {
+        this.player = this.player.onCollisionDetected();
+        //keep track of the dead players so the spots remain on the street
+        this.deadPlayers.push(this.player);
+        const currentLevel = this.gameAttempts.currentLevel;
+        this.gameAttempts =
+          this.gameAttempts.completeCurrentLevelAttempt(false);
+        // automatically goes next level if max failure count reach
+        if (this.gameAttempts.currentLevel !== currentLevel){
+          console.log(`too many failures, going to next level`);
+          this.playNextLevel();
+        } else {
+          //reset the current player to the scenario start
+          this.player = this.scenario.player;
+        }
+      
+      }
+    }
+  } 
 
   public displayScoreboard() {
     // Add a fixed rectangular background.
