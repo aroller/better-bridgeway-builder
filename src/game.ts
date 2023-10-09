@@ -1,17 +1,16 @@
-import { matrix } from "mathjs";
-import { matricesIntersect } from "./math";
 
 /**
  * Base class for all game objects like the player, obstacles, etc.
+ * The shape is a rectangle starting from x,y (top-left) and extending to the right and down.
  */
-export abstract class GameObject {
+export class GameObject {
   /**
    * Creates a new game object.
-   * @param x The x-coordinate of the object.
-   * @param y The y-coordinate of the object.
-   * @param width The width of the object.
-   * @param height The height of the object.
-   * @param image The image to be displayed for the object.
+   * @param x The x-coordinate of the object which is the left-most value.
+   * @param y The y-coordinate of the object which is the top-most value.
+   * @param width The width of the object as measured right from x.
+   * @param height The height of the object as measured down from y.
+   * @param image The image to be displayed for the object. Optionally provide nothing drawn if undefined.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
    * @param angle The angle in which to rotate the object
    */
@@ -20,13 +19,13 @@ export abstract class GameObject {
     public readonly y: number,
     public readonly width: number,
     public readonly height: number,
-    public readonly image: HTMLImageElement,
+    public readonly image?: HTMLImageElement,
     public readonly flipHorizontally: boolean = true,
     public readonly angle: number = 0,
   ) {}
 
   /**
-   * Draws the game object on the canvas.
+   * Draws the game object on the canvas, if the image exists.
    * @param ctx The canvas rendering context to draw on.
    */
   public draw(ctx: CanvasRenderingContext2D): void {
@@ -61,10 +60,6 @@ export abstract class GameObject {
         // Draw without transformations
         ctx.drawImage(this.image, x, y, this.width, this.height);
       }
-    } else {
-      this.image.onload = () => {
-        this.draw(ctx);
-      };
     }
   }
 
@@ -74,22 +69,24 @@ export abstract class GameObject {
    * @returns True if the two game objects intersect, false otherwise.
    */
   public intersects(other: GameObject): boolean {
-    const rect1 = this.getRectMatrix();
-    const rect2 = other.getRectMatrix();
-    return matricesIntersect(rect1, rect2);
-  }
+    // Calculate the coordinates of the rectangles
+    const thisX1 = this.x;
+    const thisY1 = this.y;
+    const thisX2 = this.x + this.width;
+    const thisY2 = this.y + this.height;
 
-  /**
-   * Returns the matrix representing the rectangle occupied by the game object.
-   * @returns The matrix representing the rectangle occupied by the game object.
-   */
-  private getRectMatrix(): math.Matrix {
-    return matrix([
-      [this.x, this.y],
-      [this.x + this.width, this.y],
-      [this.x + this.width, this.y + this.height],
-      [this.x, this.y + this.height],
-    ]);
+    const otherX1 = other.x;
+    const otherY1 = other.y;
+    const otherX2 = other.x + other.width;
+    const otherY2 = other.y + other.height;
+
+    // Check for intersection
+    return (
+      thisX1 <= otherX2 &&
+      thisX2 >= otherX1 &&
+      thisY1 <= otherY2 &&
+      thisY2 >= otherY1
+    );
   }
 }
 

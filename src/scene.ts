@@ -73,23 +73,22 @@ export class Scene {
       this.updateCanvas();
     }, 50);
     setInterval(() => {
-      this.street = this.street.generateObstacles();
+      this.street = this.street.generateObstacles(this.player);
     }, 100);
   }
 
-
   private playNextLevel() {
-    
     const level = this.gameAttempts.currentLevel;
-    this.scenario = this.scenarioProducer.getScenarioForLevel(this.gameAttempts.currentLevel);
+    this.scenario = this.scenarioProducer.getScenarioForLevel(
+      this.gameAttempts.currentLevel,
+    );
     this.street = this.scenario.street;
     this.player = this.scenario.player;
     this.displayDialogWithHtmlFromFile(
       `dialogs/level${level}.html`,
       "Play",
-      () => {
-      },
-      );
+      () => {},
+    );
   }
 
   /**
@@ -98,23 +97,29 @@ export class Scene {
    */
   private handleKeyDown(event: KeyboardEvent) {
     if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
-      switch (event.code) {
-        case "ArrowUp":
-          this.player = this.player.moveUp();
-          break;
-        case "ArrowDown":
-          this.player = this.player.moveDown();
-          break;
-        case "ArrowLeft":
-          this.player = this.player.moveLeft();
-          break;
-        case "ArrowRight":
-          this.player = this.player.moveRight();
-          break;
+      const pixelsToMove = this.player.pixelsPerMove;
+      
+      let x = this.playerDestination?.x ? this.playerDestination.x : this.player.x;
+      let y = this.playerDestination?.y ? this.playerDestination.y : this.player.y;
+      
+        switch (event.code) {
+          case "ArrowUp":
+            y -= pixelsToMove;
+            break;
+          case "ArrowDown":
+            y += pixelsToMove;
+            break;
+          case "ArrowLeft":
+            x -= pixelsToMove;
+            break;
+          case "ArrowRight":
+            x += pixelsToMove;
+            break;
+        }
+        this.playerDestination = new Point(x, y);
+        this.updateCanvas();
       }
-
-      this.updateCanvas();
-    }
+    
   }
 
   /**
@@ -122,9 +127,7 @@ export class Scene {
    * @param event - The MouseEvent object representing the mouse click.
    */
   private handleMouseDown(event: MouseEvent) {
-    const x = event.clientX - this.ctx.canvas.offsetLeft;
-    const y = event.clientY - this.ctx.canvas.offsetTop;
-    this.playerDestination = new Point(x, y);
+    this.handleScreenEvent(event.clientX,event.clientY);
   }
 
   /**
@@ -140,11 +143,18 @@ export class Scene {
    * @param event - The TouchEvent object representing the touch.
    */
   private handleTouchStart(event: TouchEvent) {
-    const x = event.touches[0].clientX - this.ctx.canvas.offsetLeft;
-    const y = event.touches[0].clientY - this.ctx.canvas.offsetTop;
-    this.playerDestination = new Point(x, y);
+    const touch = event.touches[0];
+    this.handleScreenEvent(touch.clientX,touch.clientY);
   }
 
+  private handleScreenEvent(clientX:number,clientY:number){
+    const rect = this.ctx.canvas.getBoundingClientRect();
+    const scaleX = this.ctx.canvas.width / rect.width;
+    const scaleY = this.ctx.canvas.height / rect.height;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
+    this.playerDestination = new Point(x, y);
+  }
   /**
    * Handles touch input to set the player destination to null when the touch ends.
    * @param event - The TouchEvent object representing the touch.
@@ -155,7 +165,7 @@ export class Scene {
 
   /**
    * Navigates the player to their destination if they are not squashed and a destination is set.
-   * This is useful for touch input for mobile devices.
+   * This is useful for touch input for mobile devices and creating consistent speed capabilities.
    * @returns void
    */
 
@@ -214,7 +224,7 @@ export class Scene {
         //start the next scenario
         this.deadPlayers = [];
         this.playNextLevel();
-      } else if (this.street.detectCollision(this.player.x, this.player.y)) {
+      } else if (this.street.detectCollision(this.player)) {
         this.player = this.player.onCollisionDetected();
         //keep track of the dead players so the spots remain on the street
         this.deadPlayers.push(this.player);
@@ -230,6 +240,7 @@ export class Scene {
       player.draw(this.ctx);
     });
 
+    // debug code displaying x,y for the player
     // this.ctx.fillText(
     //     `x: ${this.player.x}, y: ${this.player.y}`,
     //     this.player.x,

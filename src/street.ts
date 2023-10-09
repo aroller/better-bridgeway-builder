@@ -1,9 +1,17 @@
 import { string } from "mathjs";
 import { GameObject } from "./game";
+import { Player } from "./player";
 
 export const enum LaneDirection {
   LEFT = -1,
   RIGHT = 1,
+}
+
+export const enum ObstacleSpeeds {
+  STOPPED = 0,
+  SLOW = 2,
+  MEDIUM = 5,
+  FAST = 7,
 }
 
 /** Draws lines for lanes. Could be hidden or dashed.  */
@@ -34,8 +42,11 @@ export class Obstacle extends GameObject {
     height: number,
     public readonly speed: number,
     public readonly direction: LaneDirection,
-    image: HTMLImageElement,
+    image?: HTMLImageElement,
   ) {
+    if (!image) {
+      throw new Error("Image is required, but missing");
+    }
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
     this.speed = speed;
     this.direction = direction;
@@ -65,23 +76,29 @@ export class ObstacleProducer {
    * Creates an instance of ObstacleProducer.
    * @param template The obstacle template to produce others.
    * @param maxFrequencyInSeconds The maximum frequency in seconds at which obstacles can be produced. It helps throttle the level of traffic.
+   * @param assignX If true, the x value will be assigned in the next method.  False keeps the x value of the template.
    */
   constructor(
     public readonly template: Obstacle,
     public readonly maxFrequencyInSeconds: number = 1,
+    public readonly assignX: boolean = true,
   ) {}
 
   /**
-   *
+   * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    * @returns True if the producer is ready to produce another obstacle, false otherwise.
    */
-  public readyForNext(): boolean {
+  public readyForNext(player:Player): boolean {
     const currentTime = Date.now();
     const timeSinceLastObstacle = (currentTime - this.lastObstacleTime) / 1000;
     return timeSinceLastObstacle > this.maxFrequencyInSeconds;
   }
 
   public next(x: number): Obstacle {
+    //override x unless told not to
+    if (!this.assignX) {
+      x = this.template.x;
+    }
     const obstacle = new Obstacle(
       x,
       this.template.y,
@@ -93,6 +110,45 @@ export class ObstacleProducer {
     );
     this.lastObstacleTime = Date.now();
     return obstacle;
+  }
+}
+
+
+/**
+ * A class that produces obstacles at a certain frequency, 
+ * but only when the player intersects with a target object.
+ * @extends ObstacleProducer
+ */
+export class TargetObstacleProducer extends ObstacleProducer {
+
+  /**
+   * Creates a new instance of TargetObstacleProducer.
+   * @param template - The obstacle template to use.
+   * @param maxFrequencyInSeconds - The maximum frequency at which to produce obstacles.
+   * @param assignX - Whether to assign the obstacle's X position randomly.
+   * @param target - The target object that the player must intersect with in order for obstacles to be produced.
+   */
+  constructor(
+    template: Obstacle,
+    maxFrequencyInSeconds: number,
+    assignX: boolean,
+    public readonly target: GameObject,
+  ) {
+    super(template, maxFrequencyInSeconds, assignX);
+  }
+
+  /**
+   * Determines whether the producer is ready to produce the next obstacle.
+   * @param player - The player object to check for intersection with the target object.
+   * @returns True if the producer is ready and the player intersects with the target object, false otherwise.
+   */
+  public readyForNext(player: Player): boolean {
+    const ready = super.readyForNext(player);
+    if (ready) {
+      const intersects = player.intersects(this.target);
+      return intersects;
+    }
+    return false;
   }
 }
 
@@ -218,18 +274,12 @@ export class Lane {
    * @param playerY - The y coordinate of the player.
    * @returns True if there is a collision, false otherwise.
    */
-  public detectCollision(playerX: number, playerY: number): boolean {
+  public detectCollision(player:Player): boolean {
     // Calculate the top position of the lane
     const positionY = this.centerY - this.laneWidth / 2;
 
     for (const obstacle of this.obstacles) {
-      if (
-        playerX > obstacle.x &&
-        playerX < obstacle.x + obstacle.width &&
-        playerY > positionY + (this.laneWidth - obstacle.height) / 2 &&
-        playerY <
-          positionY + (this.laneWidth - obstacle.height) / 2 + obstacle.height
-      ) {
+      if (player.intersects(obstacle)) {
         return true;
       }
     }
@@ -282,8 +332,9 @@ export class Street {
   /** Called periodically, this iterates each lane's ObstacleProducer which
    * will generate an obstacle at the appropriate moment in the scenario
    * and be added to the list of obstacles for the lane.
+   * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    */
-  public generateObstacles(): Street {
+  public generateObstacles(player:Player): Street {
     const maxPerLane = 5;
     const randomLaneIndex = Math.floor(Math.random() * this.lanes.length);
     const newLanes = this.lanes.map((lane, index) => {
@@ -295,7 +346,7 @@ export class Street {
               ? lane.streetLength + offsetOffCanvas
               : 0 - offsetOffCanvas;
           for (const obstacleProducer of lane.obstacleProducers) {
-            if(obstacleProducer.readyForNext()){
+            if(obstacleProducer.readyForNext(player)){
               lane = lane.addObstacle(obstacleProducer.next(x));
             }
           }
@@ -317,9 +368,9 @@ export class Street {
    * @param {number} playerY - The y coordinate of the player.
    * @returns {boolean} - True if there is a collision, false otherwise.
    */
-  public detectCollision(playerX: number, playerY: number): boolean {
+  public detectCollision(player:Player): boolean {
     for (const lane of this.lanes) {
-      if (lane.detectCollision(playerX, playerY)) {
+      if (lane.detectCollision(player)) {
         return true;
       }
     }
