@@ -23,12 +23,13 @@ Demonstrates the problems with the current configuration (from east/top to west/
 * Southbound Parking Lane
 
 1. Light traffic with cars only makes it easy to cross the road and learn the controls.
-2. Heavy traffic with cars only shows the advantage of the center lane as a refuge island.
-3. Vehicles now stop for the player when they can be seen to create a more realistic scenario which has its challenges in the next levels.  
-4. Parking adds to the challenges. Parked cars block line of sight so cars appear out of thin air once in the lane. 
-5. Adding bicycle traffic shows how heavy traffic loses the center lane refuge island since cars pass the bicycles. 
-6. Delivery vehicles block the center lane. Crossing close to it makes a vehicles appear and squash the player to explain the importance of sight lines.  
-7. Traffic is now heavy and stopped in both directions. The center turn lane allows first responders to travel, but a delivery vehicle blocks the way.  When the first responder is blocked, the player is squashed symbolically linking death to a blocked first responder. 
+2. Heavy traffic with cars only shows the advantage of the center lane as a refuge island. 
+3. Heavy traffic with a slower moving frog is almost impossible to cross the street.  
+4. Vehicles now stop for the player when they can be seen to create a more realistic scenario which has its challenges in the next levels.  
+5. Parking adds to the challenges. Parked cars block line of sight so cars appear out of thin air once in the lane. 
+6. Adding bicycle traffic shows how heavy traffic loses the center lane refuge island since cars pass the bicycles. 
+7. Delivery vehicles block the center lane. Crossing close to it makes a vehicles appear and squash the player to explain the importance of sight lines.  
+8. Traffic is now heavy and stopped in both directions. The center turn lane allows first responders to travel, but a delivery vehicle blocks the way.  When the first responder is blocked, the player is squashed symbolically linking death to a blocked first responder. 
 
 ### Improved Infrastructure Levels
 
