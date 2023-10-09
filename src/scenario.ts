@@ -202,10 +202,11 @@ export class ScenarioProducer {
     const playerSize = 30;
     const playerImage = new Image();
     playerImage.src = "images/players/frog.svg";
+    const pixelsPerMove = 10;
     // place the player on the sidewalk.  the scene must be fixed in size
     const playerX = PLAYER_START_X;
     const playerY = 470;
-    return new Player(playerX, playerY, playerSize, playerSize, playerImage);
+    return new Player(playerX, playerY, playerSize, playerSize, playerImage,pixelsPerMove);
   }
 
   public carTraffic20203(lightTraffic: boolean, parking:boolean=false): Scenario {

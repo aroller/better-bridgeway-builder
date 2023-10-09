@@ -11,6 +11,8 @@ export class Player extends GameObject {
    * @param width The width of the player's rectangle.
    * @param height The height of the player's rectangle.
    * @param image The image to be displayed for the player.
+   * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
+   * @param pixelsPerMove Distance per move to relocate the player to match the movement of the image flipping simulating walking.
    */
   constructor(
     public readonly x: number,
@@ -18,8 +20,8 @@ export class Player extends GameObject {
     public readonly width: number,
     public readonly height: number,
     public readonly image: HTMLImageElement,
+    public readonly pixelsPerMove: number,
     public readonly flipHorizontally: boolean = false,
-    public readonly speedInPixelsPerMove: number = 10,
   ) {
     super(x, y, width, height, image, flipHorizontally);
   }
@@ -42,56 +44,35 @@ export class Player extends GameObject {
       this.width,
       this.height,
       redImage,
+      this.pixelsPerMove,
       this.flipHorizontally,
-      this.speedInPixelsPerMove,
     );
   }
 
-  public moveUp(): Player {
+  private move(x: number, y: number) {
     return new Player(
-      this.x,
-      this.y - this.speedInPixelsPerMove,
+      x,
+      y,
       this.width,
       this.height,
       this.image,
-      !this.flipHorizontally,
-      this.speedInPixelsPerMove,
+      this.pixelsPerMove,
+      !this.flipHorizontally, // flip the image per move to simulate walking
     );
+  }
+  public moveUp(): Player {
+    return this.move(this.x, this.y - this.pixelsPerMove);
   }
 
   public moveDown(): Player {
-    return new Player(
-      this.x,
-      this.y + this.speedInPixelsPerMove,
-      this.width,
-      this.height,
-      this.image,
-      !this.flipHorizontally,
-      this.speedInPixelsPerMove,
-    );
+    return this.move(this.x, this.y + this.pixelsPerMove);
   }
 
   public moveLeft(): Player {
-    return new Player(
-      this.x - this.speedInPixelsPerMove,
-      this.y,
-      this.width,
-      this.height,
-      this.image,
-      !this.flipHorizontally,
-      this.speedInPixelsPerMove,
-    );
+    return this.move(this.x - this.pixelsPerMove, this.y);
   }
 
   public moveRight(): Player {
-    return new Player(
-      this.x + this.speedInPixelsPerMove,
-      this.y,
-      this.width,
-      this.height,
-      this.image,
-      !this.flipHorizontally,
-      this.speedInPixelsPerMove,
-    );
+    return this.move(this.x + this.pixelsPerMove, this.y);
   }
 }
