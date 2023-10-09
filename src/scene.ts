@@ -214,7 +214,7 @@ export class Scene {
         //start the next scenario
         this.deadPlayers = [];
         this.playNextLevel();
-      } else if (this.street.detectCollision(this.player.x, this.player.y)) {
+      } else if (this.street.detectCollision(this.player)) {
         this.player = this.player.onCollisionDetected();
         //keep track of the dead players so the spots remain on the street
         this.deadPlayers.push(this.player);

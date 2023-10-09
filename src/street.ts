@@ -146,7 +146,6 @@ export class TargetObstacleProducer extends ObstacleProducer {
     const ready = super.readyForNext(player);
     if (ready) {
       const intersects = player.intersects(this.target);
-      console.log("target is ready ", intersects);
       return intersects;
     }
     return false;
@@ -275,18 +274,12 @@ export class Lane {
    * @param playerY - The y coordinate of the player.
    * @returns True if there is a collision, false otherwise.
    */
-  public detectCollision(playerX: number, playerY: number): boolean {
+  public detectCollision(player:Player): boolean {
     // Calculate the top position of the lane
     const positionY = this.centerY - this.laneWidth / 2;
 
     for (const obstacle of this.obstacles) {
-      if (
-        playerX > obstacle.x &&
-        playerX < obstacle.x + obstacle.width &&
-        playerY > positionY + (this.laneWidth - obstacle.height) / 2 &&
-        playerY <
-          positionY + (this.laneWidth - obstacle.height) / 2 + obstacle.height
-      ) {
+      if (player.intersects(obstacle)) {
         return true;
       }
     }
@@ -375,9 +368,9 @@ export class Street {
    * @param {number} playerY - The y coordinate of the player.
    * @returns {boolean} - True if there is a collision, false otherwise.
    */
-  public detectCollision(playerX: number, playerY: number): boolean {
+  public detectCollision(player:Player): boolean {
     for (const lane of this.lanes) {
-      if (lane.detectCollision(playerX, playerY)) {
+      if (lane.detectCollision(player)) {
         return true;
       }
     }

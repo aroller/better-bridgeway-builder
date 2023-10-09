@@ -11,6 +11,10 @@ import {
 } from "./street";
 import { LaneDirection } from "./street";
 
+/** Fixed point corresponding to the part of the starting sidewalk where the red curb exists. 
+ * Fathest left point putting the frog close to the parked cars. 
+ */
+const PLAYER_START_X = 395;
 const solidWhiteLineStyle = new LaneLineStyle();
 const solidYellowLineStyle = new LaneLineStyle("yellow");
 const dashedYellowLineStyle = new LaneLineStyle(solidYellowLineStyle.color, true);
@@ -109,12 +113,12 @@ export class ScenarioProducer {
   private parkingLineOfSightTriggeredProducers(vehicleLaneY:number): readonly ObstacleProducer[]{
     const producers: ObstacleProducer[] = [];
          // these x values are hard coded to the scene to match parked cars
-         const closeToParkedCarX = 395;
+         const closeToParkedCarX = PLAYER_START_X;
          const yTriggerPoint = 380;
          const targetWidth = 80;
          const targetHeight = 25;
          const targets = [new GameObject(closeToParkedCarX, yTriggerPoint, targetWidth, targetHeight)];
-         const maxFrequencyForTargetTrigger = 2;
+         const maxFrequencyForTargetTrigger = 5;
          const speed = ObstacleSpeeds.MEDIUM;
          // this vehicle appears when the player reaches the lane
          const hiddenVehicleStartingX = 250;
@@ -167,6 +171,11 @@ export class ScenarioProducer {
     return street;
   }
 
+  /**
+   * Populates the parking lane with parked cars.
+   * @param y The y-coordinate of the obstacle producers.
+   * @returns An array of obstacle producers.
+   */
   private parkingLaneObstacleProducers(y:number): readonly ObstacleProducer[] {
     const frequency = 10;
     const speed = 0;
@@ -194,7 +203,7 @@ export class ScenarioProducer {
     const playerImage = new Image();
     playerImage.src = "images/players/frog.svg";
     // place the player on the sidewalk.  the scene must be fixed in size
-    const playerX = 395;
+    const playerX = PLAYER_START_X;
     const playerY = 470;
     return new Player(playerX, playerY, playerSize, playerSize, playerImage);
   }
