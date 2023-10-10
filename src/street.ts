@@ -52,7 +52,7 @@ export class Obstacle extends GameObject {
     public readonly speed: number,
     public readonly direction: LaneDirection,
     image?: HTMLImageElement,
-    public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.BRAKE,
+    public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
   ) {
     if (!image) {
       throw new Error("Image is required, but missing");
@@ -74,6 +74,7 @@ export class Obstacle extends GameObject {
       adjustedSpeed,
       this.direction,
       this.image,
+      this.avoidance,
     );
   }
 
@@ -177,6 +178,7 @@ export class ObstacleProducer {
       this.template.speed,
       this.template.direction,
       this.template.image,
+      this.template.avoidance,
     );
     this.lastObstacleTime = Date.now();
     return obstacle;

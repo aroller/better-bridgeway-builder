@@ -8,6 +8,7 @@ import {
   ObstacleSpeeds,
   TargetObstacleProducer,
   Street,
+  ObstacleAvoidanceType,
 } from "./street";
 import { LaneDirection } from "./street";
 import { splitUnit } from "mathjs";
@@ -60,6 +61,7 @@ export class ScenarioProducer {
     direction: LaneDirection,
     speed: number = ObstacleSpeeds.MEDIUM,
     x: number = 0,
+    obstacleAvoidance:ObstacleAvoidanceType,
   ): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
     const imageScale = 0.1;
@@ -75,6 +77,7 @@ export class ScenarioProducer {
       speed,
       direction,
       image,
+      obstacleAvoidance,
     );
   }
 
@@ -95,8 +98,9 @@ export class ScenarioProducer {
     direction: LaneDirection,
     maxFrequencyInSeconds: number = 1,
     parkingLineOfSightTriggeredVehicles: boolean = false,
+    obstacleAvoidance:ObstacleAvoidanceType,
   ): readonly ObstacleProducer[] {
-    const vehicleTemplate = this.vehicleWagonObstacle(y, direction);
+    const vehicleTemplate = this.vehicleWagonObstacle(y, direction, ObstacleSpeeds.MEDIUM, 0, obstacleAvoidance);
     const producers = [new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds)];
     if (parkingLineOfSightTriggeredVehicles) {
       producers.push(...this.parkingLineOfSightTriggeredProducers(y));
@@ -123,7 +127,7 @@ export class ScenarioProducer {
          const speed = ObstacleSpeeds.MEDIUM;
          // this vehicle appears when the player reaches the lane
          const hiddenVehicleStartingX = 250;
-         const hiddenVehicleTemplate = this.vehicleWagonObstacle(vehicleLaneY, LaneDirection.RIGHT, speed, hiddenVehicleStartingX);
+         const hiddenVehicleTemplate = this.vehicleWagonObstacle(vehicleLaneY, LaneDirection.RIGHT, speed, hiddenVehicleStartingX, ObstacleAvoidanceType.NONE);
          for (const target of targets) {
            producers.push(new TargetObstacleProducer(hiddenVehicleTemplate,maxFrequencyForTargetTrigger,false,target));
          }
@@ -132,6 +136,7 @@ export class ScenarioProducer {
   private bridgeway2023(
     lightTraffic: boolean = false,
     parkingIncluded: boolean = false,
+    obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
   ): Street {
     const frequency = lightTraffic ? 5 : 1;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
@@ -143,7 +148,7 @@ export class ScenarioProducer {
       LaneDirection.LEFT,
       vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, solidYellowLineStyle),
-      this.vehicleTrafficObstacleProducers(y, LaneDirection.LEFT, frequency),
+      this.vehicleTrafficObstacleProducers(y, LaneDirection.LEFT, frequency, false, obstacleAvoidance),
     );
     y = y + turnLaneWidth;
     street = street.addLane(
@@ -157,7 +162,7 @@ export class ScenarioProducer {
       LaneDirection.RIGHT,
       vehicleLaneWidth,
       new LaneLinesStyles(solidYellowLineStyle, hiddenLineStyle),
-      this.vehicleTrafficObstacleProducers(y, LaneDirection.RIGHT, frequency, parkingIncluded),
+      this.vehicleTrafficObstacleProducers(y, LaneDirection.RIGHT, frequency, parkingIncluded, obstacleAvoidance),
     );
     if (parkingIncluded) {
       const parkingLaneWidth = 60;
@@ -188,6 +193,7 @@ export class ScenarioProducer {
         LaneDirection.RIGHT,
         speed,
         x,
+        ObstacleAvoidanceType.NONE,
       );
       producers.push(new ObstacleProducer(obstacle, frequency, false));
     }
@@ -216,11 +222,15 @@ export class ScenarioProducer {
     let title;
     let description = "";
     let street;
+    const LIGHT_TRAFFIC = true;
+    const HEAVY_TRAFFIC = false;
+    const PARKING_INCLUDED = true;
+    const PARKING_NOT_INCLUDED = false;
     switch (level) {
       case 1:
         title = "Light Traffic is Easy to Cross";
         description = "Normal speed person crossing with light traffic."
-        street = this.bridgeway2023(true);
+        street = this.bridgeway2023(LIGHT_TRAFFIC);
         break;
       case 2:
         title = "Heavy Traffic is Challenging to Cross";
@@ -236,13 +246,13 @@ export class ScenarioProducer {
       case 4:
         title = "Cars Stops for Slow Moving Frogs";
         description = "Cars stop for a person crossing with heavy traffic."
-        street = this.bridgeway2023();
+        street = this.bridgeway2023(HEAVY_TRAFFIC,PARKING_NOT_INCLUDED,ObstacleAvoidanceType.BRAKE);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case 5:
         title = "Parked Cars Block the View of Slow Moving Frogs";
         description = "Parked cars block the view of a slow moving person crossing with heavy traffic."
-        street = this.bridgeway2023(true,true);
+        street = this.bridgeway2023(LIGHT_TRAFFIC,PARKING_INCLUDED,ObstacleAvoidanceType.BRAKE);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       default:
