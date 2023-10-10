@@ -23,6 +23,8 @@ export class Player extends GameObject {
    * @param image The image to be displayed for the player.
    * @param pixelsPerMove Distance per move to relocate the player to match the movement of the image flipping simulating walking.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
+   * @param speedLimit The maximum number of pixels per second the player can move.
+   * @param angle The angle in which to rotate this player, in radians. 0 -> up.
    * @param speed The maximum number of pixels per second the player can move.
    */
   constructor(
@@ -33,9 +35,11 @@ export class Player extends GameObject {
     public readonly image: HTMLImageElement,
     public readonly pixelsPerMove: number,
     public readonly flipHorizontally: boolean = false,
+    public readonly speedLimit: number = PlayerSpeed.MEDIUM,
+    public readonly angle: number = 0,
     public readonly speed: PlayerSpeed = PlayerSpeed.NORMAL, 
   ) {
-    super(x, y, width, height, image, flipHorizontally);
+    super(x, y, width, height, image, flipHorizontally, angle);
   }
 
   /**
@@ -78,7 +82,7 @@ export class Player extends GameObject {
     return false;
   }
 
-  private move(x: number, y: number) {
+  private move(x: number, y: number, angle: number = 0) {
     if (this.canMove(x,y)) {
       return new Player(
         x,
@@ -88,6 +92,9 @@ export class Player extends GameObject {
         this.image,
         this.pixelsPerMove,
         !this.flipHorizontally, // flip the image per move to simulate walking
+        this.speedLimit,
+        angle,
+      );
         this.speed,
         );
     }
@@ -98,14 +105,14 @@ export class Player extends GameObject {
   }
 
   public moveDown(): Player {
-    return this.move(this.x, this.y + this.pixelsPerMove);
+    return this.move(this.x, this.y + this.pixelsPerMove, Math.PI);
   }
 
   public moveLeft(): Player {
-    return this.move(this.x - this.pixelsPerMove, this.y);
+    return this.move(this.x - this.pixelsPerMove, this.y, -Math.PI / 2);
   }
 
   public moveRight(): Player {
-    return this.move(this.x + this.pixelsPerMove, this.y);
+    return this.move(this.x + this.pixelsPerMove, this.y, Math.PI / 2);
   }
 }
