@@ -297,42 +297,50 @@ export class Scene {
     this.ctx.fillText(`${timeElapsed}`, x, y + 30);
   }
 
-  public displayDialogWithHtmlFromFile(
-    filePath: string,
-    buttonText: string,
-    callback: () => void,
-  ) {
-    // Create a div element for the dialog.
-    const dialog = document.createElement("div");
-    dialog.style.position = "absolute";
-    dialog.style.top = "50%";
-    dialog.style.left = "50%";
-    dialog.style.transform = "translate(-50%, -50%)";
-    dialog.style.width = "75%";
-    dialog.style.backgroundColor = "white";
-    dialog.style.border = "1px solid black";
-    dialog.style.padding = "20px";
-    dialog.style.textAlign = "center";
+    public displayDialogWithHtmlFromFile(
+      filePath: string,
+      buttonText: string,
+      callback: () => void,
+    ) {
+      // Create a div element for the dialog.
+      const dialog = document.createElement("div");
+      dialog.style.position = "absolute";
+      dialog.style.top = "50%";
+      dialog.style.left = "50%";
+      dialog.style.transform = "translate(-50%, -50%)";
+      dialog.style.width = "75%";
+      dialog.style.backgroundColor = "white";
+      dialog.style.border = "1px solid black";
+      dialog.style.padding = "20px";
+      dialog.style.textAlign = "center";
 
-    // Create an iframe element for the HTML page.
-    const iframe = document.createElement("iframe");
-    iframe.style.width = "100%";
-    iframe.style.height = "400px";
-    iframe.src = filePath;
-    dialog.appendChild(iframe);
+      // Create an iframe element for the HTML page.
+      const iframe = document.createElement("iframe");
+      iframe.style.width = "100%";
+      iframe.style.height = "400px";
+      iframe.src = filePath;
+      dialog.appendChild(iframe);
 
-    // Add the continue button to the dialog.
-    const button = document.createElement("button");
-    button.textContent = buttonText;
-    button.addEventListener("click", () => {
-      // Remove the dialog from the DOM.
-      dialog.remove();
-      // Call the callback function.
-      callback();
-    });
-    dialog.appendChild(button);
+      // Add the continue button to the dialog.
+      const button = document.createElement("button");
+      button.textContent = buttonText;
+      button.addEventListener("click", () => {
+        // Remove the dialog from the DOM.
+        dialog.remove();
+        // Call the callback function.
+        callback();
+      });
+      dialog.appendChild(button);
 
-    // Add the dialog to the DOM.
-    document.body.appendChild(dialog);
+      // Add the dialog to the DOM.
+      document.body.appendChild(dialog);
+
+      // Close the dialog by pressing any key.
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
+          dialog.remove();
+          callback();
+        }
+      });
+    }
   }
-}
