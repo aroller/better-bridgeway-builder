@@ -82,15 +82,12 @@ export class Obstacle extends GameObject {
       let newSpeed = this.speed;
 
       // Check if the player is in front of the obstacle
+      const isPlayerInLane =
+        player.y >= this.y - this.height && player.y <= this.y + this.height;
       const isPlayerInFront =
-        (this.direction === LaneDirection.RIGHT &&
-          this.x < player.x &&
-          player.y >= this.y - this.height &&
-          player.y <= this.y + this.height) ||
-        (this.direction === LaneDirection.LEFT &&
-          this.x > player.x &&
-          player.y >= this.y - this.height &&
-          player.y <= this.y + this.height);
+        isPlayerInLane &&
+        ((this.direction === LaneDirection.RIGHT && this.x < player.x) ||
+          (this.direction === LaneDirection.LEFT && this.x > player.x));
 
       if (isPlayerInFront) {
         const distanceToPlayer = Math.abs(this.x - player.x);
