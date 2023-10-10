@@ -35,7 +35,7 @@ export class Player extends GameObject {
     public readonly image: HTMLImageElement,
     public readonly pixelsPerMove: number,
     public readonly flipHorizontally: boolean = false,
-    public readonly speedLimit: number = PlayerSpeed.MEDIUM,
+    public readonly speedLimit: number = PlayerSpeed.NORMAL,
     public readonly angle: number = 0,
     public readonly speed: PlayerSpeed = PlayerSpeed.NORMAL, 
   ) {
@@ -82,7 +82,7 @@ export class Player extends GameObject {
     return false;
   }
 
-  private move(x: number, y: number, angle: number = 0) {
+  private move(x: number, y: number, angle: number) {
     if (this.canMove(x,y)) {
       return new Player(
         x,
@@ -94,14 +94,13 @@ export class Player extends GameObject {
         !this.flipHorizontally, // flip the image per move to simulate walking
         this.speedLimit,
         angle,
-      );
         this.speed,
         );
     }
     return this;
   }
   public moveUp(): Player {
-    return this.move(this.x, this.y - this.pixelsPerMove);
+    return this.move(this.x, this.y - this.pixelsPerMove, 0);
   }
 
   public moveDown(): Player {
