@@ -1,6 +1,6 @@
 import { string } from "mathjs";
 import { GameObject } from "./game";
-import { Player } from "./player";
+import { Player, PlayerSpeed } from "./player";
 
 export const enum LaneDirection {
   LEFT = -1,
@@ -102,6 +102,15 @@ export class Obstacle extends GameObject {
         //just stop when going slow enough to avoid crushing the player
         if (newSpeed < 3) {
           newSpeed = 0;
+        }
+      } else { 
+        if(newSpeed <= 0){
+          newSpeed = 1; // start moving again
+        }
+        // no longer blocked.  speed up if necessary
+        // We didn't save what speed we were going before so just proceed at min
+        if(newSpeed < ObstacleSpeeds.SLOW){
+            newSpeed *= 1.1; // Increase speed by 10%
         }
       }
 
