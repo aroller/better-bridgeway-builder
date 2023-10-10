@@ -4,9 +4,8 @@
 import { GameObject } from "./game";
 
 export const enum PlayerSpeed {
-  SLOW = 30,
-  MEDIUM = 60,
-  FAST = 90,
+  SLOW,
+  NORMAL,
 }
 export class Player extends GameObject {
 
@@ -25,7 +24,8 @@ export class Player extends GameObject {
    * @param pixelsPerMove Distance per move to relocate the player to match the movement of the image flipping simulating walking.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
    * @param speedLimit The maximum number of pixels per second the player can move.
-   * @param angle The angle in which to rotate this player, in radians.
+   * @param angle The angle in which to rotate this player, in radians. 0 -> up.
+   * @param speed The maximum number of pixels per second the player can move.
    */
   constructor(
     public readonly x: number,
@@ -37,6 +37,7 @@ export class Player extends GameObject {
     public readonly flipHorizontally: boolean = false,
     public readonly speedLimit: number = PlayerSpeed.MEDIUM,
     public readonly angle: number = 0,
+    public readonly speed: PlayerSpeed = PlayerSpeed.NORMAL, 
   ) {
     super(x, y, width, height, image, flipHorizontally, angle);
   }
@@ -61,7 +62,7 @@ export class Player extends GameObject {
       redImage,
       this.pixelsPerMove,
       this.flipHorizontally,
-      this.speedLimit,
+      this.speed,
     );
   }
 
@@ -73,7 +74,8 @@ export class Player extends GameObject {
     const distance = Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2));
 
     // Calculate the maximum distance the player can move
-    const maxDistance = (this.speedLimit * timeSinceLastMove) / 1000;
+    const speedLimit:number = this.speed === PlayerSpeed.NORMAL ? 200 : 30;
+    const maxDistance = (speedLimit * timeSinceLastMove) / 1000;
     if (distance <= maxDistance) {
       return true;
     }
@@ -93,6 +95,8 @@ export class Player extends GameObject {
         this.speedLimit,
         angle,
       );
+        this.speed,
+        );
     }
     return this;
   }

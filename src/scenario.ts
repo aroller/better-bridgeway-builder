@@ -1,4 +1,4 @@
-import { Player } from "./player";
+import { Player, PlayerSpeed } from "./player";
 import { GameObject } from "./game";
 import {
   LaneLineStyle,
@@ -10,6 +10,7 @@ import {
   Street,
 } from "./street";
 import { LaneDirection } from "./street";
+import { splitUnit } from "mathjs";
 
 /** Fixed point corresponding to the part of the starting sidewalk where the red curb exists. 
  * Fathest left point putting the frog close to the parked cars. 
@@ -198,7 +199,7 @@ export class ScenarioProducer {
    *
    * @returns
    */
-  private frogPlayer(): Player {
+  private frogPlayer(speed:PlayerSpeed=PlayerSpeed.NORMAL): Player {
     const playerSize = 30;
     const playerImage = new Image();
     playerImage.src = "images/players/frog.svg";
@@ -206,54 +207,47 @@ export class ScenarioProducer {
     // place the player on the sidewalk.  the scene must be fixed in size
     const playerX = PLAYER_START_X;
     const playerY = 470;
-    return new Player(playerX, playerY, playerSize, playerSize, playerImage,pixelsPerMove);
-  }
-
-  public carTraffic20203(lightTraffic: boolean, parking:boolean=false): Scenario {
-    const title = lightTraffic
-      ? "Morning Light Traffic 2023"
-      : "Heavy Traffic 2023";
-    const description = "";
-
-    const player = this.frogPlayer();
-    const street = this.bridgeway2023(lightTraffic,parking);
-    const finishLineY = this.topOfStreetY;
-    const scenario = new Scenario(
-      title,
-      description,
-      street,
-      player,
-      finishLineY,
-    );
-
-    return scenario;
-  }
-
-  /** Light traffic simplest scenario. No traffic in center lane. */
-  public morningLightTaffic2023(): Scenario {
-    return this.carTraffic20203(true);
-  }
-
-  /** Heavy traffic difficult to cross.  No traffic in center lane.  */
-  public heavyTraffic2023(): Scenario {
-    return this.carTraffic20203(false);
-  }
-
-  public lightTrafficParking2023(): Scenario {
-    return this.carTraffic20203(true,true);
+ 
+    return new Player(playerX, playerY, playerSize, playerSize, playerImage, pixelsPerMove,false, speed);
   }
 
   public getScenarioForLevel(level: number): Scenario {
+    let player = this.frogPlayer();
+    let title;
+    let description = "";
+    let street;
     switch (level) {
       case 1:
-        return this.lightTrafficParking2023();
-        // return this.morningLightTaffic2023();
+        title = "Light Traffic";
+        description = "Normal speed person crossing with light traffic."
+        street = this.bridgeway2023(true);
+        break;
       case 2:
-        return this.heavyTraffic2023();
+        title = "Heavy Traffic";
+        description = "Normal speed person crossing with heavy traffic."
+        street = this.bridgeway2023();
+        break;
       case 3:
-        return this.lightTrafficParking2023();
+        title = "Slow Mover";
+        description = "Slow moving person crossing with heavy traffic."
+        street = this.bridgeway2023();
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case 4:
+        title = "Cars Stop";
+        description = "Cars stop for a person crossing with heavy traffic."
+        street = this.bridgeway2023();
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case 5:
+        title = "Parked Cars";
+        description = "Parked cars block the view of a slow moving person crossing with heavy traffic."
+        street = this.bridgeway2023(true,true);
+        player = this.frogPlayer(PlayerSpeed.SLOW);
       default:
-        return this.morningLightTaffic2023();
+        title = "Not Yet Customized";
+        street = this.bridgeway2023();
     }
+    return new Scenario(title, description, street, player, this.topOfStreetY);
   }
 }
