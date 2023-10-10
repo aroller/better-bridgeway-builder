@@ -113,6 +113,7 @@ Credit is given at the commit level. The main contributions will be identified o
 * [ChatGPT 4](https://chat.openai.com/) for product and architecture discussions including code generation for bootstrapping and big refactors. I'm unable to share the link to the discussion.
 * [Github Co-Pilot](https://github.com/features/copilot) for actively developing and improving all code. All discussions are happening locally. 
 * [Google Bard](https://g.co/bard/share/625bfc03158c) for some product collaboration and code discussions.
+* [Dillon Roller](https://github.com/Dillon-Roller) for rotating the frog in the direction of travel
 
 
 
