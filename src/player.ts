@@ -4,8 +4,23 @@
 import { GameObject } from "./game";
 
 export const enum PlayerSpeed {
+  STOPPED,
   SLOW,
   NORMAL,
+}
+
+/** Translates the enum into the pixels per second speed limit used to control movement. */
+function getSpeedLimit(speed: PlayerSpeed): number {
+  switch (speed) {
+    case PlayerSpeed.STOPPED:
+      return 0;
+    case PlayerSpeed.SLOW:
+      return 30;
+    case PlayerSpeed.NORMAL:
+      return 200;
+    default:
+      throw new Error("Invalid player speed");
+  }
 }
 export class Player extends GameObject {
 
@@ -23,9 +38,8 @@ export class Player extends GameObject {
    * @param image The image to be displayed for the player.
    * @param pixelsPerMove Distance per move to relocate the player to match the movement of the image flipping simulating walking.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
-   * @param speedLimit The maximum number of pixels per second the player can move.
+   * @param speed One of the enumerated values that indicate the general speed of the player.
    * @param angle The angle in which to rotate this player, in radians. 0 -> up.
-   * @param speed The maximum number of pixels per second the player can move.
    */
   constructor(
     public readonly x: number,
@@ -35,9 +49,8 @@ export class Player extends GameObject {
     public readonly image: HTMLImageElement,
     public readonly pixelsPerMove: number,
     public readonly flipHorizontally: boolean = false,
-    public readonly speedLimit: number = PlayerSpeed.NORMAL,
-    public readonly angle: number = 0,
     public readonly speed: PlayerSpeed = PlayerSpeed.NORMAL, 
+    public readonly angle: number = 0,
   ) {
     super(x, y, width, height, image, flipHorizontally, angle);
   }
@@ -62,7 +75,7 @@ export class Player extends GameObject {
       redImage,
       this.pixelsPerMove,
       this.flipHorizontally,
-      this.speed,
+      PlayerSpeed.STOPPED,
     );
   }
 
@@ -74,7 +87,7 @@ export class Player extends GameObject {
     const distance = Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2));
 
     // Calculate the maximum distance the player can move
-    const speedLimit:number = this.speed === PlayerSpeed.NORMAL ? 200 : 30;
+    const speedLimit:number = getSpeedLimit(this.speed);
     const maxDistance = (speedLimit * timeSinceLastMove) / 1000;
     if (distance <= maxDistance) {
       return true;
@@ -92,9 +105,8 @@ export class Player extends GameObject {
         this.image,
         this.pixelsPerMove,
         !this.flipHorizontally, // flip the image per move to simulate walking
-        this.speedLimit,
-        angle,
         this.speed,
+        angle,
         );
     }
     return this;
