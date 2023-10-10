@@ -9,9 +9,18 @@ export const enum LaneDirection {
 
 export const enum ObstacleSpeeds {
   STOPPED = 0,
-  SLOW = 2,
-  MEDIUM = 5,
-  FAST = 7,
+  SLOW = 4,
+  MEDIUM = 10,
+  FAST = 14,
+}
+
+/**
+ * Indicate how to avoid obstacles
+ */
+export enum ObstacleAvoidanceType {
+  NONE,
+  DECELERATION,
+  LANE_CHANGE,
 }
 
 /** Draws lines for lanes. Could be hidden or dashed.  */
@@ -43,6 +52,7 @@ export class Obstacle extends GameObject {
     public readonly speed: number,
     public readonly direction: LaneDirection,
     image?: HTMLImageElement,
+    public readonly avoidance:ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
   ) {
     if (!image) {
       throw new Error("Image is required, but missing");
@@ -52,8 +62,9 @@ export class Obstacle extends GameObject {
     this.direction = direction;
   }
 
-  public moveObstacle(): Obstacle {
+  public moveObstacle(player:Player): Obstacle {
     const newX = this.x + this.speed * this.direction;
+    
     return new Obstacle(
       newX,
       this.y,
@@ -64,6 +75,7 @@ export class Obstacle extends GameObject {
       this.image,
     );
   }
+  
 }
 
 /**
@@ -198,9 +210,9 @@ export class Lane {
    * Updates the obstacles in the lane.
    * @returns A new instance of Lane with the updated obstacles.
    */
-  public updateObstacles(): Lane {
+  public updateObstacles(player:Player): Lane {
     const newObstacles = this.obstacles
-      .map((obstacle) => obstacle.moveObstacle())
+      .map((obstacle) => obstacle.moveObstacle(player))
       .filter((obstacle) => {
         if (this.direction === LaneDirection.LEFT) {
           return obstacle.x + obstacle.width > 0;
@@ -357,8 +369,8 @@ export class Street {
     return new Street(this.topOfStreetY, this.streetLength, newLanes);
   }
 
-  public updateObstacles(): Street {
-    const newLanes = this.lanes.map((lane) => lane.updateObstacles());
+  public updateObstacles(player:Player): Street {
+    const newLanes = this.lanes.map((lane) => lane.updateObstacles(player));
     return new Street(this.topOfStreetY, this.streetLength, newLanes);
   }
 

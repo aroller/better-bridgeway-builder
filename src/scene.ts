@@ -70,7 +70,6 @@ export class Scene {
 
     // Update the game every 50 milliseconds.
     setInterval(() => {
-      this.street = this.street.updateObstacles();
       this.updateCanvas();
     }, 50);
     setInterval(() => {
@@ -120,7 +119,6 @@ export class Scene {
             break;
         }
         this.playerDestination = new Point(x, y);
-        this.updateCanvas();
       }
     
   }
@@ -215,17 +213,17 @@ export class Scene {
    * updates the street and player objects, and draws them.
    */
   private updateCanvas() {
-    // Clear the canvas.
-    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-
     // Update the street obstacles.
-    this.street = this.street.updateObstacles();
-
+    this.street = this.street.updateObstacles(this.player);
+    
+    
     // move to the position if controls instruct to do so
     this.navigateToDestination();
-
+    
     this.nextAttemptOrLevelIfReady();
-
+    
+    // Clear the canvas.
+    this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     // Draw the player and street.
     this.player.draw(this.ctx);
     this.deadPlayers.forEach((player) => {
