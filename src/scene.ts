@@ -214,7 +214,7 @@ export class Scene {
    */
   private updateCanvas() {
     // Update the street obstacles.
-    this.street = this.street.updateObstacles(this.player);
+    this.street = this.street.updateObstacles(this.player,this.street.getAllObstacles());
     
     
     // move to the position if controls instruct to do so

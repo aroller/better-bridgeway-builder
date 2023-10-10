@@ -62,8 +62,8 @@ export class Obstacle extends GameObject {
     this.direction = direction;
   }
 
-  public moveObstacle(player: Player): Obstacle {
-    const adjustedSpeed = this.calculateSpeed(player);
+  public moveObstacle(player: Player, obstacles:readonly Obstacle[]): Obstacle {
+    const adjustedSpeed = this.calculateSpeed(player,obstacles);
     const newX = this.x + adjustedSpeed * this.direction;
 
     return new Obstacle(
@@ -77,22 +77,38 @@ export class Obstacle extends GameObject {
     );
   }
 
-  private calculateSpeed(player: Player): number {
+  private calculateSpeed(player: Player, obstacles: readonly Obstacle[]): number {
     if (this.avoidance === ObstacleAvoidanceType.BRAKE) {
       let newSpeed = this.speed;
 
       // Check if the player is in front of the obstacle
-      const isPlayerInLane =
-        player.y >= this.y - this.height && player.y <= this.y + this.height;
-      const isPlayerInFront =
-        isPlayerInLane &&
-        ((this.direction === LaneDirection.RIGHT && this.x < player.x) ||
-          (this.direction === LaneDirection.LEFT && this.x > player.x));
+      const gameObjects: GameObject[] = [...obstacles, player];
+      const isAnyObjectInFront = gameObjects.some((gameObject) => {
+        const isObjectInLane =
+          gameObject.y >= this.y - this.height && gameObject.y <= this.y + this.height;
+        const isObjectInFront =
+          isObjectInLane &&
+          ((this.direction === LaneDirection.RIGHT && this.x < gameObject.x) ||
+            (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
+        return isObjectInFront;
+      });
 
-      if (isPlayerInFront) {
-        const distanceToPlayer = Math.abs(this.x - player.x);
+      if (isAnyObjectInFront) {
+        const distanceToClosestObject = Math.min(
+          ...gameObjects
+            .filter((gameObject) => {
+              const isObjectInLane =
+                gameObject.y >= this.y - this.height && gameObject.y <= this.y + this.height;
+              const isObjectInFront =
+                isObjectInLane &&
+                ((this.direction === LaneDirection.RIGHT && this.x < gameObject.x) ||
+                  (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
+              return isObjectInFront;
+            })
+            .map((gameObject) => Math.abs(this.x - gameObject.x))
+        );
         const speedInPixelsPerSecond = this.speed * 10; //multiply since speed is per refresh...50ms
-        const timeToCollision = distanceToPlayer / speedInPixelsPerSecond;
+        const timeToCollision = distanceToClosestObject / speedInPixelsPerSecond;
 
         // If time to collision is less than a certain threshold, slow down
         if (timeToCollision < 3) {
@@ -103,14 +119,14 @@ export class Obstacle extends GameObject {
         if (newSpeed < 3) {
           newSpeed = 0;
         }
-      } else { 
-        if(newSpeed <= 0){
+      } else {
+        if (newSpeed <= 0) {
           newSpeed = 1; // start moving again
         }
         // no longer blocked.  speed up if necessary
         // We didn't save what speed we were going before so just proceed at min
-        if(newSpeed < ObstacleSpeeds.SLOW){
-            newSpeed *= 1.1; // Increase speed by 10%
+        if (newSpeed < ObstacleSpeeds.SLOW) {
+          newSpeed *= 1.1; // Increase speed by 10%
         }
       }
 
@@ -250,9 +266,9 @@ export class Lane {
    * Updates the obstacles in the lane.
    * @returns A new instance of Lane with the updated obstacles.
    */
-  public updateObstacles(player: Player): Lane {
+  public updateObstacles(player: Player, obstacles:readonly Obstacle[]): Lane {
     const newObstacles = this.obstacles
-      .map((obstacle) => obstacle.moveObstacle(player))
+      .map((obstacle) => obstacle.moveObstacle(player,obstacles))
       .filter((obstacle) => {
         if (this.direction === LaneDirection.LEFT) {
           return obstacle.x + obstacle.width > 0;
@@ -409,8 +425,8 @@ export class Street {
     return new Street(this.topOfStreetY, this.streetLength, newLanes);
   }
 
-  public updateObstacles(player: Player): Street {
-    const newLanes = this.lanes.map((lane) => lane.updateObstacles(player));
+  public updateObstacles(player: Player, obstacles:readonly Obstacle[]): Street {
+    const newLanes = this.lanes.map((lane) => lane.updateObstacles(player,obstacles));
     return new Street(this.topOfStreetY, this.streetLength, newLanes);
   }
 
@@ -446,4 +462,13 @@ export class Street {
       0,
     );
   }
+
+  /**
+   * Gets all obstacles from all lanes.
+   * @returns An array of all obstacles.
+   */
+  public getAllObstacles(): readonly Obstacle[] {
+    return this.lanes.flatMap((lane) => lane.obstacles);
+  }
+  
 }
