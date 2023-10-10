@@ -19,8 +19,8 @@ export const enum ObstacleSpeeds {
  */
 export enum ObstacleAvoidanceType {
   NONE,
-  DECELERATION,
-  LANE_CHANGE,
+  BRAKE,
+  PASS,
 }
 
 /** Draws lines for lanes. Could be hidden or dashed.  */
@@ -52,7 +52,7 @@ export class Obstacle extends GameObject {
     public readonly speed: number,
     public readonly direction: LaneDirection,
     image?: HTMLImageElement,
-    public readonly avoidance:ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
+    public readonly avoidance:ObstacleAvoidanceType = ObstacleAvoidanceType.BRAKE,
   ) {
     if (!image) {
       throw new Error("Image is required, but missing");
@@ -63,18 +63,49 @@ export class Obstacle extends GameObject {
   }
 
   public moveObstacle(player:Player): Obstacle {
-    const newX = this.x + this.speed * this.direction;
+    const adjustedSpeed = this.calculateSpeed(player);
+    const newX = this.x + adjustedSpeed * this.direction;
     
     return new Obstacle(
       newX,
       this.y,
       this.width,
       this.height,
-      this.speed,
+      adjustedSpeed,
       this.direction,
       this.image,
     );
   }
+  
+  private calculateSpeed(player: Player): number {
+    if(this.avoidance === ObstacleAvoidanceType.BRAKE){
+      let newSpeed = this.speed;
+      
+      // Check if the player is in front of the obstacle
+      const isPlayerInFront = (this.direction === LaneDirection.RIGHT && this.x < player.x) ||
+      (this.direction === LaneDirection.LEFT && this.x > player.x);
+      
+    if (isPlayerInFront) {
+      const distanceToPlayer = Math.abs(this.x - player.x);
+      const speedInPixelsPerSecond = this.speed * 10; //multiply since speed is per refresh...50ms
+      const timeToCollision = distanceToPlayer / speedInPixelsPerSecond; 
+  
+      // If time to collision is less than a certain threshold, slow down
+      if (timeToCollision < 3) { // 3 seconds following distance as a rule
+        newSpeed *= 0.9; // Reduce speed by 10%
+      }
+      //just stop when going slow enough to avoid crushing the player
+      if(newSpeed < 3){
+        newSpeed = 0;
+      }
+
+    }
+  
+    return Math.max(newSpeed, 0); // Ensure the speed is never negative
+  }
+  return this.speed;
+  }
+  
   
 }
 

@@ -218,29 +218,29 @@ export class ScenarioProducer {
     let street;
     switch (level) {
       case 1:
-        title = "Light Traffic";
+        title = "Light Traffic is Easy to Cross";
         description = "Normal speed person crossing with light traffic."
         street = this.bridgeway2023(true);
         break;
       case 2:
-        title = "Heavy Traffic";
+        title = "Heavy Traffic is Challenging to Cross";
         description = "Normal speed person crossing with heavy traffic."
         street = this.bridgeway2023();
         break;
       case 3:
-        title = "Slow Mover";
+        title = "Slow Moving Frogs Can Barely Cross in Heavy Traffic";
         description = "Slow moving person crossing with heavy traffic."
         street = this.bridgeway2023();
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case 4:
-        title = "Cars Stop";
+        title = "Cars Stops for Slow Moving Frogs";
         description = "Cars stop for a person crossing with heavy traffic."
         street = this.bridgeway2023();
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case 5:
-        title = "Parked Cars";
+        title = "Parked Cars Block the View of Slow Moving Frogs";
         description = "Parked cars block the view of a slow moving person crossing with heavy traffic."
         street = this.bridgeway2023(true,true);
         player = this.frogPlayer(PlayerSpeed.SLOW);
