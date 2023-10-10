@@ -244,6 +244,7 @@ export class ScenarioProducer {
         description = "Parked cars block the view of a slow moving person crossing with heavy traffic."
         street = this.bridgeway2023(true,true);
         player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
       default:
         title = "Not Yet Customized";
         street = this.bridgeway2023();
