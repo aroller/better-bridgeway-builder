@@ -81,6 +81,25 @@ export class Obstacle extends GameObject {
     );
   }
 
+  private calculateDistanceToClosestObject(gameObjects: GameObject[]): number {
+    return Math.min(
+      ...gameObjects
+        .filter((gameObject) => {
+          const isObjectInLane =
+            gameObject.y >= this.y - this.height &&
+            gameObject.y <= this.y + this.height;
+          const isObjectInFront =
+            isObjectInLane &&
+            ((this.direction === LaneDirection.RIGHT &&
+              this.x < gameObject.x) ||
+              (this.direction === LaneDirection.LEFT &&
+                this.x > gameObject.x));
+          return isObjectInFront;
+        })
+        .map((gameObject) => Math.abs(this.x - gameObject.x)),
+    );
+  }
+
   /**
    * Calculates the speed of the street object based on the player's position and obstacles on the street.
    * If the player is in front of the obstacle, the obstacle will slow down if braking is enabled.
@@ -100,23 +119,7 @@ export class Obstacle extends GameObject {
       const gameObjects: GameObject[] = [...obstacles, player].filter(
         (gameObject) => gameObject !== this,
       );
-
-      const distanceToClosestObject = Math.min(
-        ...gameObjects
-          .filter((gameObject) => {
-            const isObjectInLane =
-              gameObject.y >= this.y - this.height &&
-              gameObject.y <= this.y + this.height;
-            const isObjectInFront =
-              isObjectInLane &&
-              ((this.direction === LaneDirection.RIGHT &&
-                this.x < gameObject.x) ||
-                (this.direction === LaneDirection.LEFT &&
-                  this.x > gameObject.x));
-            return isObjectInFront;
-          })
-          .map((gameObject) => Math.abs(this.x - gameObject.x)),
-      );
+      const distanceToClosestObject = this.calculateDistanceToClosestObject(gameObjects);
       //multiply since speed is per refresh...50ms.  Better if we keep track of time and calculate rate.
       const speedInPixelsPerSecond = this.speed * 10;
       const timeToCollision = distanceToClosestObject / speedInPixelsPerSecond;
