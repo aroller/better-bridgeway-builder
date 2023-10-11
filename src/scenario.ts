@@ -284,8 +284,8 @@ export class ScenarioProducer {
         description = "Normal speed person crossing with light traffic.";
         street = this.bridgeway2023(
           LIGHT_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
+          PARKING_NOT_INCLUDED,
+          ObstacleAvoidanceType.NONE,
         );
         break;
       case 2:
@@ -300,7 +300,7 @@ export class ScenarioProducer {
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case 4:
-        title = "Cars Stops for Slow Moving Frogs";
+        title = "Cars Stop for Slow Moving Frogs";
         description = "Cars stop for a person crossing with heavy traffic.";
         street = this.bridgeway2023(
           HEAVY_TRAFFIC,
