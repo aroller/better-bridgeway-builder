@@ -287,6 +287,7 @@ export class ScenarioProducer {
           PARKING_NOT_INCLUDED,
           ObstacleAvoidanceType.NONE,
         );
+        // player.moveUp();
         break;
       case 2:
         title = "Heavy Traffic is Challenging to Cross";
@@ -321,7 +322,7 @@ export class ScenarioProducer {
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       default:
-        title = "Not Yet Customized";
+        title = "Game Over";
         street = this.bridgeway2023();
     }
     return new Scenario(title, description, street, player, this.topOfStreetY);
