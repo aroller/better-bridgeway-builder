@@ -62,8 +62,11 @@ export class Obstacle extends GameObject {
     this.direction = direction;
   }
 
-  public moveObstacle(player: Player, obstacles:readonly Obstacle[]): Obstacle {
-    const adjustedSpeed = this.calculateSpeed(player,obstacles);
+  public moveObstacle(
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): Obstacle {
+    const adjustedSpeed = this.calculateSpeed(player, obstacles);
     const newX = this.x + adjustedSpeed * this.direction;
 
     return new Obstacle(
@@ -78,55 +81,59 @@ export class Obstacle extends GameObject {
     );
   }
 
-  private calculateSpeed(player: Player, obstacles: readonly Obstacle[]): number {
+  /**
+   * Calculates the speed of the street object based on the player's position and obstacles on the street.
+   * If the player is in front of the obstacle, the obstacle will slow down if braking is enabled.
+   * If the player is behind the obstacle, the obstacle will speed up if going braking is enabled.
+   * @param player - The player object on the street.
+   * @param obstacles - An array of obstacles on the street.
+   * @returns The speed of the street object.
+   */
+  private calculateSpeed(
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number {
     if (this.avoidance === ObstacleAvoidanceType.BRAKE) {
       let newSpeed = this.speed;
 
-      // Check if the player is in front of the obstacle
-      const gameObjects: GameObject[] = [...obstacles, player];
-      const isAnyObjectInFront = gameObjects.some((gameObject) => {
-        const isObjectInLane =
-          gameObject.y >= this.y - this.height && gameObject.y <= this.y + this.height;
-        const isObjectInFront =
-          isObjectInLane &&
-          ((this.direction === LaneDirection.RIGHT && this.x < gameObject.x) ||
-            (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
-        return isObjectInFront;
-      });
+      // combine player and obstacles treating the same.  Exclude this obstacle
+      const gameObjects: GameObject[] = [...obstacles, player].filter(
+        (gameObject) => gameObject !== this,
+      );
 
-      if (isAnyObjectInFront) {
-        const distanceToClosestObject = Math.min(
-          ...gameObjects
-            .filter((gameObject) => {
-              const isObjectInLane =
-                gameObject.y >= this.y - this.height && gameObject.y <= this.y + this.height;
-              const isObjectInFront =
-                isObjectInLane &&
-                ((this.direction === LaneDirection.RIGHT && this.x < gameObject.x) ||
-                  (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
-              return isObjectInFront;
-            })
-            .map((gameObject) => Math.abs(this.x - gameObject.x))
-        );
-        const speedInPixelsPerSecond = this.speed * 10; //multiply since speed is per refresh...50ms
-        const timeToCollision = distanceToClosestObject / speedInPixelsPerSecond;
+      const distanceToClosestObject = Math.min(
+        ...gameObjects
+          .filter((gameObject) => {
+            const isObjectInLane =
+              gameObject.y >= this.y - this.height &&
+              gameObject.y <= this.y + this.height;
+            const isObjectInFront =
+              isObjectInLane &&
+              ((this.direction === LaneDirection.RIGHT &&
+                this.x < gameObject.x) ||
+                (this.direction === LaneDirection.LEFT &&
+                  this.x > gameObject.x));
+            return isObjectInFront;
+          })
+          .map((gameObject) => Math.abs(this.x - gameObject.x)),
+      );
+      //multiply since speed is per refresh...50ms.  Better if we keep track of time and calculate rate.
+      const speedInPixelsPerSecond = this.speed * 10;
+      const timeToCollision = distanceToClosestObject / speedInPixelsPerSecond;
 
-        // If time to collision is less than a certain threshold, slow down
-        if (timeToCollision < 3) {
-          // 3 seconds following distance as a rule
-          newSpeed *= 0.9; // Reduce speed by 10%
-        }
-        //just stop when going slow enough to avoid crushing the player
-        if (newSpeed < 3) {
-          newSpeed = 0;
-        }
+      
+      // If time to collision is less than a certain threshold, slow down
+      if (timeToCollision < 3) {
+        // 3 seconds following distance as a rule
+        newSpeed *= 0.9; // Reduce speed by 10%
       } else {
         if (newSpeed <= 0) {
           newSpeed = 1; // start moving again
-        }
+        } 
         // no longer blocked.  speed up if necessary
         // We didn't save what speed we were going before so just proceed at min
-        if (newSpeed < ObstacleSpeeds.SLOW) {
+        //FIXME: we need to remember what speed we were going before we slowed down
+        if (newSpeed < ObstacleSpeeds.MEDIUM) {
           newSpeed *= 1.1; // Increase speed by 10%
         }
       }
@@ -268,9 +275,9 @@ export class Lane {
    * Updates the obstacles in the lane.
    * @returns A new instance of Lane with the updated obstacles.
    */
-  public updateObstacles(player: Player, obstacles:readonly Obstacle[]): Lane {
+  public updateObstacles(player: Player, obstacles: readonly Obstacle[]): Lane {
     const newObstacles = this.obstacles
-      .map((obstacle) => obstacle.moveObstacle(player,obstacles))
+      .map((obstacle) => obstacle.moveObstacle(player, obstacles))
       .filter((obstacle) => {
         if (this.direction === LaneDirection.LEFT) {
           return obstacle.x + obstacle.width > 0;
@@ -427,8 +434,13 @@ export class Street {
     return new Street(this.topOfStreetY, this.streetLength, newLanes);
   }
 
-  public updateObstacles(player: Player, obstacles:readonly Obstacle[]): Street {
-    const newLanes = this.lanes.map((lane) => lane.updateObstacles(player,obstacles));
+  public updateObstacles(
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): Street {
+    const newLanes = this.lanes.map((lane) =>
+      lane.updateObstacles(player, obstacles),
+    );
     return new Street(this.topOfStreetY, this.streetLength, newLanes);
   }
 
@@ -472,5 +484,4 @@ export class Street {
   public getAllObstacles(): readonly Obstacle[] {
     return this.lanes.flatMap((lane) => lane.obstacles);
   }
-  
 }
