@@ -1,17 +1,16 @@
-
 /**
  * Base class for all game objects like the player, obstacles, etc.
- * The shape is a rectangle starting from left,right (adjusted from x,y which is the centerpoint) 
+ * The shape is a rectangle starting from left,right (adjusted from x,y which is the centerpoint)
  * and extending to the right (width) and down (height) to match canvas coordinates.
- * 
+ *
  */
 export class GameObject {
   /**
    * Creates a new game object.  The coordinates are the center point of the object.
    * This is different than a typical rectangle coordinates which are the top-left point.
-   * The reason for this is that it makes it easier to center the objects in the lane. 
+   * The reason for this is that it makes it easier to center the objects in the lane.
    * It also makes it easier to rotate around the center.
-   * 
+   *
    * @param x The x-coordinate of the object which is the center point of the object.
    * @param y The y-coordinate of the object which is the center point of the object.
    * @param width The width of the object as measured right from x - 1/2 width.
@@ -74,7 +73,13 @@ export class GameObject {
           }
 
           // Draw the image at (0, 0) relative to the translated and rotated context
-          ctx.drawImage(this.image, -this.width / 2, -this.height / 2, this.width, this.height);
+          ctx.drawImage(
+            this.image,
+            -this.width / 2,
+            -this.height / 2,
+            this.width,
+            this.height,
+          );
 
           // Restore the original state
           ctx.restore();
@@ -209,8 +214,10 @@ export class LevelAttempts {
  * Represents a set of attempts by a player to complete a game.
  */
 export class GameAttempts {
-  constructor(public readonly attempts: ReadonlyArray<LevelAttempts> = [],
-    public readonly maxAttemptCount:number = 2) {}
+  constructor(
+    public readonly attempts: ReadonlyArray<LevelAttempts> = [],
+    public readonly maxAttemptCount: number = 2,
+  ) {}
 
   public get successCount(): number {
     return this.attempts.reduce(
@@ -300,8 +307,14 @@ export class GameAttempts {
     const updatedLevelAttempts =
       currentLevelAttempts.completeCurrentAttempt(success);
     //for some resason maxAttemptCount requires a +1 to work correctly
-    if (success || this.getCurrentLevelAttempts().failureCount >= this.maxAttemptCount) {
-      const updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts];
+    if (
+      success ||
+      this.getCurrentLevelAttempts().failureCount >= this.maxAttemptCount
+    ) {
+      const updatedAttempts = [
+        ...this.attempts.slice(0, -1),
+        updatedLevelAttempts,
+      ];
       return new GameAttempts(updatedAttempts).startNewLevel();
     } else {
       const updatedAttempts = [

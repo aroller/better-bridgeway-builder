@@ -79,7 +79,7 @@ export class Scene {
 
   private playNextLevel() {
     const level = this.gameAttempts.currentLevel;
-            //start the next scenario
+    //start the next scenario
     this.deadPlayers = [];
     this.scenario = this.scenarioProducer.getScenarioForLevel(
       this.gameAttempts.currentLevel,
@@ -100,27 +100,30 @@ export class Scene {
   private handleKeyDown(event: KeyboardEvent) {
     if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
       const pixelsToMove = this.player.pixelsPerMove;
-      
-      let x = this.playerDestination?.x ? this.playerDestination.x : this.player.x;
-      let y = this.playerDestination?.y ? this.playerDestination.y : this.player.y;
-      
-        switch (event.code) {
-          case "ArrowUp":
-            y -= pixelsToMove;
-            break;
-          case "ArrowDown":
-            y += pixelsToMove;
-            break;
-          case "ArrowLeft":
-            x -= pixelsToMove;
-            break;
-          case "ArrowRight":
-            x += pixelsToMove;
-            break;
-        }
-        this.playerDestination = new Point(x, y);
+
+      let x = this.playerDestination?.x
+        ? this.playerDestination.x
+        : this.player.x;
+      let y = this.playerDestination?.y
+        ? this.playerDestination.y
+        : this.player.y;
+
+      switch (event.code) {
+        case "ArrowUp":
+          y -= pixelsToMove;
+          break;
+        case "ArrowDown":
+          y += pixelsToMove;
+          break;
+        case "ArrowLeft":
+          x -= pixelsToMove;
+          break;
+        case "ArrowRight":
+          x += pixelsToMove;
+          break;
       }
-    
+      this.playerDestination = new Point(x, y);
+    }
   }
 
   /** Stop moving when the key is no longer pressed. */
@@ -133,7 +136,7 @@ export class Scene {
    * @param event - The MouseEvent object representing the mouse click.
    */
   private handleMouseDown(event: MouseEvent) {
-    this.handleScreenEvent(event.clientX,event.clientY);
+    this.handleScreenEvent(event.clientX, event.clientY);
   }
 
   /**
@@ -150,10 +153,10 @@ export class Scene {
    */
   private handleTouchStart(event: TouchEvent) {
     const touch = event.touches[0];
-    this.handleScreenEvent(touch.clientX,touch.clientY);
+    this.handleScreenEvent(touch.clientX, touch.clientY);
   }
 
-  private handleScreenEvent(clientX:number,clientY:number){
+  private handleScreenEvent(clientX: number, clientY: number) {
     const rect = this.ctx.canvas.getBoundingClientRect();
     const scaleX = this.ctx.canvas.width / rect.width;
     const scaleY = this.ctx.canvas.height / rect.height;
@@ -214,14 +217,16 @@ export class Scene {
    */
   private updateCanvas() {
     // Update the street obstacles.
-    this.street = this.street.updateObstacles(this.player,this.street.getAllObstacles());
-    
-    
+    this.street = this.street.updateObstacles(
+      this.player,
+      this.street.getAllObstacles(),
+    );
+
     // move to the position if controls instruct to do so
     this.navigateToDestination();
-    
+
     this.nextAttemptOrLevelIfReady();
-    
+
     // Clear the canvas.
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     // Draw the player and street.
@@ -240,7 +245,7 @@ export class Scene {
     this.displayScoreboard();
   }
 
-  private nextAttemptOrLevelIfReady(){
+  private nextAttemptOrLevelIfReady() {
     if (this.gameAttempts.getCurrentLevelAttempt().isInProgress()) {
       //check for the goal of reaching the finish
       //Fixme: it seems the player height should be used to reach the sidewalk
@@ -255,17 +260,16 @@ export class Scene {
         this.gameAttempts =
           this.gameAttempts.completeCurrentLevelAttempt(false);
         // automatically goes next level if max failure count reach
-        if (this.gameAttempts.currentLevel !== currentLevel){
+        if (this.gameAttempts.currentLevel !== currentLevel) {
           console.log(`too many failures, going to next level`);
           this.playNextLevel();
         } else {
           //reset the current player to the scenario start
           this.player = this.scenario.player;
         }
-      
       }
     }
-  } 
+  }
 
   public displayScoreboard() {
     // Add a fixed rectangular background.
@@ -297,50 +301,54 @@ export class Scene {
     this.ctx.fillText(`${timeElapsed}`, x, y + 30);
   }
 
-    public displayDialogWithHtmlFromFile(
-      filePath: string,
-      buttonText: string,
-      callback: () => void,
-    ) {
-      // Create a div element for the dialog.
-      const dialog = document.createElement("div");
-      dialog.style.position = "absolute";
-      dialog.style.top = "50%";
-      dialog.style.left = "50%";
-      dialog.style.transform = "translate(-50%, -50%)";
-      dialog.style.width = "75%";
-      dialog.style.backgroundColor = "white";
-      dialog.style.border = "1px solid black";
-      dialog.style.padding = "20px";
-      dialog.style.textAlign = "center";
+  public displayDialogWithHtmlFromFile(
+    filePath: string,
+    buttonText: string,
+    callback: () => void,
+  ) {
+    // Create a div element for the dialog.
+    const dialog = document.createElement("div");
+    dialog.style.position = "absolute";
+    dialog.style.top = "50%";
+    dialog.style.left = "50%";
+    dialog.style.transform = "translate(-50%, -50%)";
+    dialog.style.width = "75%";
+    dialog.style.backgroundColor = "white";
+    dialog.style.border = "1px solid black";
+    dialog.style.padding = "20px";
+    dialog.style.textAlign = "center";
 
-      // Create an iframe element for the HTML page.
-      const iframe = document.createElement("iframe");
-      iframe.style.width = "100%";
-      iframe.style.height = "400px";
-      iframe.src = filePath;
-      dialog.appendChild(iframe);
+    // Create an iframe element for the HTML page.
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = "400px";
+    iframe.src = filePath;
+    dialog.appendChild(iframe);
 
-      // Add the continue button to the dialog.
-      const button = document.createElement("button");
-      button.textContent = buttonText;
-      button.addEventListener("click", () => {
-        // Remove the dialog from the DOM.
+    // Add the continue button to the dialog.
+    const button = document.createElement("button");
+    button.textContent = buttonText;
+    button.addEventListener("click", () => {
+      // Remove the dialog from the DOM.
+      dialog.remove();
+      // Call the callback function.
+      callback();
+    });
+    dialog.appendChild(button);
+
+    // Add the dialog to the DOM.
+    document.body.appendChild(dialog);
+
+    // Close the dialog by pressing any key.
+    document.addEventListener("keydown", (event) => {
+      if (
+        event.key === "Enter" ||
+        event.key === " " ||
+        event.key === "Escape"
+      ) {
         dialog.remove();
-        // Call the callback function.
         callback();
-      });
-      dialog.appendChild(button);
-
-      // Add the dialog to the DOM.
-      document.body.appendChild(dialog);
-
-      // Close the dialog by pressing any key.
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
-          dialog.remove();
-          callback();
-        }
-      });
-    }
+      }
+    });
   }
+}

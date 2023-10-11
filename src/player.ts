@@ -23,11 +23,10 @@ function getSpeedLimit(speed: PlayerSpeed): number {
   }
 }
 export class Player extends GameObject {
-
   /** Keeps track of the time last moved.  Since the player is read-only, we assume
-   * it has moved when constructed.  
+   * it has moved when constructed.
    */
-    private readonly lastMovedAt: number = Date.now(); // Keeps track of the last time the player moved
+  private readonly lastMovedAt: number = Date.now(); // Keeps track of the last time the player moved
 
   /**
    * Creates a new player instance.  See GameObject for parameter descriptions.
@@ -49,7 +48,7 @@ export class Player extends GameObject {
     public readonly image: HTMLImageElement,
     public readonly pixelsPerMove: number,
     public readonly flipHorizontally: boolean = false,
-    public readonly speed: PlayerSpeed = PlayerSpeed.NORMAL, 
+    public readonly speed: PlayerSpeed = PlayerSpeed.NORMAL,
     public readonly angle: number = 0,
   ) {
     super(x, y, width, height, image, flipHorizontally, angle);
@@ -84,10 +83,12 @@ export class Player extends GameObject {
     const timeSinceLastMove = now - this.lastMovedAt;
 
     // Calculate the actual distance the player wants to move
-    const distance = Math.sqrt(Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2));
+    const distance = Math.sqrt(
+      Math.pow(x - this.x, 2) + Math.pow(y - this.y, 2),
+    );
 
     // Calculate the maximum distance the player can move
-    const speedLimit:number = getSpeedLimit(this.speed);
+    const speedLimit: number = getSpeedLimit(this.speed);
     const maxDistance = (speedLimit * timeSinceLastMove) / 1000;
     if (distance <= maxDistance) {
       return true;
@@ -96,7 +97,7 @@ export class Player extends GameObject {
   }
 
   private move(x: number, y: number, angle: number) {
-    if (this.canMove(x,y)) {
+    if (this.canMove(x, y)) {
       return new Player(
         x,
         y,
@@ -107,7 +108,7 @@ export class Player extends GameObject {
         !this.flipHorizontally, // flip the image per move to simulate walking
         this.speed,
         angle,
-        );
+      );
     }
     return this;
   }

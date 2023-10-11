@@ -131,7 +131,7 @@ export class Obstacle extends GameObject {
         if (timeToCollision < 3) {
           // 3 seconds following distance as a rule
           newSpeed *= 0.9; // Reduce speed by 10%
-          if(newSpeed < 3) {
+          if (newSpeed < 3) {
             newSpeed = 0; //stop
           }
         }
