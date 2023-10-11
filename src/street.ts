@@ -92,8 +92,7 @@ export class Obstacle extends GameObject {
             isObjectInLane &&
             ((this.direction === LaneDirection.RIGHT &&
               this.x < gameObject.x) ||
-              (this.direction === LaneDirection.LEFT &&
-                this.x > gameObject.x));
+              (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
           return isObjectInFront;
         })
         .map((gameObject) => Math.abs(this.x - gameObject.x)),
@@ -113,26 +112,29 @@ export class Obstacle extends GameObject {
     obstacles: readonly Obstacle[],
   ): number {
     if (this.avoidance === ObstacleAvoidanceType.BRAKE) {
-      let newSpeed = this.speed;
-
       // combine player and obstacles treating the same.  Exclude this obstacle
       const gameObjects: GameObject[] = [...obstacles, player].filter(
         (gameObject) => gameObject !== this,
       );
-      const distanceToClosestObject = this.calculateDistanceToClosestObject(gameObjects);
-      //multiply since speed is per refresh...50ms.  Better if we keep track of time and calculate rate.
-      const speedInPixelsPerSecond = this.speed * 10;
-      const timeToCollision = distanceToClosestObject / speedInPixelsPerSecond;
+      const distanceToClosestObject =
+        this.calculateDistanceToClosestObject(gameObjects);
+      let newSpeed = this.speed;
 
-      
-      // If time to collision is less than a certain threshold, slow down
-      if (timeToCollision < 3) {
-        // 3 seconds following distance as a rule
-        newSpeed *= 0.9; // Reduce speed by 10%
+      if (distanceToClosestObject < 1000) {
+        //multiply since speed is per refresh...50ms.  Better if we keep track of time and calculate rate.
+        const speedInPixelsPerSecond = this.speed * 10;
+        const timeToCollision =
+          distanceToClosestObject / speedInPixelsPerSecond;
+
+        // If time to collision is less than a certain threshold, slow down
+        if (timeToCollision < 3) {
+          // 3 seconds following distance as a rule
+          newSpeed *= 0.9; // Reduce speed by 10%
+        }
       } else {
         if (newSpeed <= 0) {
           newSpeed = 1; // start moving again
-        } 
+        }
         // no longer blocked.  speed up if necessary
         // We didn't save what speed we were going before so just proceed at min
         //FIXME: we need to remember what speed we were going before we slowed down
@@ -143,6 +145,7 @@ export class Obstacle extends GameObject {
 
       return Math.max(newSpeed, 0); // Ensure the speed is never negative
     }
+
     return this.speed;
   }
 }
