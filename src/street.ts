@@ -120,7 +120,7 @@ export class Obstacle extends GameObject {
         this.calculateDistanceToClosestObject(gameObjects);
       let newSpeed = this.speed;
 
-      if (distanceToClosestObject < 1000) {
+      if (distanceToClosestObject < 300) {
         //multiply since speed is per refresh...50ms.  Better if we keep track of time and calculate rate.
         const speedInPixelsPerSecond = this.speed * 10;
         const timeToCollision =
@@ -130,6 +130,9 @@ export class Obstacle extends GameObject {
         if (timeToCollision < 3) {
           // 3 seconds following distance as a rule
           newSpeed *= 0.9; // Reduce speed by 10%
+          if(newSpeed < 3) {
+            newSpeed = 0; //stop
+          }
         }
       } else {
         if (newSpeed <= 0) {
