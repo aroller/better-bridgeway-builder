@@ -1,15 +1,21 @@
 
 /**
  * Base class for all game objects like the player, obstacles, etc.
- * The shape is a rectangle starting from x,y (top-left) and extending to the right and down.
+ * The shape is a rectangle starting from left,right (adjusted from x,y which is the centerpoint) 
+ * and extending to the right (width) and down (height) to match canvas coordinates.
+ * 
  */
 export class GameObject {
   /**
-   * Creates a new game object.
-   * @param x The x-coordinate of the object which is the left-most value.
-   * @param y The y-coordinate of the object which is the top-most value.
-   * @param width The width of the object as measured right from x.
-   * @param height The height of the object as measured down from y.
+   * Creates a new game object.  The coordinates are the center point of the object.
+   * This is different than a typical rectangle coordinates which are the top-left point.
+   * The reason for this is that it makes it easier to center the objects in the lane. 
+   * It also makes it easier to rotate around the center.
+   * 
+   * @param x The x-coordinate of the object which is the center point of the object.
+   * @param y The y-coordinate of the object which is the center point of the object.
+   * @param width The width of the object as measured right from x - 1/2 width.
+   * @param height The height of the object as measured down from y - 1/2 height.
    * @param image The image to be displayed for the object. Optionally provide nothing drawn if undefined.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
    * @param angle The angle in which this object should be rotated, in radians.
@@ -24,6 +30,22 @@ export class GameObject {
     public readonly angle: number = 0,
   ) {}
 
+  protected get left(): number {
+    return this.x - this.width / 2;
+  }
+
+  protected get right(): number {
+    return this.x + this.width / 2;
+  }
+
+  protected get top(): number {
+    return this.y - this.height / 2;
+  }
+
+  protected get bottom(): number {
+    return this.y + this.height / 2;
+  }
+
   /**
    * Draws the game object on the canvas, if the image exists.
    * @param ctx The canvas rendering context to draw on.
@@ -31,8 +53,8 @@ export class GameObject {
   public draw(ctx: CanvasRenderingContext2D): void {
     if (this.image) {
       if (this.image.complete) {
-        const x = this.x - this.width / 2;
-        const y = this.y - this.height / 2;
+        const x = this.left;
+        const y = this.top;
         const shouldTransform = this.angle !== 0 || this.flipHorizontally;
 
         if (shouldTransform) {
@@ -75,15 +97,15 @@ export class GameObject {
    */
   public intersects(other: GameObject): boolean {
     // Calculate the coordinates of the rectangles
-    const thisX1 = this.x;
-    const thisY1 = this.y;
-    const thisX2 = this.x + this.width;
-    const thisY2 = this.y + this.height;
+    const thisX1 = this.left;
+    const thisY1 = this.top;
+    const thisX2 = this.right;
+    const thisY2 = this.bottom;
 
-    const otherX1 = other.x;
-    const otherY1 = other.y;
-    const otherX2 = other.x + other.width;
-    const otherY2 = other.y + other.height;
+    const otherX1 = other.left;
+    const otherY1 = other.top;
+    const otherX2 = other.right;
+    const otherY2 = other.bottom;
 
     // Check for intersection
     return (

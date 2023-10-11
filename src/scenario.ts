@@ -11,15 +11,17 @@ import {
   ObstacleAvoidanceType,
 } from "./street";
 import { LaneDirection } from "./street";
-import { splitUnit } from "mathjs";
 
-/** Fixed point corresponding to the part of the starting sidewalk where the red curb exists. 
- * Fathest left point putting the frog close to the parked cars. 
+/** Fixed point corresponding to the part of the starting sidewalk where the red curb exists.
+ * Fathest left point putting the frog close to the parked cars.
  */
-const PLAYER_START_X = 395;
+const PLAYER_START_X = 440;
 const solidWhiteLineStyle = new LaneLineStyle();
 const solidYellowLineStyle = new LaneLineStyle("yellow");
-const dashedYellowLineStyle = new LaneLineStyle(solidYellowLineStyle.color, true);
+const dashedYellowLineStyle = new LaneLineStyle(
+  solidYellowLineStyle.color,
+  true,
+);
 const hiddenLineStyle = new LaneLineStyle(
   solidWhiteLineStyle.color,
   false,
@@ -61,7 +63,7 @@ export class ScenarioProducer {
     direction: LaneDirection,
     speed: number = ObstacleSpeeds.MEDIUM,
     x: number = 0,
-    obstacleAvoidance:ObstacleAvoidanceType,
+    obstacleAvoidance: ObstacleAvoidanceType,
   ): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
     const imageScale = 0.1;
@@ -83,10 +85,10 @@ export class ScenarioProducer {
 
   /**
    * Returns an array of obstacle producers that produce vehicle obstacles.
-   * If parkingLineOfSightTriggeredVehicles is true, vehicles will be produced 
+   * If parkingLineOfSightTriggeredVehicles is true, vehicles will be produced
    * conditionally on the player's location at spots where the players view was blocked
    * by a parked car.
-   * 
+   *
    * @param y The y-coordinate of the obstacles.
    * @param direction The direction of the lane.
    * @param maxFrequencyInSeconds The maximum frequency of obstacle production in seconds.
@@ -98,10 +100,18 @@ export class ScenarioProducer {
     direction: LaneDirection,
     maxFrequencyInSeconds: number = 1,
     parkingLineOfSightTriggeredVehicles: boolean = false,
-    obstacleAvoidance:ObstacleAvoidanceType,
+    obstacleAvoidance: ObstacleAvoidanceType,
   ): readonly ObstacleProducer[] {
-    const vehicleTemplate = this.vehicleWagonObstacle(y, direction, ObstacleSpeeds.MEDIUM, 0, obstacleAvoidance);
-    const producers = [new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds)];
+    const vehicleTemplate = this.vehicleWagonObstacle(
+      y,
+      direction,
+      ObstacleSpeeds.MEDIUM,
+      0,
+      obstacleAvoidance,
+    );
+    const producers = [
+      new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds),
+    ];
     if (parkingLineOfSightTriggeredVehicles) {
       producers.push(...this.parkingLineOfSightTriggeredProducers(y));
     }
@@ -111,27 +121,49 @@ export class ScenarioProducer {
   /**
    * Obstacle producers that trigger cars to appear when the player exits the parking
    * lane close to the parked cars.  This is to simulate the player's view being blocked.
-   * 
+   *
    * @param vehicleLaneY The y-coordinate of the vehicle lane.
    * @returns An array of obstacle producers.
    */
-  private parkingLineOfSightTriggeredProducers(vehicleLaneY:number): readonly ObstacleProducer[]{
+  private parkingLineOfSightTriggeredProducers(
+    vehicleLaneY: number,
+  ): readonly ObstacleProducer[] {
     const producers: ObstacleProducer[] = [];
-         // these x values are hard coded to the scene to match parked cars
-         const closeToParkedCarX = PLAYER_START_X;
-         const yTriggerPoint = 380;
-         const targetWidth = 80;
-         const targetHeight = 25;
-         const targets = [new GameObject(closeToParkedCarX, yTriggerPoint, targetWidth, targetHeight)];
-         const maxFrequencyForTargetTrigger = 5;
-         const speed = ObstacleSpeeds.MEDIUM;
-         // this vehicle appears when the player reaches the lane
-         const hiddenVehicleStartingX = 250;
-         const hiddenVehicleTemplate = this.vehicleWagonObstacle(vehicleLaneY, LaneDirection.RIGHT, speed, hiddenVehicleStartingX, ObstacleAvoidanceType.NONE);
-         for (const target of targets) {
-           producers.push(new TargetObstacleProducer(hiddenVehicleTemplate,maxFrequencyForTargetTrigger,false,target));
-         }
-         return producers;
+    // these x values are hard coded to the scene to match parked cars
+    const closeToParkedCarX = PLAYER_START_X;
+    const yTriggerPoint = 380;
+    const targetWidth = 80;
+    const targetHeight = 25;
+    const targets = [
+      new GameObject(
+        closeToParkedCarX,
+        yTriggerPoint,
+        targetWidth,
+        targetHeight,
+      ),
+    ];
+    const maxFrequencyForTargetTrigger = 5;
+    const speed = ObstacleSpeeds.MEDIUM;
+    // this vehicle appears when the player reaches the lane
+    const hiddenVehicleStartingX = PLAYER_START_X - 100;
+    const hiddenVehicleTemplate = this.vehicleWagonObstacle(
+      vehicleLaneY,
+      LaneDirection.RIGHT,
+      speed,
+      hiddenVehicleStartingX,
+      ObstacleAvoidanceType.BRAKE, // this vehicle will stop for the player even though it appears abruptly
+    );
+    for (const target of targets) {
+      producers.push(
+        new TargetObstacleProducer(
+          hiddenVehicleTemplate,
+          maxFrequencyForTargetTrigger,
+          false,
+          target,
+        ),
+      );
+    }
+    return producers;
   }
   private bridgeway2023(
     lightTraffic: boolean = false,
@@ -148,7 +180,13 @@ export class ScenarioProducer {
       LaneDirection.LEFT,
       vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, solidYellowLineStyle),
-      this.vehicleTrafficObstacleProducers(y, LaneDirection.LEFT, frequency, false, obstacleAvoidance),
+      this.vehicleTrafficObstacleProducers(
+        y,
+        LaneDirection.LEFT,
+        frequency,
+        false,
+        obstacleAvoidance,
+      ),
     );
     y = y + turnLaneWidth;
     street = street.addLane(
@@ -162,13 +200,19 @@ export class ScenarioProducer {
       LaneDirection.RIGHT,
       vehicleLaneWidth,
       new LaneLinesStyles(solidYellowLineStyle, hiddenLineStyle),
-      this.vehicleTrafficObstacleProducers(y, LaneDirection.RIGHT, frequency, parkingIncluded, obstacleAvoidance),
+      this.vehicleTrafficObstacleProducers(
+        y,
+        LaneDirection.RIGHT,
+        frequency,
+        parkingIncluded,
+        obstacleAvoidance,
+      ),
     );
     if (parkingIncluded) {
       const parkingLaneWidth = 60;
       y = y + parkingLaneWidth;
       street = street.addLane(
-        LaneDirection.RIGHT, 
+        LaneDirection.RIGHT,
         parkingLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         this.parkingLaneObstacleProducers(y),
@@ -182,10 +226,10 @@ export class ScenarioProducer {
    * @param y The y-coordinate of the obstacle producers.
    * @returns An array of obstacle producers.
    */
-  private parkingLaneObstacleProducers(y:number): readonly ObstacleProducer[] {
+  private parkingLaneObstacleProducers(y: number): readonly ObstacleProducer[] {
     const frequency = 10;
     const speed = 0;
-    const xForEach = [-40,80,200,320,520, 800, 900, 1000, 1100];
+    const xForEach = [20, 120, 240, 360, 560, 840, 940, 1040, 1150];
     const producers: ObstacleProducer[] = [];
     for (const x of xForEach) {
       const obstacle = this.vehicleWagonObstacle(
@@ -200,12 +244,11 @@ export class ScenarioProducer {
     return producers;
   }
 
-
   /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene.
    *
    * @returns
    */
-  private frogPlayer(speed:PlayerSpeed=PlayerSpeed.NORMAL): Player {
+  private frogPlayer(speed: PlayerSpeed = PlayerSpeed.NORMAL): Player {
     const playerSize = 30;
     const playerImage = new Image();
     playerImage.src = "images/players/frog.svg";
@@ -213,8 +256,17 @@ export class ScenarioProducer {
     // place the player on the sidewalk.  the scene must be fixed in size
     const playerX = PLAYER_START_X;
     const playerY = 470;
- 
-    return new Player(playerX, playerY, playerSize, playerSize, playerImage, pixelsPerMove,false, speed);
+
+    return new Player(
+      playerX,
+      playerY,
+      playerSize,
+      playerSize,
+      playerImage,
+      pixelsPerMove,
+      false,
+      speed,
+    );
   }
 
   public getScenarioForLevel(level: number): Scenario {
@@ -229,30 +281,43 @@ export class ScenarioProducer {
     switch (level) {
       case 1:
         title = "Light Traffic is Easy to Cross";
-        description = "Normal speed person crossing with light traffic."
-        street = this.bridgeway2023(LIGHT_TRAFFIC);
+        description = "Normal speed person crossing with light traffic.";
+        street = this.bridgeway2023(
+          LIGHT_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+        );
         break;
       case 2:
         title = "Heavy Traffic is Challenging to Cross";
-        description = "Normal speed person crossing with heavy traffic."
+        description = "Normal speed person crossing with heavy traffic.";
         street = this.bridgeway2023();
         break;
       case 3:
         title = "Slow Moving Frogs Can Barely Cross in Heavy Traffic";
-        description = "Slow moving person crossing with heavy traffic."
+        description = "Slow moving person crossing with heavy traffic.";
         street = this.bridgeway2023();
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case 4:
         title = "Cars Stops for Slow Moving Frogs";
-        description = "Cars stop for a person crossing with heavy traffic."
-        street = this.bridgeway2023(HEAVY_TRAFFIC,PARKING_NOT_INCLUDED,ObstacleAvoidanceType.BRAKE);
+        description = "Cars stop for a person crossing with heavy traffic.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_NOT_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+        );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case 5:
         title = "Parked Cars Block the View of Slow Moving Frogs";
-        description = "Parked cars block the view of a slow moving person crossing with heavy traffic."
-        street = this.bridgeway2023(LIGHT_TRAFFIC,PARKING_INCLUDED,ObstacleAvoidanceType.BRAKE);
+        description =
+          "Parked cars block the view of a slow moving person crossing with heavy traffic.";
+        street = this.bridgeway2023(
+          LIGHT_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+        );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       default:
