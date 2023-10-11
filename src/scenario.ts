@@ -132,7 +132,7 @@ export class ScenarioProducer {
     // these x values are hard coded to the scene to match parked cars
     const closeToParkedCarX = PLAYER_START_X;
     const yTriggerPoint = 380;
-    const targetWidth = 80;
+    const targetWidth = 150;
     const targetHeight = 25;
     const targets = [
       new GameObject(
