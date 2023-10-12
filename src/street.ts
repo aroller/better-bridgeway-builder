@@ -86,23 +86,68 @@ export class Obstacle extends GameObject {
     );
   }
 
-  private calculateDistanceToClosestObject(gameObjects: GameObject[]): number {
-    return Math.min(
-      ...gameObjects
-        .filter((gameObject) => {
-          const isObjectInLane =
-            gameObject.y >= this.y - this.height &&
-            gameObject.y <= this.y + this.height;
-          const isObjectInFront =
-            isObjectInLane &&
-            ((this.direction === LaneDirection.RIGHT &&
-              this.x < gameObject.x) ||
-              (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
-          return isObjectInFront;
-        })
-        .map((gameObject) => Math.abs(this.x - gameObject.x)),
-    );
+  private getClosestObject(
+    gameObjects: GameObject[],
+  ): GameObject | undefined {
+    let closestObstacle: GameObject | undefined;
+    let closestDistance = Infinity;
+
+    gameObjects.forEach((gameObject) => {
+      const isObjectInLane =
+        gameObject.y >= this.y - this.height &&
+        gameObject.y <= this.y + this.height;
+      const isObjectInFront =
+        isObjectInLane &&
+        ((this.direction === LaneDirection.RIGHT && this.x < gameObject.x) ||
+          (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
+      if (isObjectInFront) {
+        const distance = Math.abs(this.x - gameObject.x);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestObstacle = gameObject;
+        }
+      }
+    });
+
+    return closestObstacle;
   }
+
+  public calculateTimeToCollision(gameObjects: GameObject[]): number | undefined {
+    const closestObstacle = this.getClosestObject(gameObjects);
+    if (!closestObstacle) {
+      return undefined;
+    }
+    
+    const distanceToClosestObstacle = this.getDistanceTo(closestObstacle);
+    
+    // Calculate relative speed between this obstacle and the closest obstacle
+    const relativeSpeed = this.speed - ( closestObstacle instanceof Obstacle? (closestObstacle as Obstacle).speed : 0);
+    
+
+    // If the relative speed is negative, the objects are moving away from each other
+    if (relativeSpeed <= 0) {
+      return -Infinity;
+    }
+    
+    // Calculate time to collision
+    const timeToCollision = distanceToClosestObstacle / relativeSpeed;
+    
+    return timeToCollision;
+  }
+  
+  private getDistanceTo(gameObject: GameObject): number {
+    return Math.abs(this.x - gameObject.x);
+  }
+
+  private calculateDistanceToClosestObject(gameObjects: GameObject[]): number {
+    const closest = this.getClosestObject(gameObjects);
+    if (closest)  {
+      return this.getDistanceTo(closest);
+    }
+    return Infinity;
+  }
+
+  
 
   /**
    * Calculates the speed of the street object based on the player's position and obstacles on the street.
@@ -121,36 +166,22 @@ export class Obstacle extends GameObject {
       const gameObjects: GameObject[] = [...obstacles, player].filter(
         (gameObject) => gameObject !== this,
       );
-      const distanceToClosestObject =
-        this.calculateDistanceToClosestObject(gameObjects);
-      let newSpeed = this.speed;
-// We must consider the speed of the closest object to determine if collision will happen
-      // only slow down if we are close to the object...value is determined empirically
-      if (distanceToClosestObject < 300) {
-        //multiply since speed is per refresh...50ms.  Better if we keep track of time and calculate rate.
-        const speedInPixelsPerSecond = this.speed * 10;
-        const timeToCollision =
-          distanceToClosestObject / speedInPixelsPerSecond;
-
-        // If time to collision is less than a certain threshold, slow down
-        if (timeToCollision < 3) {
-          // 3 seconds following distance as a rule
-          newSpeed *= 0.6; // Reduce speed by 10%
-        }
-        if (distanceToClosestObject < 100) {
-          newSpeed =0;
-        }
-      } 
       
-      if (distanceToClosestObject > 100) {
-        if (newSpeed <= 0) {
-          newSpeed = 1; // start moving again
-        }
-        // no longer blocked.  speed up if necessary
-        if (this.originalSpeed && newSpeed < this.originalSpeed) {
-          console.log(`speeding up from ${newSpeed} to ${this.originalSpeed}`);
-          newSpeed *= 1.1; // Increase speed by 10%
-        }
+      const timeToCollision = this.calculateTimeToCollision(gameObjects);
+      let newSpeed = this.speed;
+      if(timeToCollision && timeToCollision > 0 && timeToCollision < 100 ) {
+        // If time to collision is less than a certain threshold, slow down
+        newSpeed -= 0.5; // Reduce speed by 10%
+      } 
+
+      const distanceToClosest = this.calculateDistanceToClosestObject(gameObjects);
+      if ( distanceToClosest < 200 ) {
+        newSpeed -= 0.5;
+      }
+      if( distanceToClosest < 100) {
+        newSpeed -= 1;
+      } else if(this.originalSpeed && newSpeed < this.originalSpeed) {
+        newSpeed += 0.25;
       }
 
       return Math.max(newSpeed, 0); // Ensure the speed is never negative
@@ -441,9 +472,11 @@ export class Street {
           const producersCount = lane.obstacleProducers.length;
 
           //not every lane has a producer
-          if(producersCount > 0){
+          if (producersCount > 0) {
             //pick only one to produce
-            const randomProducerIndex = Math.floor(Math.random() * producersCount);
+            const randomProducerIndex = Math.floor(
+              Math.random() * producersCount,
+            );
             const producer = lane.obstacleProducers[randomProducerIndex];
             if (producer.readyForNext(player)) {
               lane = lane.addObstacle(producer.next(x));
