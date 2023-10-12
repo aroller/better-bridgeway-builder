@@ -58,19 +58,22 @@ export class ScenarioProducer {
     public readonly topOfStreetY: number,
   ) {}
 
-  private vehicleWagonObstacle(
+  private obstacle(
+    x: number,
     y: number,
     direction: LaneDirection,
-    speed: number = ObstacleSpeeds.MEDIUM,
-    x: number = 0,
+    speed: number,
     obstacleAvoidance: ObstacleAvoidanceType,
+    imageSrc: string,
+    imageWidth: number,
+    imageHeight: number,
+    imageScale: number,
   ): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
-    const imageScale = 0.1;
-    const objectWidth = 706.12 * imageScale;
-    const objectHeight = 314.33 * imageScale;
+    const objectWidth = imageWidth * imageScale;
+    const objectHeight = imageHeight * imageScale;
     const image = new Image();
-    image.src = "images/obstacles/car-wagon.svg";
+    image.src = imageSrc;
     return new Obstacle(
       x,
       y,
@@ -80,6 +83,44 @@ export class ScenarioProducer {
       direction,
       image,
       obstacleAvoidance,
+    );
+  }
+
+  private vehicleObstacle(
+    x: number,
+    y: number,
+    direction: LaneDirection,
+    speed: number = ObstacleSpeeds.MEDIUM,
+    obstacleAvoidance: ObstacleAvoidanceType,
+  ): Obstacle {
+    return this.obstacle(
+      x,
+      y,
+      direction,
+      speed,
+      obstacleAvoidance,
+      "images/obstacles/car-wagon.svg",
+      706.12,
+      314.33,
+      0.1,
+    );
+  }
+
+  private bicycleObstacle(
+    y: number,
+    direction: LaneDirection,
+    obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.BRAKE,
+  ): Obstacle {
+    return this.obstacle(
+      0,
+      y,
+      direction,
+      ObstacleSpeeds.SLOW,
+      obstacleAvoidance,
+      "images/obstacles/bicycle.svg",
+      1088.47,
+      349.2,
+      0.05,
     );
   }
 
@@ -101,17 +142,24 @@ export class ScenarioProducer {
     maxFrequencyInSeconds: number = 1,
     parkingLineOfSightTriggeredVehicles: boolean = false,
     obstacleAvoidance: ObstacleAvoidanceType,
+    bicycles: boolean = false,
   ): readonly ObstacleProducer[] {
-    const vehicleTemplate = this.vehicleWagonObstacle(
+    const vehicleTemplate = this.vehicleObstacle(
+      0,
       y,
       direction,
       ObstacleSpeeds.MEDIUM,
-      0,
       obstacleAvoidance,
     );
     const producers = [
       new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds),
     ];
+    if (bicycles) {
+      const bicycleTemplate = this.bicycleObstacle(y,direction);
+      producers.push(
+        new ObstacleProducer(bicycleTemplate, maxFrequencyInSeconds),
+      );
+    }
     if (parkingLineOfSightTriggeredVehicles) {
       producers.push(...this.parkingLineOfSightTriggeredProducers(y));
     }
@@ -146,11 +194,11 @@ export class ScenarioProducer {
     const speed = ObstacleSpeeds.MEDIUM;
     // this vehicle appears when the player reaches the lane
     const hiddenVehicleStartingX = PLAYER_START_X - 100;
-    const hiddenVehicleTemplate = this.vehicleWagonObstacle(
+    const hiddenVehicleTemplate = this.vehicleObstacle(
+      hiddenVehicleStartingX,
       vehicleLaneY,
       LaneDirection.RIGHT,
       speed,
-      hiddenVehicleStartingX,
       ObstacleAvoidanceType.BRAKE, // this vehicle will stop for the player even though it appears abruptly
     );
     for (const target of targets) {
@@ -169,6 +217,7 @@ export class ScenarioProducer {
     lightTraffic: boolean = false,
     parkingIncluded: boolean = false,
     obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
+    bicycles: boolean = false,
   ): Street {
     const frequency = lightTraffic ? 5 : 1;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
@@ -180,13 +229,14 @@ export class ScenarioProducer {
       LaneDirection.LEFT,
       vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, solidYellowLineStyle),
-      this.vehicleTrafficObstacleProducers(
-        y,
-        LaneDirection.LEFT,
-        frequency,
-        false,
-        obstacleAvoidance,
-      ),
+      // this.vehicleTrafficObstacleProducers(
+      //   y,
+      //   LaneDirection.LEFT,
+      //   frequency,
+      //   false,
+      //   obstacleAvoidance,
+      //   bicycles,
+      // ),
     );
     y = y + turnLaneWidth;
     street = street.addLane(
@@ -206,6 +256,7 @@ export class ScenarioProducer {
         frequency,
         parkingIncluded,
         obstacleAvoidance,
+        bicycles,
       ),
     );
     if (parkingIncluded) {
@@ -232,11 +283,11 @@ export class ScenarioProducer {
     const xForEach = [20, 120, 240, 360, 560, 840, 940, 1040, 1150];
     const producers: ObstacleProducer[] = [];
     for (const x of xForEach) {
-      const obstacle = this.vehicleWagonObstacle(
+      const obstacle = this.vehicleObstacle(
+        x,
         y,
         LaneDirection.RIGHT,
         speed,
-        x,
         ObstacleAvoidanceType.NONE,
       );
       producers.push(new ObstacleProducer(obstacle, frequency, false));
@@ -278,6 +329,8 @@ export class ScenarioProducer {
     const HEAVY_TRAFFIC = false;
     const PARKING_INCLUDED = true;
     const PARKING_NOT_INCLUDED = false;
+    const BICYCLES_INCLUDED = true;
+    const BICYCLES_NOT_INCLUDED = false;
     switch (level) {
       case 1:
         title = "Light Traffic is Easy to Cross";
@@ -285,7 +338,8 @@ export class ScenarioProducer {
         street = this.bridgeway2023(
           LIGHT_TRAFFIC,
           PARKING_NOT_INCLUDED,
-          ObstacleAvoidanceType.NONE,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_INCLUDED,
         );
         // player.moveUp();
         break;
