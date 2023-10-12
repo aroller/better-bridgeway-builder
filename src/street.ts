@@ -9,7 +9,7 @@ export const enum LaneDirection {
 
 export const enum ObstacleSpeeds {
   STOPPED = 0,
-  SLOW = 9,
+  SLOW = 4,
   MEDIUM = 10,
   FAST = 14,
 }
