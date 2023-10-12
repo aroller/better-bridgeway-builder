@@ -290,7 +290,9 @@ export class ScenarioProducer {
         speed,
         ObstacleAvoidanceType.NONE,
       );
-      producers.push(new ObstacleProducer(obstacle, frequency, false, false));
+      const DO_NOT_ASSIGN_X = false;
+      const DO_NOT_RANDOMIZE = false;
+      producers.push(new ObstacleProducer(obstacle, frequency, DO_NOT_ASSIGN_X, DO_NOT_RANDOMIZE));
     }
     return producers;
   }
