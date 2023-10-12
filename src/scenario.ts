@@ -27,6 +27,7 @@ const hiddenLineStyle = new LaneLineStyle(
   false,
   true,
 );
+
 /**
  * A class representing a scenario that educates the player about infrastructure challenges.
  */
@@ -48,6 +49,17 @@ export class Scenario {
   ) {}
 }
 
+export enum ScenarioKey {
+  LIGHT_TRAFFIC = "light-traffic",
+  HEAVY_TRAFFIC = "heavy-traffic",
+  SLOW_MOVING = "slow-moving",
+  CARS_STOP = "cars-stop",
+  PARKED_CARS = "parked-cars",
+  BICYCLES_SHARED_LANE = "bicycles-shared-lane",
+  CARS_PASS_BICYCLES = "cars-pass-bicycles",
+  GAME_OVER = "game-over",
+}
+
 /**
  * Creates specific scenarios to be executed in the game.
  */
@@ -57,6 +69,113 @@ export class ScenarioProducer {
     public readonly streetLength: number,
     public readonly topOfStreetY: number,
   ) {}
+
+  /**
+   * Returns the scenario key that matches the provided level.
+   * @param level The level to match.
+   * @returns The matching scenario key.
+   */
+  public static getScenarioKeyForLevel(level: number): ScenarioKey {
+    const keys = Object.values(ScenarioKey);
+    const minLevel = 1;
+    const maxLevel = keys.length;
+    if (level < minLevel || level > maxLevel) {
+      return keys[0];
+    }
+    return keys[level - 1];
+  }
+
+  /**
+   * Returns a scenario for the specified level.
+   * @param key The key that matches the scenario to be prepared.
+   * @returns The scenario.
+   */
+  public getScenario(key: string | ScenarioKey): Scenario {
+    let player = this.frogPlayer();
+    let title;
+    let description = "";
+    let street;
+    const LIGHT_TRAFFIC = true;
+    const HEAVY_TRAFFIC = false;
+    const PARKING_INCLUDED = true;
+    const PARKING_NOT_INCLUDED = false;
+    const BICYCLES_INCLUDED = true;
+    const BICYCLES_NOT_INCLUDED = false;
+    switch (key) {
+      case ScenarioKey.LIGHT_TRAFFIC:
+        title = "Light Traffic is Easy to Cross";
+        description = "Normal speed person crossing with light traffic.";
+        street = this.bridgeway2023(
+          LIGHT_TRAFFIC,
+          PARKING_NOT_INCLUDED,
+          ObstacleAvoidanceType.NONE,
+          BICYCLES_NOT_INCLUDED,
+        );
+        // player.moveUp();
+        break;
+      case ScenarioKey.HEAVY_TRAFFIC:
+        title = "Heavy Traffic is Challenging to Cross";
+        description = "Normal speed person crossing with heavy traffic.";
+        street = this.bridgeway2023();
+        break;
+      case ScenarioKey.SLOW_MOVING:
+        title = "Slow Moving Frogs Can Barely Cross in Heavy Traffic";
+        description = "Slow moving person crossing with heavy traffic.";
+        street = this.bridgeway2023();
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case ScenarioKey.CARS_STOP:
+        title = "Cars Stop for Slow Moving Frogs";
+        description = "Cars stop for a person crossing with heavy traffic.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_NOT_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+        );
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case ScenarioKey.PARKED_CARS:
+        title = "Parked Cars Block the View of Slow Moving Frogs";
+        description =
+          "Parked cars block the view of a slow moving person crossing with heavy traffic.";
+        street = this.bridgeway2023(
+          LIGHT_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+        );
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case ScenarioKey.BICYCLES_SHARED_LANE:
+        title = "Bicycles Move Slower than Cars";
+        description =
+          "Traffic congestion increases when bicycles are present because they share the lane.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_INCLUDED,
+        );
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case ScenarioKey.CARS_PASS_BICYCLES:
+        title = "Cars Pass Bicycles";
+        description =
+          "Cars use the middle lane to pass the slower bicycles.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.PASS,
+          BICYCLES_INCLUDED,
+        );
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case ScenarioKey.GAME_OVER:
+      default:
+        title = "Game Over";
+        street = this.bridgeway2023();
+    }
+    return new Scenario(title, description, street, player, this.topOfStreetY);
+  }
 
   private obstacle(
     x: number,
@@ -120,7 +239,7 @@ export class ScenarioProducer {
       "images/obstacles/bicycle.png",
       332,
       140,
-      .15,
+      0.15,
     );
   }
 
@@ -155,7 +274,7 @@ export class ScenarioProducer {
       new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds),
     ];
     if (bicycles) {
-      const bicycleTemplate = this.bicycleObstacle(y,direction);
+      const bicycleTemplate = this.bicycleObstacle(y, direction);
       producers.push(
         new ObstacleProducer(bicycleTemplate, maxFrequencyInSeconds),
       );
@@ -292,7 +411,14 @@ export class ScenarioProducer {
       );
       const DO_NOT_ASSIGN_X = false;
       const DO_NOT_RANDOMIZE = false;
-      producers.push(new ObstacleProducer(obstacle, frequency, DO_NOT_ASSIGN_X, DO_NOT_RANDOMIZE));
+      producers.push(
+        new ObstacleProducer(
+          obstacle,
+          frequency,
+          DO_NOT_ASSIGN_X,
+          DO_NOT_RANDOMIZE,
+        ),
+      );
     }
     return producers;
   }
@@ -300,6 +426,11 @@ export class ScenarioProducer {
   /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene.
    *
    * @returns
+   */
+  /**
+   * Creates a new frog player with the specified speed.
+   * @param speed - The speed of the player, defaults to PlayerSpeed.NORMAL.
+   * @returns A new Player object representing the frog player.
    */
   private frogPlayer(speed: PlayerSpeed = PlayerSpeed.NORMAL): Player {
     const playerSize = 30;
@@ -320,78 +451,5 @@ export class ScenarioProducer {
       false,
       speed,
     );
-  }
-
-  public getScenarioForLevel(level: number): Scenario {
-    let player = this.frogPlayer();
-    let title;
-    let description = "";
-    let street;
-    const LIGHT_TRAFFIC = true;
-    const HEAVY_TRAFFIC = false;
-    const PARKING_INCLUDED = true;
-    const PARKING_NOT_INCLUDED = false;
-    const BICYCLES_INCLUDED = true;
-    const BICYCLES_NOT_INCLUDED = false;
-    switch (level) {
-      case 1:
-        title = "Light Traffic is Easy to Cross";
-        description = "Normal speed person crossing with light traffic.";
-        street = this.bridgeway2023(
-          LIGHT_TRAFFIC,
-          PARKING_NOT_INCLUDED,
-          ObstacleAvoidanceType.NONE,
-          BICYCLES_NOT_INCLUDED,
-        );
-        // player.moveUp();
-        break;
-      case 2:
-        title = "Heavy Traffic is Challenging to Cross";
-        description = "Normal speed person crossing with heavy traffic.";
-        street = this.bridgeway2023();
-        break;
-      case 3:
-        title = "Slow Moving Frogs Can Barely Cross in Heavy Traffic";
-        description = "Slow moving person crossing with heavy traffic.";
-        street = this.bridgeway2023();
-        player = this.frogPlayer(PlayerSpeed.SLOW);
-        break;
-      case 4:
-        title = "Cars Stop for Slow Moving Frogs";
-        description = "Cars stop for a person crossing with heavy traffic.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_NOT_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-        );
-        player = this.frogPlayer(PlayerSpeed.SLOW);
-        break;
-      case 5:
-        title = "Parked Cars Block the View of Slow Moving Frogs";
-        description =
-          "Parked cars block the view of a slow moving person crossing with heavy traffic.";
-        street = this.bridgeway2023(
-          LIGHT_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-        );
-        break;
-      case 6:
-        title = "Bicycles Move Slower than Cars";
-        description =
-          "Traffic congestion increases when bicycles are present because they share the lane.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_INCLUDED
-        );
-        player = this.frogPlayer(PlayerSpeed.SLOW);
-        break;
-      default:
-        title = "Game Over";
-        street = this.bridgeway2023();
-    }
-    return new Scenario(title, description, street, player, this.topOfStreetY);
   }
 }
