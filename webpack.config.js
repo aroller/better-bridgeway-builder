@@ -13,7 +13,10 @@ module.exports = {
     path: buildPath,
     filename: "bundle.js",
   },
-
+  watchOptions: {
+    aggregateTimeout: 200,
+    poll: 5000,
+  },
   module: {
     rules: [
       {

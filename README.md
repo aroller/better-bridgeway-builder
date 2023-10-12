@@ -9,6 +9,43 @@ Crossing the Bridgeway Blvd between Richardson and Princess in Sausalito can be 
 
 [Play the latest](https://aroller.github.io/better-bridgeway-builder/). 
 
+## Game Levels
+
+The game intends to ramp up the scenarios to increase the challenge with 
+intentions to educate the advantages and disadvantages of infrastructure. 
+
+### Existing Infrstructure Levels
+
+Demonstrates the problems with the current configuration (from east/top to west/bottom):
+* Northbound Vehicle Travel Lane
+* Center turn lane 
+* Southbound Vehicle Travel Lane
+* Southbound Parking Lane
+
+1. Light traffic with cars only makes it easy to cross the road and learn the controls.
+2. Heavy traffic with cars only shows the advantage of the center lane as a refuge island. 
+3. Heavy traffic with a slower moving frog is almost impossible to cross the street.  
+4. Vehicles now stop for the player when they can be seen to create a more realistic scenario which has its challenges in the next levels.  
+5. Parking adds to the challenges. Parked cars block line of sight so cars appear out of thin air once in the lane. 
+6. Adding bicycle traffic shows how heavy traffic loses the center lane refuge island since cars pass the bicycles. 
+7. Delivery vehicles block the center lane. Crossing close to it makes a vehicles appear and squash the player to explain the importance of sight lines.  
+8. Traffic is now heavy and stopped in both directions. The center turn lane allows first responders to travel, but a delivery vehicle blocks the way.  When the first responder is blocked, the player is squashed symbolically linking death to a blocked first responder. 
+
+### Improved Infrastructure Levels
+
+The previous levels showed the challenges with the existing infrastructure.  Now improvements can be made to make it easier to cross the road. 
+
+1. Crosswalk is added, but limited parking removed. A southbound vehicle appears instantly to squash the player in the crosswalk since the parked car blocks the view. 
+2. Parking near the crosswalk is removed to match DOT daylighting requirements.
+3. Delivery vehicle parks in the center turn lane and the line of sight problem returns to instantly produce a vehicle out of nowhere and squashed players.
+4. Rapid flashing beacon is added to warn drivers to stop, but now a delivery driver is squashed delivering goods. 
+5. Center turn lane is turned into a refuse island blocking deliveries from happening near the crosswalk.  Traffic clogs up due to slow bicycles and nobody passing in turn lane.
+6. Bicycle lanes added to both directions separating bicycle and vehicle traffic.  Deliveries take place in designated parking spots. 
+7. Emergency vehicle comes through and vehicles pull into the bicycle lane to allow passing.
+8. Southbound bicyclists in the bike lane get doored by a parked car or squashed by cars exiting parking lane.
+9.  Bi-directional bicycle lane moved to the east/top side of the street demonstrates the advantages of separating. 
+10. Emergency vehicle passes through with northbound vehicles pulling into the bicycle lanes.
+11. Emergency vehicle uses the bicycle lanes to pass stopped vehicles blocking the road. 
 
 ## Development
 
@@ -76,6 +113,7 @@ Credit is given at the commit level. The main contributions will be identified o
 * [ChatGPT 4](https://chat.openai.com/) for product and architecture discussions including code generation for bootstrapping and big refactors. I'm unable to share the link to the discussion.
 * [Github Co-Pilot](https://github.com/features/copilot) for actively developing and improving all code. All discussions are happening locally. 
 * [Google Bard](https://g.co/bard/share/625bfc03158c) for some product collaboration and code discussions.
+* [Dillon Roller](https://github.com/Dillon-Roller) for rotating the frog in the direction of travel
 
 
 

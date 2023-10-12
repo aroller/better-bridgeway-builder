@@ -1,48 +1,97 @@
-import { matrix } from "mathjs";
-import { matricesIntersect } from "./math";
-
 /**
  * Base class for all game objects like the player, obstacles, etc.
+ * The shape is a rectangle starting from left,right (adjusted from x,y which is the centerpoint)
+ * and extending to the right (width) and down (height) to match canvas coordinates.
+ *
  */
-export abstract class GameObject {
+export class GameObject {
   /**
-   * Creates a new game object.
-   * @param x The x-coordinate of the object.
-   * @param y The y-coordinate of the object.
-   * @param width The width of the object.
-   * @param height The height of the object.
-   * @param image The image to be displayed for the object.
+   * Creates a new game object.  The coordinates are the center point of the object.
+   * This is different than a typical rectangle coordinates which are the top-left point.
+   * The reason for this is that it makes it easier to center the objects in the lane.
+   * It also makes it easier to rotate around the center.
+   *
+   * @param x The x-coordinate of the object which is the center point of the object.
+   * @param y The y-coordinate of the object which is the center point of the object.
+   * @param width The width of the object as measured right from x - 1/2 width.
+   * @param height The height of the object as measured down from y - 1/2 height.
+   * @param image The image to be displayed for the object. Optionally provide nothing drawn if undefined.
    * @param flipHorizontally Whether or not to flip the image horizontally when being drawn.
+   * @param angle The angle in which this object should be rotated, in radians.
    */
   constructor(
     public readonly x: number,
     public readonly y: number,
     public readonly width: number,
     public readonly height: number,
-    public readonly image: HTMLImageElement,
-    public readonly flipHorizontally: boolean = true,
+    public readonly image?: HTMLImageElement,
+    public readonly flipHorizontally: boolean = false,
+    public readonly angle: number = 0,
   ) {}
 
+  protected get left(): number {
+    return this.x - this.width / 2;
+  }
+
+  protected get right(): number {
+    return this.x + this.width / 2;
+  }
+
+  protected get top(): number {
+    return this.y - this.height / 2;
+  }
+
+  protected get bottom(): number {
+    return this.y + this.height / 2;
+  }
+
   /**
-   * Draws the game object on the canvas.
+   * Draws the game object on the canvas, if the image exists.
    * @param ctx The canvas rendering context to draw on.
    */
   public draw(ctx: CanvasRenderingContext2D): void {
-    if (this.image.complete) {
-      const y = this.y - this.height / 2;
-      if (this.flipHorizontally) {
-        ctx.save();
-        ctx.translate(this.x + this.width, y);
-        ctx.scale(-1, 1);
-        ctx.drawImage(this.image, 0, 0, this.width, this.height);
-        ctx.restore();
+    if (this.image) {
+      if (this.image.complete) {
+        const x = this.left;
+        const y = this.top;
+        const shouldTransform = this.angle !== 0 || this.flipHorizontally;
+
+        if (shouldTransform) {
+          // Save the current state
+          ctx.save();
+
+          // Translate to the center of the object
+          ctx.translate(x + this.width / 2, y + this.height / 2);
+          // Rotate based on this.angle
+          if (this.angle !== 0) {
+            ctx.rotate(this.angle);
+          }
+
+          if (this.flipHorizontally) {
+            // Flip horizontally
+            ctx.scale(-1, 1);
+          }
+
+          // Draw the image at (0, 0) relative to the translated and rotated context
+          ctx.drawImage(
+            this.image,
+            -this.width / 2,
+            -this.height / 2,
+            this.width,
+            this.height,
+          );
+
+          // Restore the original state
+          ctx.restore();
+        } else {
+          // Draw without transformations
+          ctx.drawImage(this.image, x, y, this.width, this.height);
+        }
       } else {
-        ctx.drawImage(this.image, this.x, y, this.width, this.height);
+        this.image.onload = () => {
+          this.draw(ctx);
+        };
       }
-    } else {
-      this.image.onload = () => {
-        this.draw(ctx);
-      };
     }
   }
 
@@ -52,22 +101,24 @@ export abstract class GameObject {
    * @returns True if the two game objects intersect, false otherwise.
    */
   public intersects(other: GameObject): boolean {
-    const rect1 = this.getRectMatrix();
-    const rect2 = other.getRectMatrix();
-    return matricesIntersect(rect1, rect2);
-  }
+    // Calculate the coordinates of the rectangles
+    const thisX1 = this.left;
+    const thisY1 = this.top;
+    const thisX2 = this.right;
+    const thisY2 = this.bottom;
 
-  /**
-   * Returns the matrix representing the rectangle occupied by the game object.
-   * @returns The matrix representing the rectangle occupied by the game object.
-   */
-  private getRectMatrix(): math.Matrix {
-    return matrix([
-      [this.x, this.y],
-      [this.x + this.width, this.y],
-      [this.x + this.width, this.y + this.height],
-      [this.x, this.y + this.height],
-    ]);
+    const otherX1 = other.left;
+    const otherY1 = other.top;
+    const otherX2 = other.right;
+    const otherY2 = other.bottom;
+
+    // Check for intersection
+    return (
+      thisX1 <= otherX2 &&
+      thisX2 >= otherX1 &&
+      thisY1 <= otherY2 &&
+      thisY2 >= otherY1
+    );
   }
 }
 
@@ -163,7 +214,10 @@ export class LevelAttempts {
  * Represents a set of attempts by a player to complete a game.
  */
 export class GameAttempts {
-  constructor(public readonly attempts: ReadonlyArray<LevelAttempts> = []) {}
+  constructor(
+    public readonly attempts: ReadonlyArray<LevelAttempts> = [],
+    public readonly maxAttemptCount: number = 2,
+  ) {}
 
   public get successCount(): number {
     return this.attempts.reduce(
@@ -252,16 +306,22 @@ export class GameAttempts {
     const currentLevelAttempts = this.getCurrentLevelAttempts();
     const updatedLevelAttempts =
       currentLevelAttempts.completeCurrentAttempt(success);
-    let updatedAttempts;
-    if (success) {
-      updatedAttempts = [...this.attempts.slice(0, -1), updatedLevelAttempts];
-      this.startNewLevel();
+    //for some resason maxAttemptCount requires a +1 to work correctly
+    if (
+      success ||
+      this.getCurrentLevelAttempts().failureCount >= this.maxAttemptCount
+    ) {
+      const updatedAttempts = [
+        ...this.attempts.slice(0, -1),
+        updatedLevelAttempts,
+      ];
+      return new GameAttempts(updatedAttempts).startNewLevel();
     } else {
-      updatedAttempts = [
+      const updatedAttempts = [
         ...this.attempts.slice(0, -1),
         updatedLevelAttempts.startNewAttempt(),
       ];
+      return new GameAttempts(updatedAttempts);
     }
-    return new GameAttempts(updatedAttempts);
   }
 }
