@@ -202,11 +202,13 @@ export class ObstacleProducer {
    * @param template The obstacle template to produce others.
    * @param maxFrequencyInSeconds The maximum frequency in seconds at which obstacles can be produced. It helps throttle the level of traffic.
    * @param assignX If true, the x value will be assigned in the next method.  False keeps the x value of the template.
+   * @param randomizeTraffic True will pick only one producer at random. False will produce from all producers if ready.
    */
   constructor(
     public readonly template: Obstacle,
     public readonly maxFrequencyInSeconds: number = 1,
     public readonly assignX: boolean = true,
+    public readonly randomizeTraffic: boolean = true,
   ) {}
 
   /**
@@ -470,18 +472,17 @@ export class Street {
               ? lane.streetLength + offsetOffCanvas
               : 0 - offsetOffCanvas;
           const producersCount = lane.obstacleProducers.length;
-
-          //not every lane has a producer
-          if (producersCount > 0) {
-            //pick only one to produce
-            const randomProducerIndex = Math.floor(
-              Math.random() * producersCount,
-            );
-            const producer = lane.obstacleProducers[randomProducerIndex];
+          const randomProducerIndex = Math.floor(
+                Math.random() * producersCount,
+              );
+          lane.obstacleProducers.map((producer, index) => {
             if (producer.readyForNext(player)) {
+              if (!producer.randomizeTraffic || index === randomProducerIndex) {
               lane = lane.addObstacle(producer.next(x));
             }
           }
+          }
+          );
         }
       }
       return lane;

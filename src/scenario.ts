@@ -117,10 +117,10 @@ export class ScenarioProducer {
       direction,
       ObstacleSpeeds.SLOW,
       obstacleAvoidance,
-      "images/obstacles/bicycle.svg",
-      1088.47,
-      349.2,
-      0.05,
+      "images/obstacles/bicycle.png",
+      332,
+      140,
+      .15,
     );
   }
 
@@ -229,14 +229,14 @@ export class ScenarioProducer {
       LaneDirection.LEFT,
       vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, solidYellowLineStyle),
-      // this.vehicleTrafficObstacleProducers(
-      //   y,
-      //   LaneDirection.LEFT,
-      //   frequency,
-      //   false,
-      //   obstacleAvoidance,
-      //   bicycles,
-      // ),
+      this.vehicleTrafficObstacleProducers(
+        y,
+        LaneDirection.LEFT,
+        frequency,
+        false,
+        obstacleAvoidance,
+        bicycles,
+      ),
     );
     y = y + turnLaneWidth;
     street = street.addLane(
@@ -278,7 +278,7 @@ export class ScenarioProducer {
    * @returns An array of obstacle producers.
    */
   private parkingLaneObstacleProducers(y: number): readonly ObstacleProducer[] {
-    const frequency = 10;
+    const frequency = 1;
     const speed = 0;
     const xForEach = [20, 120, 240, 360, 560, 840, 940, 1040, 1150];
     const producers: ObstacleProducer[] = [];
@@ -290,7 +290,7 @@ export class ScenarioProducer {
         speed,
         ObstacleAvoidanceType.NONE,
       );
-      producers.push(new ObstacleProducer(obstacle, frequency, false));
+      producers.push(new ObstacleProducer(obstacle, frequency, false, false));
     }
     return producers;
   }
@@ -338,8 +338,8 @@ export class ScenarioProducer {
         street = this.bridgeway2023(
           LIGHT_TRAFFIC,
           PARKING_NOT_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_INCLUDED,
+          ObstacleAvoidanceType.NONE,
+          BICYCLES_NOT_INCLUDED,
         );
         // player.moveUp();
         break;
@@ -372,6 +372,17 @@ export class ScenarioProducer {
           LIGHT_TRAFFIC,
           PARKING_INCLUDED,
           ObstacleAvoidanceType.BRAKE,
+        );
+        break;
+      case 6:
+        title = "Bicycles Move Slower than Cars";
+        description =
+          "Traffic congestion increases when bicycles are present because they share the lane.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_INCLUDED
         );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
