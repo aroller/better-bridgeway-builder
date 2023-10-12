@@ -99,9 +99,9 @@ export class ScenarioProducer {
       direction,
       speed,
       obstacleAvoidance,
-      "images/obstacles/car-wagon.svg",
-      706.12,
-      314.33,
+      "images/obstacles/car-wagon.png",
+      720,
+      332,
       0.1,
     );
   }
