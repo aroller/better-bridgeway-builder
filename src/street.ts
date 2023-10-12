@@ -9,7 +9,7 @@ export const enum LaneDirection {
 
 export const enum ObstacleSpeeds {
   STOPPED = 0,
-  SLOW = 4,
+  SLOW = 9,
   MEDIUM = 10,
   FAST = 14,
 }
@@ -53,6 +53,7 @@ export class Obstacle extends GameObject {
     public readonly direction: LaneDirection,
     image?: HTMLImageElement,
     public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
+    private readonly originalSpeed: ObstacleSpeeds | undefined = undefined,
   ) {
     if (!image) {
       throw new Error("Image is required, but missing");
@@ -60,6 +61,9 @@ export class Obstacle extends GameObject {
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
     this.speed = speed;
     this.direction = direction;
+    if (this.originalSpeed === undefined) {
+      this.originalSpeed = speed;
+    }
   }
 
   public moveObstacle(
@@ -78,6 +82,7 @@ export class Obstacle extends GameObject {
       this.direction,
       this.image,
       this.avoidance,
+      this.originalSpeed,
     );
   }
 
@@ -119,9 +124,9 @@ export class Obstacle extends GameObject {
       const distanceToClosestObject =
         this.calculateDistanceToClosestObject(gameObjects);
       let newSpeed = this.speed;
-
+// We must consider the speed of the closest object to determine if collision will happen
       // only slow down if we are close to the object...value is determined empirically
-      if (distanceToClosestObject < 250) {
+      if (distanceToClosestObject < 300) {
         //multiply since speed is per refresh...50ms.  Better if we keep track of time and calculate rate.
         const speedInPixelsPerSecond = this.speed * 10;
         const timeToCollision =
@@ -130,19 +135,20 @@ export class Obstacle extends GameObject {
         // If time to collision is less than a certain threshold, slow down
         if (timeToCollision < 3) {
           // 3 seconds following distance as a rule
-          newSpeed *= 0.9; // Reduce speed by 10%
-          if (newSpeed < 3) {
-            newSpeed = 0; //stop
-          }
+          newSpeed *= 0.6; // Reduce speed by 10%
         }
-      } else {
+        if (distanceToClosestObject < 100) {
+          newSpeed =0;
+        }
+      } 
+      
+      if (distanceToClosestObject > 100) {
         if (newSpeed <= 0) {
           newSpeed = 1; // start moving again
         }
         // no longer blocked.  speed up if necessary
-        // We didn't save what speed we were going before so just proceed at min
-        //FIXME: we need to remember what speed we were going before we slowed down
-        if (newSpeed < ObstacleSpeeds.MEDIUM) {
+        if (this.originalSpeed && newSpeed < this.originalSpeed) {
+          console.log(`speeding up from ${newSpeed} to ${this.originalSpeed}`);
           newSpeed *= 1.1; // Increase speed by 10%
         }
       }
@@ -432,9 +438,15 @@ export class Street {
             lane.direction === LaneDirection.LEFT
               ? lane.streetLength + offsetOffCanvas
               : 0 - offsetOffCanvas;
-          for (const obstacleProducer of lane.obstacleProducers) {
-            if (obstacleProducer.readyForNext(player)) {
-              lane = lane.addObstacle(obstacleProducer.next(x));
+          const producersCount = lane.obstacleProducers.length;
+
+          //not every lane has a producer
+          if(producersCount > 0){
+            //pick only one to produce
+            const randomProducerIndex = Math.floor(Math.random() * producersCount);
+            const producer = lane.obstacleProducers[randomProducerIndex];
+            if (producer.readyForNext(player)) {
+              lane = lane.addObstacle(producer.next(x));
             }
           }
         }
