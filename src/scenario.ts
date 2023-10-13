@@ -452,11 +452,10 @@ export class ScenarioProducer {
     const turnLaneProducers: ObstacleProducer[] = [];
     if (delivery) {
       const deliveryTruck = this.deliveryVehicleObstacle(
-        480, // specifically located blocking the straight path for the pedestrian.
+        560, // specifically located blocking the safe path for the pedestrian.
         y + 10, // it is not clear why the +10, but it is needed to make the truck appear in the correct location
         LaneDirection.RIGHT,
       );
-      console.log("turnLaneProducers", deliveryTruck);
       turnLaneProducers.push(
         new ObstacleProducer(deliveryTruck, 10000, false, false),
       );
