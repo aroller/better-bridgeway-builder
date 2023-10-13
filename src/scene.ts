@@ -35,7 +35,10 @@ export class Scene {
    * Creates a new Scene instance.
    * @param ctx - The CanvasRenderingContext2D to use for rendering.
    */
-  constructor(ctx: CanvasRenderingContext2D) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    scenarioKey: ScenarioKey | string = ScenarioKey.LIGHT_TRAFFIC,
+  ) {
     this.ctx = ctx;
     // requires a fixed background size to work
     this.topOfStreetY = 220;
@@ -48,12 +51,12 @@ export class Scene {
       this.topOfStreetY,
     );
     //assign defaults to make instances happy
-    this.scenario = this.scenarioProducer.getScenario(ScenarioProducer.getScenarioKeyForLevel(1));
+    this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.player = this.scenario.player;
     this.street = this.scenario.street;
     this.gameAttempts = new GameAttempts().startNewLevel();
 
-    this.playNextLevel();
+    this.playNextLevel(scenarioKey);
     // The background image shows the familar street scene.
     canvas.style.backgroundImage =
       "url('images/scene/better-bridgeway-background.svg')";
@@ -77,12 +80,17 @@ export class Scene {
     }, 100);
   }
 
-  private playNextLevel() {
+  /**
+   * 
+   * @param scenarioKey - The scenario key to play. If not provided, the next level will be played.
+   */
+  private playNextLevel(scenarioKey?: ScenarioKey | string) {
     const level = this.gameAttempts.currentLevel;
     //start the next scenario
     this.deadPlayers = [];
-    const scenarioKey = ScenarioProducer.getScenarioKeyForLevel(level);
-
+    if (!scenarioKey) {
+      scenarioKey = ScenarioProducer.getScenarioKeyForLevel(level);
+    }
     this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.street = this.scenario.street;
     this.player = this.scenario.player;
