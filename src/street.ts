@@ -60,8 +60,6 @@ export class Obstacle extends GameObject {
       throw new Error("Image is required, but missing");
     }
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
-    this.speed = speed;
-    this.direction = direction;
   }
 
   public moveObstacle(
