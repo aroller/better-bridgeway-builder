@@ -439,7 +439,7 @@ export class ScenarioProducer {
     bicycles: boolean = false,
     delivery: boolean = false,
   ): Street {
-    const frequency = lightTraffic ? 5 : 1;
+    const frequency = lightTraffic ? 4 : 2;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
     const vehicleLaneWidth = 65;
     const turnLaneWidth = 50;
