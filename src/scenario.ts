@@ -372,7 +372,9 @@ export class ScenarioProducer {
       );
     }
     if (parkingLineOfSightTriggeredVehicles) {
-      producers.push(...this.parkingLineOfSightTriggeredProducers(y));
+      producers.push(
+        ...this.ghostVehicleTargetTriggeredProducers(y, LaneDirection.RIGHT),
+      );
     }
     return producers;
   }
@@ -384,42 +386,43 @@ export class ScenarioProducer {
    * @param vehicleLaneY The y-coordinate of the vehicle lane.
    * @returns An array of obstacle producers.
    */
-  private parkingLineOfSightTriggeredProducers(
+  private ghostVehicleTargetTriggeredProducers(
     vehicleLaneY: number,
+    direction: LaneDirection,
   ): readonly ObstacleProducer[] {
-    const producers: ObstacleProducer[] = [];
-    // these x values are hard coded to the scene to match parked cars
-    const closeToParkedCarX = PLAYER_START_X;
-    const yTriggerPoint = 380;
-    const targetWidth = 50;
-    const targetHeight = 25;
-    const targets = [
-      new GameObject(
-        closeToParkedCarX,
-        yTriggerPoint,
-        targetWidth,
-        targetHeight,
-      ),
-    ];
-    const maxFrequencyForTargetTrigger = 5;
-    const speed = ObstacleSpeeds.MEDIUM;
     // this vehicle appears when the player reaches the lane
-    const hiddenVehicleStartingX = PLAYER_START_X - 100;
+    const hiddenVehicleStartingX = PLAYER_START_X - 100 * direction;
     const hiddenVehicleTemplate = this.ghostVehicleObstacle(
       hiddenVehicleStartingX,
       vehicleLaneY,
-      LaneDirection.RIGHT,
+      direction,
     );
-    for (const target of targets) {
-      producers.push(
-        new TargetObstacleProducer(
-          hiddenVehicleTemplate,
-          maxFrequencyForTargetTrigger,
-          false,
-          target,
-        ),
-      );
-    }
+
+    // this is the target that will trigger the ghost car when the player reaches the lane
+    const closeToParkedCarX = PLAYER_START_X;
+    console.log(`vehicleLaneY: ${vehicleLaneY}`);
+    const yTriggerPoint = vehicleLaneY + hiddenVehicleTemplate.height / 2;
+    const targetWidth = 50;
+    const targetHeight = 25;
+    const target = new GameObject(
+      closeToParkedCarX,
+      yTriggerPoint,
+      targetWidth,
+      targetHeight,
+    );
+
+    const maxFrequencyForTargetTrigger = 5;
+
+    //special producer that triggers the ghost car given the target
+    const producers: ObstacleProducer[] = [];
+    producers.push(
+      new TargetObstacleProducer(
+        hiddenVehicleTemplate,
+        maxFrequencyForTargetTrigger,
+        false,
+        target,
+      ),
+    );
     return producers;
   }
   private bridgeway2023(
@@ -451,14 +454,6 @@ export class ScenarioProducer {
     y = y + turnLaneWidth;
     const turnLaneProducers: ObstacleProducer[] = [];
     if (delivery) {
-      const deliveryTruck = this.deliveryVehicleObstacle(
-        560, // specifically located blocking the safe path for the pedestrian.
-        y + 10, // it is not clear why the +10, but it is needed to make the truck appear in the correct location
-        LaneDirection.RIGHT,
-      );
-      turnLaneProducers.push(
-        new ObstacleProducer(deliveryTruck, 10000, false, false),
-      );
     }
     street = street.addLane(
       LaneDirection.LEFT,
@@ -525,6 +520,17 @@ export class ScenarioProducer {
     return producers;
   }
 
+  private centerlaneDeliveryObstacleProducers(y: number) {
+    const producers: ObstacleProducer[] = [];
+
+    // produce a delivery truck in the center lane
+    const deliveryTruck = this.deliveryVehicleObstacle(
+      560, // specifically located blocking the safe path for the pedestrian.
+      y + 10, // it is not clear why the +10, but it is needed to make the truck appear in the correct location
+      LaneDirection.RIGHT,
+    );
+    producers.push(new ObstacleProducer(deliveryTruck, 10000, false, false));
+  }
   /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene.
    *
    * @returns
