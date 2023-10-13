@@ -1,6 +1,6 @@
 import { string } from "mathjs";
 import { GameObject } from "./game";
-import { Player, PlayerSpeed } from "./player";
+import { Player } from "./player";
 
 export const enum LaneDirection {
   LEFT = -1,
