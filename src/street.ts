@@ -53,7 +53,7 @@ export class Obstacle extends GameObject {
     public readonly direction: LaneDirection,
     image?: HTMLImageElement,
     public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
-    private readonly originalSpeed: ObstacleSpeeds | undefined = undefined,
+    private readonly originalSpeed: ObstacleSpeeds = speed,
     private readonly originalY: number = y,
   ) {
     if (!image) {
@@ -62,9 +62,6 @@ export class Obstacle extends GameObject {
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
     this.speed = speed;
     this.direction = direction;
-    if (this.originalSpeed === undefined) {
-      this.originalSpeed = speed;
-    }
   }
 
   public moveObstacle(
@@ -225,11 +222,12 @@ export class Obstacle extends GameObject {
     let newY = this.y;
     const directionMultiplier = this.direction === LaneDirection.RIGHT ? -1 : 1; // -1 for right, 1 for left
     const yAdjustment = 5 * directionMultiplier; // Adjust based on lane direction
-    const safePassDistance = this.height + closestObstacle.height;
-    const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
-    if (distanceAwayFromOriginal < safePassDistance) {
-      newY = this.y + yAdjustment;
-    }
+    newY = this.y + yAdjustment;
+    // const safePassDistance = this.height + closestObstacle.height;
+    // const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
+    // if (distanceAwayFromOriginal < safePassDistance) {
+     
+    // }
   
     return newY;
   }
