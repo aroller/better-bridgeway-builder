@@ -354,6 +354,7 @@ export class ScenarioProducer {
     parkingLineOfSightTriggeredVehicles: boolean = false,
     obstacleAvoidance: ObstacleAvoidanceType,
     bicycles: boolean = false,
+    centerLaneDelivery: boolean = false,
   ): readonly ObstacleProducer[] {
     const vehicleTemplate = this.vehicleObstacle(
       0,
@@ -374,6 +375,11 @@ export class ScenarioProducer {
     if (parkingLineOfSightTriggeredVehicles) {
       producers.push(
         ...this.ghostVehicleTargetTriggeredProducers(y, LaneDirection.RIGHT),
+      );
+    }
+    if (centerLaneDelivery) {
+      producers.push(
+        ...this.ghostVehicleTargetTriggeredProducers(y, LaneDirection.LEFT),
       );
     }
     return producers;
@@ -401,9 +407,10 @@ export class ScenarioProducer {
     // this is the target that will trigger the ghost car when the player reaches the lane
     const closeToParkedCarX = PLAYER_START_X;
     console.log(`vehicleLaneY: ${vehicleLaneY}`);
-    const yTriggerPoint = vehicleLaneY + hiddenVehicleTemplate.height / 2;
+    // trigger point is the bottom of the vehicle lane 
+    const yTriggerPoint = vehicleLaneY + hiddenVehicleTemplate.height;
     const targetWidth = 50;
-    const targetHeight = 25;
+    const targetHeight = 5;
     const target = new GameObject(
       closeToParkedCarX,
       yTriggerPoint,
@@ -411,7 +418,7 @@ export class ScenarioProducer {
       targetHeight,
     );
 
-    const maxFrequencyForTargetTrigger = 5;
+    const maxFrequencyForTargetTrigger = 3;
 
     //special producer that triggers the ghost car given the target
     const producers: ObstacleProducer[] = [];
@@ -438,6 +445,8 @@ export class ScenarioProducer {
     const turnLaneWidth = 50;
     let y = this.topOfStreetY + vehicleLaneWidth / 2;
     let street = new Street(this.topOfStreetY, this.streetLength);
+
+    // northbound vehicle lane
     street = street.addLane(
       LaneDirection.LEFT,
       vehicleLaneWidth,
@@ -449,11 +458,15 @@ export class ScenarioProducer {
         false,
         obstacleAvoidance,
         bicycles,
+        delivery, // ghost vehicles appear because of delivery trucks
       ),
     );
+
+    // center turn lane
     y = y + turnLaneWidth;
     const turnLaneProducers: ObstacleProducer[] = [];
     if (delivery) {
+      turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
     }
     street = street.addLane(
       LaneDirection.LEFT,
@@ -461,6 +474,8 @@ export class ScenarioProducer {
       new LaneLinesStyles(dashedYellowLineStyle, dashedYellowLineStyle),
       turnLaneProducers,
     );
+
+    // southbound vehicle lane
     y = y + vehicleLaneWidth;
     street = street.addLane(
       LaneDirection.RIGHT,
@@ -475,6 +490,8 @@ export class ScenarioProducer {
         bicycles,
       ),
     );
+
+    // southbound parking lane
     if (parkingIncluded) {
       const parkingLaneWidth = 60;
       y = y + parkingLaneWidth;
@@ -520,16 +537,22 @@ export class ScenarioProducer {
     return producers;
   }
 
-  private centerlaneDeliveryObstacleProducers(y: number) {
+  /** parks delivery trucks in the center lane. 
+   * 
+   * @param y the middle of the center lane
+   * @returns the producers for the delivery trucks
+   */
+  private centerlaneDeliveryObstacleProducers(y: number): readonly ObstacleProducer[] {
     const producers: ObstacleProducer[] = [];
 
     // produce a delivery truck in the center lane
-    const deliveryTruck = this.deliveryVehicleObstacle(
-      560, // specifically located blocking the safe path for the pedestrian.
+    const deliveryTruckSB = this.deliveryVehicleObstacle(
+      500, // specifically located blocking the safe path for the pedestrian.
       y + 10, // it is not clear why the +10, but it is needed to make the truck appear in the correct location
       LaneDirection.RIGHT,
     );
-    producers.push(new ObstacleProducer(deliveryTruck, 10000, false, false));
+    producers.push(new ObstacleProducer(deliveryTruckSB, 10000, false, false));
+    return producers
   }
   /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene.
    *

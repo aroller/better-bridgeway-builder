@@ -503,7 +503,7 @@ export class Street {
    * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    */
   public generateObstacles(player: Player): Street {
-    const maxPerLane = 5;
+    const maxPerLane = 15;
     const randomLaneIndex = Math.floor(Math.random() * this.lanes.length);
     const newLanes = this.lanes.map((lane, index) => {
       if (index === randomLaneIndex) {
