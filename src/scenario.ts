@@ -303,7 +303,7 @@ export class ScenarioProducer {
       : "images/obstacles/car-wagon.png";
     const imageWidth = racer ? 512 : 720;
     const imageHeight = racer ? 285 : 332;
-    const imageScale = racer ? 0.15 : 0.1;
+    const imageScale = racer ? 0.12 : 0.1;
     return this.obstacle(
       x,
       y,
