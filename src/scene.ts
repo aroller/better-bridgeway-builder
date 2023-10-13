@@ -359,4 +359,46 @@ export class Scene {
       }
     });
   }
+
+  /** The key in the http url to indicate if a level is to be played upon visiting. */
+  public static getLevelHttpParamKey(): string  {
+    return "level";
+  }
+
+  /**
+   * Returns the value of the 'level' parameter in the current URL's query string.
+   * @returns The value of the 'level' parameter, or null if it is not present.
+   */
+  public static getLevelHttpParamValue(): string | null {
+    const urlParams = new URLSearchParams(window.location.search);
+    const level = urlParams.get('level');
+    return level;
+  }
+
+  /**
+   * Returns the URL with the specified level parameter added to the query string.
+   * @param level - The level to add to the query string.
+   * @returns The URL with the specified level parameter added to the query string.
+   */
+  public static getLevelHttpUrl(level: string) {
+    const url = new URL(window.location.href);
+    url.searchParams.set(Scene.getLevelHttpParamKey(), level);
+    return url.toString();
+  }
+
+  /** Entry point into the game, this will create a scene.
+   * Optionally a level can be specified in the URL query string with values matching the ScenarioKey enum.
+   * Example: http://localhost:8080/?level=light-traffic
+   * 
+   * @param ctx - The CanvasRenderingContext2D to use for rendering.
+   */
+  public static show(ctx: CanvasRenderingContext2D): Scene{
+    const level = Scene.getLevelHttpParamValue();
+    if (level) {
+      console.log(`Starting with Level: ${level}`);
+      return new Scene(ctx, level); // pass ctx and level as arguments
+    } else {
+      return new Scene(ctx);
+    }
+  }
 }
