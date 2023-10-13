@@ -59,6 +59,7 @@ export enum ScenarioKey {
   PARKED_CARS = "parked-cars",
   BICYCLES_SHARED_LANE = "bicycles-shared-lane",
   CARS_PASS_BICYCLES = "cars-pass-bicycles",
+  CENTER_LANE_DELIVERY = "center-lane-delivery",
   GAME_OVER = "game-over",
 }
 
@@ -103,6 +104,7 @@ export class ScenarioProducer {
     const PARKING_NOT_INCLUDED = false;
     const BICYCLES_INCLUDED = true;
     const BICYCLES_NOT_INCLUDED = false;
+    const DELIVERY_INCLUDED = true;
     switch (key) {
       case ScenarioKey.LIGHT_TRAFFIC:
         title = "Light Traffic is Easy to Cross";
@@ -171,6 +173,19 @@ export class ScenarioProducer {
         );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
+      case ScenarioKey.CENTER_LANE_DELIVERY:
+        title = "Commercial Delivery in the Center Turn Lane";
+        description =
+          "Trucks block the center lane so cars no longer pass bicycles.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_INCLUDED,
+          DELIVERY_INCLUDED,
+        );
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
       case ScenarioKey.GAME_OVER:
       default:
         title = "Game Over";
@@ -213,17 +228,23 @@ export class ScenarioProducer {
     direction: LaneDirection,
     speed: number = ObstacleSpeeds.MEDIUM,
     obstacleAvoidance: ObstacleAvoidanceType,
+    delivery: boolean = false,
   ): Obstacle {
+
+    const imageSrc = delivery ? "images/obstacles/truck-delivery.png" : "images/obstacles/car-wagon.png";
+    const imageWidth = delivery ?  426 : 720;
+    const imageHeight = delivery ? 249 : 332;
+    const imageScale = delivery ? 0.25 : 0.1;
     return this.obstacle(
       x,
       y,
       direction,
       speed,
       obstacleAvoidance,
-      "images/obstacles/car-wagon.png",
-      720,
-      332,
-      0.1,
+      imageSrc,
+      imageWidth,
+      imageHeight,
+      imageScale,
     );
   }
 
@@ -339,6 +360,7 @@ export class ScenarioProducer {
     parkingIncluded: boolean = false,
     obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
     bicycles: boolean = false,
+    delivery: boolean = false,
   ): Street {
     const frequency = lightTraffic ? 5 : 1;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
@@ -360,11 +382,24 @@ export class ScenarioProducer {
       ),
     );
     y = y + turnLaneWidth;
+    const turnLaneProducers:ObstacleProducer[] = [];
+    if (delivery) {
+      const deliveryTruck = this.vehicleObstacle(
+        500, // specifically located to the right of the player crossing the street
+        y + 10, // it is not clear why the +10, but it is needed to make the truck appear in the correct location
+        LaneDirection.RIGHT,
+        ObstacleSpeeds.STOPPED,
+        ObstacleAvoidanceType.NONE,
+        true,
+      );
+      console.log("turnLaneProducers", deliveryTruck );
+      turnLaneProducers.push(new ObstacleProducer(deliveryTruck, 10000, false, false));
+    }
     street = street.addLane(
       LaneDirection.LEFT,
       turnLaneWidth,
       new LaneLinesStyles(dashedYellowLineStyle, dashedYellowLineStyle),
-      [],
+      turnLaneProducers,
     );
     y = y + vehicleLaneWidth;
     street = street.addLane(
