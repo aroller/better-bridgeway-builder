@@ -34,6 +34,7 @@ const hiddenLineStyle = new LaneLineStyle(
 export class Scenario {
   /**
    * Creates an instance of Scenario.
+   * @param key The readable identifier for this scenario. Used with http parameters, etc.
    * @param title The title of the scenario.
    * @param description The description of the scenario.
    * @param street The street where the scenario takes place.
@@ -41,6 +42,7 @@ export class Scenario {
    * @param finishLineY The y coordinate of the finish line.
    */
   constructor(
+    public readonly key: ScenarioKey,
     public readonly title: string,
     public readonly description: string,
     public readonly street: Street,
@@ -174,7 +176,7 @@ export class ScenarioProducer {
         title = "Game Over";
         street = this.bridgeway2023();
     }
-    return new Scenario(title, description, street, player, this.topOfStreetY);
+    return new Scenario(key as ScenarioKey,title, description, street, player, this.topOfStreetY);
   }
 
   private obstacle(
