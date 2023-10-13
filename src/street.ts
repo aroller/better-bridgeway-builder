@@ -305,7 +305,7 @@ export class TargetObstacleProducer extends ObstacleProducer {
     assignX: boolean,
     public readonly target: GameObject,
   ) {
-    super(template, maxFrequencyInSeconds, assignX);
+    super(template, maxFrequencyInSeconds, assignX, false);// do not randomize traffic
   }
 
   /**
