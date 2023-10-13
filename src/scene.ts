@@ -48,7 +48,7 @@ export class Scene {
       this.topOfStreetY,
     );
     //assign defaults to make instances happy
-    this.scenario = this.scenarioProducer.getScenario(1);
+    this.scenario = this.scenarioProducer.getScenario(ScenarioProducer.getScenarioKeyForLevel(1));
     this.player = this.scenario.player;
     this.street = this.scenario.street;
     this.gameAttempts = new GameAttempts().startNewLevel();
