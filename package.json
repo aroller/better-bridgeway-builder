@@ -16,8 +16,8 @@
   "author": "Aaron Roller <aaron.roller@aawhere.com> (https://github.com/aroller)",
   "license": "MIT",
   "devDependencies": {
+    "@babel/preset-env": "^7.23.2",
     "@babel/core": "^7.23.2",
-    "@babel/preset-env": "^7.22.20",
     "@babel/preset-typescript": "^7.23.2",
     "@types/jest": "^27.0.2",
     "babel-core": "^6.26.3",
