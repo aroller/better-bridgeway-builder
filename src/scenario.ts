@@ -234,7 +234,7 @@ export class ScenarioProducer {
     const imageSrc = delivery ? "images/obstacles/truck-delivery.png" : "images/obstacles/car-wagon.png";
     const imageWidth = delivery ?  426 : 720;
     const imageHeight = delivery ? 249 : 332;
-    const imageScale = delivery ? 0.25 : 0.1;
+    const imageScale = delivery ? 0.22 : 0.1;
     return this.obstacle(
       x,
       y,
@@ -385,7 +385,7 @@ export class ScenarioProducer {
     const turnLaneProducers:ObstacleProducer[] = [];
     if (delivery) {
       const deliveryTruck = this.vehicleObstacle(
-        500, // specifically located to the right of the player crossing the street
+        480, // specifically located blocking the straight path for the pedestrian.
         y + 10, // it is not clear why the +10, but it is needed to make the truck appear in the correct location
         LaneDirection.RIGHT,
         ObstacleSpeeds.STOPPED,
