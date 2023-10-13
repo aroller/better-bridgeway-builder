@@ -220,12 +220,13 @@ export class Obstacle extends GameObject {
     let newY = this.y;
     const directionMultiplier = this.direction === LaneDirection.RIGHT ? -1 : 1; // -1 for right, 1 for left
     const yAdjustment = 5 * directionMultiplier; // Adjust based on lane direction
-    newY = this.y + yAdjustment;
-    // const safePassDistance = this.height + closestObstacle.height;
-    // const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
-    // if (distanceAwayFromOriginal < safePassDistance) {
-     
-    // }
+
+    //only adjust if the new y is not too far from the original
+    const maxPassDistance = this.height;
+    const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
+    if (distanceAwayFromOriginal < maxPassDistance) {
+      newY = this.y + yAdjustment;
+    }
   
     return newY;
   }
