@@ -1,6 +1,6 @@
 import { Street } from "./street";
 import { Player } from "./player";
-import { Scenario, ScenarioProducer } from "./scenario";
+import { Scenario, ScenarioProducer, ScenarioKey } from "./scenario";
 import { GameAttempts } from "./game";
 
 /**
@@ -48,7 +48,7 @@ export class Scene {
       this.topOfStreetY,
     );
     //assign defaults to make instances happy
-    this.scenario = this.scenarioProducer.getScenarioForLevel(1);
+    this.scenario = this.scenarioProducer.getScenario(1);
     this.player = this.scenario.player;
     this.street = this.scenario.street;
     this.gameAttempts = new GameAttempts().startNewLevel();
@@ -81,13 +81,13 @@ export class Scene {
     const level = this.gameAttempts.currentLevel;
     //start the next scenario
     this.deadPlayers = [];
-    this.scenario = this.scenarioProducer.getScenarioForLevel(
-      this.gameAttempts.currentLevel,
-    );
+    const scenarioKey = ScenarioProducer.getScenarioKeyForLevel(level);
+
+    this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.street = this.scenario.street;
     this.player = this.scenario.player;
     this.displayDialogWithHtmlFromFile(
-      `dialogs/level${level}.html`,
+      `dialogs/${scenarioKey}.html`,
       "Play",
       () => {},
     );
