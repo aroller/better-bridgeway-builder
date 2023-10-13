@@ -54,6 +54,7 @@ export class Obstacle extends GameObject {
     image?: HTMLImageElement,
     public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
     private readonly originalSpeed: ObstacleSpeeds | undefined = undefined,
+    private readonly originalY: number = y,
   ) {
     if (!image) {
       throw new Error("Image is required, but missing");
@@ -72,10 +73,10 @@ export class Obstacle extends GameObject {
   ): Obstacle {
     const adjustedSpeed = this.calculateSpeed(player, obstacles);
     const newX = this.x + adjustedSpeed * this.direction;
-
+    const newY = this.calculateYForPassing(player, obstacles);
     return new Obstacle(
       newX,
-      this.y,
+      newY,
       this.width,
       this.height,
       adjustedSpeed,
@@ -83,11 +84,12 @@ export class Obstacle extends GameObject {
       this.image,
       this.avoidance,
       this.originalSpeed,
+      this.originalY,
     );
   }
 
   private getClosestObject(
-    gameObjects: GameObject[],
+    gameObjects: readonly GameObject[],
   ): GameObject | undefined {
     let closestObstacle: GameObject | undefined;
     let closestDistance = Infinity;
@@ -189,6 +191,49 @@ export class Obstacle extends GameObject {
 
     return this.speed;
   }
+
+  /**
+   * Determine a new y which may be the same as this.
+   * If the obstacle is going to collide with another obstacle, 
+   * it will change lanes if ObstacleAvoidanceType is PASS.
+   * The passing vehicle never returns to its original lane.
+   * This is intended to demonstrate bicycle and vehicles passing each other
+   * on the shared street so using Heavy Traffic provides the best demonstration. 
+   * 
+   * @param player to be considered for collision avoidance. It won't pass the player
+   * @param obstacles will pass these obstacles if blocked
+   * @returns 
+   */
+  public calculateYForPassing(player: Player, obstacles: readonly Obstacle[]): number {
+    if (this.avoidance !== ObstacleAvoidanceType.PASS) {
+      return this.y;
+    }
+    const closestObstacle = this.getClosestObject(obstacles) as Obstacle;
+    
+    if (!closestObstacle){
+      return this.y;
+    } 
+    //only pass slower objects. If this is a slow object, put it back in the original lane
+    if (this.speed < closestObstacle.speed) {
+      return this.originalY;
+    }
+    
+    if(this.getDistanceTo(closestObstacle) > 2* this.width) {
+      return this.y;
+    }
+    
+    let newY = this.y;
+    const directionMultiplier = this.direction === LaneDirection.RIGHT ? -1 : 1; // -1 for right, 1 for left
+    const yAdjustment = 5 * directionMultiplier; // Adjust based on lane direction
+    const safePassDistance = this.height + closestObstacle.height;
+    const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
+    if (distanceAwayFromOriginal < safePassDistance) {
+      newY = this.y + yAdjustment;
+    }
+  
+    return newY;
+  }
+  
 }
 
 /**
