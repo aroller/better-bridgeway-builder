@@ -1,9 +1,26 @@
 import { string } from "mathjs";
 import { GameObject } from "./game";
+import { Player, PlayerSpeed } from "./player";
 
 export const enum LaneDirection {
   LEFT = -1,
   RIGHT = 1,
+}
+
+export const enum ObstacleSpeeds {
+  STOPPED = 0,
+  SLOW = 4,
+  MEDIUM = 10,
+  FAST = 14,
+}
+
+/**
+ * Indicate how to avoid obstacles
+ */
+export enum ObstacleAvoidanceType {
+  NONE,
+  BRAKE,
+  PASS,
 }
 
 /** Draws lines for lanes. Could be hidden or dashed.  */
@@ -34,25 +51,189 @@ export class Obstacle extends GameObject {
     height: number,
     public readonly speed: number,
     public readonly direction: LaneDirection,
-    image: HTMLImageElement,
+    image?: HTMLImageElement,
+    public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
+    private readonly originalSpeed: ObstacleSpeeds | undefined = undefined,
+    private readonly originalY: number = y,
   ) {
+    if (!image) {
+      throw new Error("Image is required, but missing");
+    }
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
     this.speed = speed;
     this.direction = direction;
+    if (this.originalSpeed === undefined) {
+      this.originalSpeed = speed;
+    }
   }
 
-  public moveObstacle(): Obstacle {
-    const newX = this.x + this.speed * this.direction;
+  public moveObstacle(
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): Obstacle {
+    const adjustedSpeed = this.calculateSpeed(player, obstacles);
+    const newX = this.x + adjustedSpeed * this.direction;
+    const newY = this.calculateYForPassing(player, obstacles);
     return new Obstacle(
       newX,
-      this.y,
+      newY,
       this.width,
       this.height,
-      this.speed,
+      adjustedSpeed,
       this.direction,
       this.image,
+      this.avoidance,
+      this.originalSpeed,
+      this.originalY,
     );
   }
+
+  private getClosestObject(
+    gameObjects: readonly GameObject[],
+  ): GameObject | undefined {
+    let closestObstacle: GameObject | undefined;
+    let closestDistance = Infinity;
+
+    gameObjects.forEach((gameObject) => {
+      const isObjectInLane =
+        gameObject.y >= this.y - this.height &&
+        gameObject.y <= this.y + this.height;
+      const isObjectInFront =
+        isObjectInLane &&
+        ((this.direction === LaneDirection.RIGHT && this.x < gameObject.x) ||
+          (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
+      if (isObjectInFront) {
+        const distance = Math.abs(this.x - gameObject.x);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestObstacle = gameObject;
+        }
+      }
+    });
+
+    return closestObstacle;
+  }
+
+  public calculateTimeToCollision(gameObjects: GameObject[]): number | undefined {
+    const closestObstacle = this.getClosestObject(gameObjects);
+    if (!closestObstacle) {
+      return undefined;
+    }
+    
+    const distanceToClosestObstacle = this.getDistanceTo(closestObstacle);
+    
+    // Calculate relative speed between this obstacle and the closest obstacle
+    const relativeSpeed = this.speed - ( closestObstacle instanceof Obstacle? (closestObstacle as Obstacle).speed : 0);
+    
+
+    // If the relative speed is negative, the objects are moving away from each other
+    if (relativeSpeed <= 0) {
+      return -Infinity;
+    }
+    
+    // Calculate time to collision
+    const timeToCollision = distanceToClosestObstacle / relativeSpeed;
+    
+    return timeToCollision;
+  }
+  
+  private getDistanceTo(gameObject: GameObject): number {
+    return Math.abs(this.x - gameObject.x);
+  }
+
+  private calculateDistanceToClosestObject(gameObjects: GameObject[]): number {
+    const closest = this.getClosestObject(gameObjects);
+    if (closest)  {
+      return this.getDistanceTo(closest);
+    }
+    return Infinity;
+  }
+
+  
+
+  /**
+   * Calculates the speed of the street object based on the player's position and obstacles on the street.
+   * If the player is in front of the obstacle, the obstacle will slow down if braking is enabled.
+   * If the player is behind the obstacle, the obstacle will speed up if going braking is enabled.
+   * @param player - The player object on the street.
+   * @param obstacles - An array of obstacles on the street.
+   * @returns The speed of the street object.
+   */
+  private calculateSpeed(
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number {
+    if (this.avoidance === ObstacleAvoidanceType.BRAKE) {
+      // combine player and obstacles treating the same.  Exclude this obstacle
+      const gameObjects: GameObject[] = [...obstacles, player].filter(
+        (gameObject) => gameObject !== this,
+      );
+      
+      const timeToCollision = this.calculateTimeToCollision(gameObjects);
+      let newSpeed = this.speed;
+      if(timeToCollision && timeToCollision > 0 && timeToCollision < 100 ) {
+        // If time to collision is less than a certain threshold, slow down
+        newSpeed -= 0.5; // Reduce speed by 10%
+      } 
+
+      const distanceToClosest = this.calculateDistanceToClosestObject(gameObjects);
+      if ( distanceToClosest < 200 ) {
+        newSpeed -= 0.5;
+      }
+      if( distanceToClosest < 100) {
+        newSpeed -= 1;
+      } else if(this.originalSpeed && newSpeed < this.originalSpeed) {
+        newSpeed += 0.25;
+      }
+
+      return Math.max(newSpeed, 0); // Ensure the speed is never negative
+    }
+
+    return this.speed;
+  }
+
+  /**
+   * Determine a new y which may be the same as this.
+   * If the obstacle is going to collide with another obstacle, 
+   * it will change lanes if ObstacleAvoidanceType is PASS.
+   * The passing vehicle never returns to its original lane.
+   * This is intended to demonstrate bicycle and vehicles passing each other
+   * on the shared street so using Heavy Traffic provides the best demonstration. 
+   * 
+   * @param player to be considered for collision avoidance. It won't pass the player
+   * @param obstacles will pass these obstacles if blocked
+   * @returns 
+   */
+  public calculateYForPassing(player: Player, obstacles: readonly Obstacle[]): number {
+    if (this.avoidance !== ObstacleAvoidanceType.PASS) {
+      return this.y;
+    }
+    const closestObstacle = this.getClosestObject(obstacles) as Obstacle;
+    
+    if (!closestObstacle){
+      return this.y;
+    } 
+    //only pass slower objects. If this is a slow object, put it back in the original lane
+    if (this.speed < closestObstacle.speed) {
+      return this.originalY;
+    }
+    
+    if(this.getDistanceTo(closestObstacle) > 2* this.width) {
+      return this.y;
+    }
+    
+    let newY = this.y;
+    const directionMultiplier = this.direction === LaneDirection.RIGHT ? -1 : 1; // -1 for right, 1 for left
+    const yAdjustment = 5 * directionMultiplier; // Adjust based on lane direction
+    const safePassDistance = this.height + closestObstacle.height;
+    const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
+    if (distanceAwayFromOriginal < safePassDistance) {
+      newY = this.y + yAdjustment;
+    }
+  
+    return newY;
+  }
+  
 }
 
 /**
@@ -65,23 +246,31 @@ export class ObstacleProducer {
    * Creates an instance of ObstacleProducer.
    * @param template The obstacle template to produce others.
    * @param maxFrequencyInSeconds The maximum frequency in seconds at which obstacles can be produced. It helps throttle the level of traffic.
+   * @param assignX If true, the x value will be assigned in the next method.  False keeps the x value of the template.
+   * @param randomizeTraffic True will pick only one producer at random. False will produce from all producers if ready.
    */
   constructor(
     public readonly template: Obstacle,
     public readonly maxFrequencyInSeconds: number = 1,
+    public readonly assignX: boolean = true,
+    public readonly randomizeTraffic: boolean = true,
   ) {}
 
   /**
-   *
+   * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    * @returns True if the producer is ready to produce another obstacle, false otherwise.
    */
-  public readyForNext(): boolean {
+  public readyForNext(player: Player): boolean {
     const currentTime = Date.now();
     const timeSinceLastObstacle = (currentTime - this.lastObstacleTime) / 1000;
     return timeSinceLastObstacle > this.maxFrequencyInSeconds;
   }
 
   public next(x: number): Obstacle {
+    //override x unless told not to
+    if (!this.assignX) {
+      x = this.template.x;
+    }
     const obstacle = new Obstacle(
       x,
       this.template.y,
@@ -90,9 +279,47 @@ export class ObstacleProducer {
       this.template.speed,
       this.template.direction,
       this.template.image,
+      this.template.avoidance,
     );
     this.lastObstacleTime = Date.now();
     return obstacle;
+  }
+}
+
+/**
+ * A class that produces obstacles at a certain frequency,
+ * but only when the player intersects with a target object.
+ * @extends ObstacleProducer
+ */
+export class TargetObstacleProducer extends ObstacleProducer {
+  /**
+   * Creates a new instance of TargetObstacleProducer.
+   * @param template - The obstacle template to use.
+   * @param maxFrequencyInSeconds - The maximum frequency at which to produce obstacles.
+   * @param assignX - Whether to assign the obstacle's X position randomly.
+   * @param target - The target object that the player must intersect with in order for obstacles to be produced.
+   */
+  constructor(
+    template: Obstacle,
+    maxFrequencyInSeconds: number,
+    assignX: boolean,
+    public readonly target: GameObject,
+  ) {
+    super(template, maxFrequencyInSeconds, assignX);
+  }
+
+  /**
+   * Determines whether the producer is ready to produce the next obstacle.
+   * @param player - The player object to check for intersection with the target object.
+   * @returns True if the producer is ready and the player intersects with the target object, false otherwise.
+   */
+  public readyForNext(player: Player): boolean {
+    const ready = super.readyForNext(player);
+    if (ready) {
+      const intersects = player.intersects(this.target);
+      return intersects;
+    }
+    return false;
   }
 }
 
@@ -142,9 +369,9 @@ export class Lane {
    * Updates the obstacles in the lane.
    * @returns A new instance of Lane with the updated obstacles.
    */
-  public updateObstacles(): Lane {
+  public updateObstacles(player: Player, obstacles: readonly Obstacle[]): Lane {
     const newObstacles = this.obstacles
-      .map((obstacle) => obstacle.moveObstacle())
+      .map((obstacle) => obstacle.moveObstacle(player, obstacles))
       .filter((obstacle) => {
         if (this.direction === LaneDirection.LEFT) {
           return obstacle.x + obstacle.width > 0;
@@ -218,18 +445,12 @@ export class Lane {
    * @param playerY - The y coordinate of the player.
    * @returns True if there is a collision, false otherwise.
    */
-  public detectCollision(playerX: number, playerY: number): boolean {
+  public detectCollision(player: Player): boolean {
     // Calculate the top position of the lane
     const positionY = this.centerY - this.laneWidth / 2;
 
     for (const obstacle of this.obstacles) {
-      if (
-        playerX > obstacle.x &&
-        playerX < obstacle.x + obstacle.width &&
-        playerY > positionY + (this.laneWidth - obstacle.height) / 2 &&
-        playerY <
-          positionY + (this.laneWidth - obstacle.height) / 2 + obstacle.height
-      ) {
+      if (player.intersects(obstacle)) {
         return true;
       }
     }
@@ -282,19 +503,31 @@ export class Street {
   /** Called periodically, this iterates each lane's ObstacleProducer which
    * will generate an obstacle at the appropriate moment in the scenario
    * and be added to the list of obstacles for the lane.
+   * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    */
-  public generateObstacles(): Street {
+  public generateObstacles(player: Player): Street {
+    const maxPerLane = 5;
     const randomLaneIndex = Math.floor(Math.random() * this.lanes.length);
     const newLanes = this.lanes.map((lane, index) => {
       if (index === randomLaneIndex) {
-        const offsetOffCanvas = 50;
-        const x =
-          lane.direction === LaneDirection.LEFT
-            ? lane.streetLength + offsetOffCanvas
-            : 0 - offsetOffCanvas;
-        let newObstacle: Obstacle | undefined;
-        for (const obstacleProducer of lane.obstacleProducers) {
-          lane = lane.addObstacle(obstacleProducer.next(x));
+        if (lane.obstacles.length < maxPerLane) {
+          const offsetOffCanvas = 50;
+          const x =
+            lane.direction === LaneDirection.LEFT
+              ? lane.streetLength + offsetOffCanvas
+              : 0 - offsetOffCanvas;
+          const producersCount = lane.obstacleProducers.length;
+          const randomProducerIndex = Math.floor(
+                Math.random() * producersCount,
+              );
+          lane.obstacleProducers.map((producer, index) => {
+            if (producer.readyForNext(player)) {
+              if (!producer.randomizeTraffic || index === randomProducerIndex) {
+              lane = lane.addObstacle(producer.next(x));
+            }
+          }
+          }
+          );
         }
       }
       return lane;
@@ -302,8 +535,13 @@ export class Street {
     return new Street(this.topOfStreetY, this.streetLength, newLanes);
   }
 
-  public updateObstacles(): Street {
-    const newLanes = this.lanes.map((lane) => lane.updateObstacles());
+  public updateObstacles(
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): Street {
+    const newLanes = this.lanes.map((lane) =>
+      lane.updateObstacles(player, obstacles),
+    );
     return new Street(this.topOfStreetY, this.streetLength, newLanes);
   }
 
@@ -313,9 +551,9 @@ export class Street {
    * @param {number} playerY - The y coordinate of the player.
    * @returns {boolean} - True if there is a collision, false otherwise.
    */
-  public detectCollision(playerX: number, playerY: number): boolean {
+  public detectCollision(player: Player): boolean {
     for (const lane of this.lanes) {
-      if (lane.detectCollision(playerX, playerY)) {
+      if (lane.detectCollision(player)) {
         return true;
       }
     }
@@ -338,5 +576,13 @@ export class Street {
       (totalWidth, lane) => totalWidth + lane.laneWidth,
       0,
     );
+  }
+
+  /**
+   * Gets all obstacles from all lanes.
+   * @returns An array of all obstacles.
+   */
+  public getAllObstacles(): readonly Obstacle[] {
+    return this.lanes.flatMap((lane) => lane.obstacles);
   }
 }
