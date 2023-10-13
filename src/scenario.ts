@@ -163,8 +163,7 @@ export class ScenarioProducer {
         break;
       case ScenarioKey.CARS_PASS_BICYCLES:
         title = "Cars Pass Bicycles";
-        description =
-          "Cars use the middle lane to pass the slower bicycles.";
+        description = "Cars use the middle lane to pass the slower bicycles.";
         street = this.bridgeway2023(
           HEAVY_TRAFFIC,
           PARKING_INCLUDED,
@@ -191,7 +190,14 @@ export class ScenarioProducer {
         title = "Game Over";
         street = this.bridgeway2023();
     }
-    return new Scenario(key as ScenarioKey,title, description, street, player, this.topOfStreetY);
+    return new Scenario(
+      key as ScenarioKey,
+      title,
+      description,
+      street,
+      player,
+      this.topOfStreetY,
+    );
   }
 
   private obstacle(
@@ -222,19 +228,82 @@ export class ScenarioProducer {
     );
   }
 
+  /** Hidden from line of sight of the player.
+   * Appears abruptly when the player reaches the lane.
+   * Doesn't brake for the player simulating a driver not seeing the pedestrian.
+   *
+   * @param x
+   * @param y
+   * @param direction
+   * @returns
+   */
+  private ghostVehicleObstacle(
+    x: number,
+    y: number,
+    direction: LaneDirection,
+  ): Obstacle {
+    return this.obstacle(
+      x,
+      y,
+      direction,
+      ObstacleSpeeds.FAST,
+      ObstacleAvoidanceType.NONE,
+      "images/obstacles/car-ghost.png",
+      509,
+      266,
+      0.15,
+    );
+  }
+
+  /** parked delivery vehicle blocks pedestrian crossing, bicycle passing,
+   * emergency vehicles and line of sight ghost vehicles.
+   */
+  private deliveryVehicleObstacle(
+    x: number,
+    y: number,
+    direction: LaneDirection,
+  ): Obstacle {
+    return this.obstacle(
+      x,
+      y,
+      direction,
+      ObstacleSpeeds.STOPPED,
+      ObstacleAvoidanceType.NONE,
+      "images/obstacles/truck-delivery.png",
+      426,
+      249,
+      0.22,
+    );
+  }
+
+  /** Regular cars that populate the lanes.
+   * The car is a red racer if obstacleAvoidance will not stop for the player.
+   * The car is a blue wagon if obstacleAvoidance will stop for the player.
+   *
+   * @param x
+   * @param y
+   * @param direction
+   * @param speed
+   * @param obstacleAvoidance
+   * @returns
+   */
   private vehicleObstacle(
     x: number,
     y: number,
     direction: LaneDirection,
     speed: number = ObstacleSpeeds.MEDIUM,
     obstacleAvoidance: ObstacleAvoidanceType,
-    delivery: boolean = false,
   ): Obstacle {
-
-    const imageSrc = delivery ? "images/obstacles/truck-delivery.png" : "images/obstacles/car-wagon.png";
-    const imageWidth = delivery ?  426 : 720;
-    const imageHeight = delivery ? 249 : 332;
-    const imageScale = delivery ? 0.22 : 0.1;
+    const racer =
+      (speed != ObstacleSpeeds.STOPPED &&
+        obstacleAvoidance === ObstacleAvoidanceType.NONE) ||
+      obstacleAvoidance === ObstacleAvoidanceType.PASS;
+    const imageSrc = racer
+      ? "images/obstacles/car-racer.png"
+      : "images/obstacles/car-wagon.png";
+    const imageWidth = racer ? 512 : 720;
+    const imageHeight = racer ? 285 : 332;
+    const imageScale = racer ? 0.15 : 0.1;
     return this.obstacle(
       x,
       y,
@@ -322,7 +391,7 @@ export class ScenarioProducer {
     // these x values are hard coded to the scene to match parked cars
     const closeToParkedCarX = PLAYER_START_X;
     const yTriggerPoint = 380;
-    const targetWidth = 150;
+    const targetWidth = 100;
     const targetHeight = 25;
     const targets = [
       new GameObject(
@@ -336,12 +405,10 @@ export class ScenarioProducer {
     const speed = ObstacleSpeeds.MEDIUM;
     // this vehicle appears when the player reaches the lane
     const hiddenVehicleStartingX = PLAYER_START_X - 100;
-    const hiddenVehicleTemplate = this.vehicleObstacle(
+    const hiddenVehicleTemplate = this.ghostVehicleObstacle(
       hiddenVehicleStartingX,
       vehicleLaneY,
       LaneDirection.RIGHT,
-      speed,
-      ObstacleAvoidanceType.BRAKE, // this vehicle will stop for the player even though it appears abruptly
     );
     for (const target of targets) {
       producers.push(
@@ -382,18 +449,17 @@ export class ScenarioProducer {
       ),
     );
     y = y + turnLaneWidth;
-    const turnLaneProducers:ObstacleProducer[] = [];
+    const turnLaneProducers: ObstacleProducer[] = [];
     if (delivery) {
-      const deliveryTruck = this.vehicleObstacle(
+      const deliveryTruck = this.deliveryVehicleObstacle(
         480, // specifically located blocking the straight path for the pedestrian.
         y + 10, // it is not clear why the +10, but it is needed to make the truck appear in the correct location
         LaneDirection.RIGHT,
-        ObstacleSpeeds.STOPPED,
-        ObstacleAvoidanceType.NONE,
-        true,
       );
-      console.log("turnLaneProducers", deliveryTruck );
-      turnLaneProducers.push(new ObstacleProducer(deliveryTruck, 10000, false, false));
+      console.log("turnLaneProducers", deliveryTruck);
+      turnLaneProducers.push(
+        new ObstacleProducer(deliveryTruck, 10000, false, false),
+      );
     }
     street = street.addLane(
       LaneDirection.LEFT,
