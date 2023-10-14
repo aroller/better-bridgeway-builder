@@ -71,10 +71,10 @@ export class Obstacle extends GameObject {
   }
 
   /** Helps the producers create a new obstacle in the given location.  */
-  public clone(x: number) {
+  public clone(x: number = this.x, y: number = this.y) {
     return new Obstacle(
       x,
-      this.y,
+      y,
       this.width,
       this.height,
       this.speed,
@@ -294,17 +294,31 @@ export class Obstacle extends GameObject {
       return this.originalY;
     }
 
+    // return to original lane if safe to do so
+    const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
+    const yAdjustmentToReturn = 2 * this.direction;
+    if (distanceAwayFromOriginal > this.height) {
+      const returnPreview = this.clone(this.x, this.originalY);
+      if (!returnPreview.collisionDetected(obstacles)) {
+        const closestIfReturned = returnPreview.getClosestObject(obstacles);
+        if (!closestIfReturned) {
+          return this.originalY;
+        }
+        if (returnPreview.getDistanceTo(closestIfReturned) > 5 * this.width) {
+          return this.originalY;
+        }
+      }
+    }
     if (this.getDistanceTo(closestObstacle) > 2 * this.width) {
       return this.y;
     }
 
     let newY = this.y;
     const directionMultiplier = this.direction === LaneDirection.RIGHT ? -1 : 1; // -1 for right, 1 for left
-    const yAdjustment = 5 * directionMultiplier; // Adjust based on lane direction
+    const yAdjustment = 8 * directionMultiplier; // Adjust based on lane direction
 
     //only adjust if the new y is not too far from the original
     const maxPassDistance = this.height;
-    const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
     if (distanceAwayFromOriginal < maxPassDistance) {
       newY = this.y + yAdjustment;
     }
@@ -599,7 +613,10 @@ export class Street {
                   newObstacle = producer.next(safeX);
                   safeX += 2 * newObstacle.width * -lane.direction; // grows off screen
                   attempts++;
-                } while (attempts < 3 && newObstacle.collisionDetected(lane.obstacles));
+                } while (
+                  attempts < 3 &&
+                  newObstacle.collisionDetected(lane.obstacles)
+                );
                 lane = lane.addObstacle(newObstacle);
               }
             }
