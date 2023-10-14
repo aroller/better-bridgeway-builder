@@ -62,6 +62,12 @@ export class Obstacle extends GameObject {
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
   }
 
+  public static getCrashedImage(): HTMLImageElement {
+    const image = new Image();
+    image.src = "images/obstacles/crashed.png";
+    return image;
+  }
+
   public moveObstacle(
     player: Player,
     obstacles: readonly Obstacle[],
@@ -69,19 +75,36 @@ export class Obstacle extends GameObject {
     const adjustedSpeed = this.calculateSpeed(player, obstacles);
     const newX = this.x + adjustedSpeed * this.direction;
     const newY = this.calculateYForPassing(player, obstacles);
+    const crashed = this.detectCollision(obstacles);
     return new Obstacle(
       newX,
       newY,
       this.width,
       this.height,
-      adjustedSpeed,
+      crashed? ObstacleSpeeds.STOPPED: adjustedSpeed,
       this.direction,
-      this.image,
+      crashed?Obstacle.getCrashedImage():this.image,
       this.avoidance,
       this.originalSpeed,
       this.originalY,
     );
   }
+
+  /** Returns true if this obstacle is colliding with any other obstacle
+   * 
+   * @param obstacles 
+   */
+  private detectCollision(obstacles: readonly Obstacle[]) {
+    const collision = obstacles.some((obstacle) => {
+      if (obstacle === this) {
+        return false;
+      }
+      return this.intersects(obstacle);
+    });
+    return collision;
+  }
+
+  
 
   private getClosestObject(
     gameObjects: readonly GameObject[],
