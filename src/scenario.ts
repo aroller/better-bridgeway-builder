@@ -227,6 +227,7 @@ export class ScenarioProducer {
     imageHeight: number,
     imageScale: number,
     detectCollision: boolean = false,
+    emergencyVehicle: boolean = false,
   ): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
     const objectWidth = imageWidth * imageScale;
@@ -243,6 +244,7 @@ export class ScenarioProducer {
       image,
       obstacleAvoidance,
       detectCollision,
+      emergencyVehicle,
     );
   }
 
@@ -303,14 +305,16 @@ export class ScenarioProducer {
       y,
       direction,
       ObstacleSpeeds.MEDIUM,
-      ObstacleAvoidanceType.BRAKE,
+      ObstacleAvoidanceType.PASS,
       "images/obstacles/truck-ambulance.png",
       426,
       249,
       0.22,
       true,// detect collision
+      true, // emergency vehicle  
     );
   }
+
 
   /** Regular cars that populate the lanes.
    * The car is a red racer if obstacleAvoidance will not stop for the player.
@@ -407,7 +411,7 @@ export class ScenarioProducer {
     // add an ambulance first to demonstrate a clear path
     if (ambulance) {
       const ambulance = this.ambulanceObstacle(y, direction);
-      const ambulanceFrequency = 2; // multiple productions shows multiple scenarios
+      const ambulanceFrequency = 10; // multiple productions shows multiple scenarios
       producers.push(new ObstacleProducer(ambulance, ambulanceFrequency));
     }
 
@@ -509,7 +513,7 @@ export class ScenarioProducer {
         obstacleAvoidance,
         bicycles,
         delivery, // ghost vehicles appear because of delivery trucks
-        ambulance,
+        //no ambulance - only travels southbound from Fire Station to Old Town
       ),
     );
 

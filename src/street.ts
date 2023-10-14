@@ -104,7 +104,7 @@ export class Obstacle extends GameObject {
         Obstacle.getCrashedImage(),
         ObstacleAvoidanceType.NONE,
         false, // no collision detection for crashed obstacles
-        this.emergencyVehicle,
+        false, // crash is no longer emergency vehicle
         this.originalSpeed,
         this.originalY,
       );
@@ -591,12 +591,13 @@ export class Street {
           lane.obstacleProducers.map((producer, index) => {
             if (producer.readyForNext(player)) {
               if (!producer.randomizeTraffic || index === randomProducerIndex) {
+                // only produce if a safe location is found
                 let safeX = x;
                 let newObstacle;
                 let attempts = 0; // circuit breaker
                 do {
                   newObstacle = producer.next(safeX);
-                  safeX += 2 * newObstacle.width * -lane.direction;
+                  safeX += 2 * newObstacle.width * -lane.direction; // grows off screen
                   attempts++;
                 } while (attempts < 3 && newObstacle.collisionDetected(lane.obstacles));
                 lane = lane.addObstacle(newObstacle);
