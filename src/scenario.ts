@@ -60,6 +60,7 @@ export enum ScenarioKey {
   BICYCLES_SHARED_LANE = "bicycles-shared-lane",
   CARS_PASS_BICYCLES = "cars-pass-bicycles",
   CENTER_LANE_DELIVERY = "center-lane-delivery",
+  CENTER_LANE_AMBULANCE = "center-lane-ambulance",
   GAME_OVER = "game-over",
 }
 
@@ -105,6 +106,7 @@ export class ScenarioProducer {
     const BICYCLES_INCLUDED = true;
     const BICYCLES_NOT_INCLUDED = false;
     const DELIVERY_INCLUDED = true;
+    const AMBULANCE_INCLUDED = true;
     switch (key) {
       case ScenarioKey.LIGHT_TRAFFIC:
         title = "Light Traffic is Easy to Cross";
@@ -182,6 +184,20 @@ export class ScenarioProducer {
           ObstacleAvoidanceType.BRAKE,
           BICYCLES_INCLUDED,
           DELIVERY_INCLUDED,
+        );
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case ScenarioKey.CENTER_LANE_AMBULANCE:
+        title = "First Responders blocked by Delivery Trucks in Center Turn Lane";
+        description =
+          "The center turn lane can not both be a delivery lane and emergency lane.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.PASS,
+          BICYCLES_NOT_INCLUDED,
+          DELIVERY_INCLUDED,
+          AMBULANCE_INCLUDED,
         );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
@@ -270,6 +286,23 @@ export class ScenarioProducer {
       ObstacleSpeeds.STOPPED,
       ObstacleAvoidanceType.NONE,
       "images/obstacles/truck-delivery.png",
+      426,
+      249,
+      0.22,
+    );
+  }
+
+  private ambulanceObstacle(
+    y: number,
+    direction: LaneDirection,
+  ): Obstacle {
+    return this.obstacle(
+      0,
+      y,
+      direction,
+      ObstacleSpeeds.MEDIUM,
+      ObstacleAvoidanceType.PASS,
+      "images/obstacles/truck-ambulance.png",
       426,
       249,
       0.22,
@@ -438,6 +471,7 @@ export class ScenarioProducer {
     obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
     bicycles: boolean = false,
     delivery: boolean = false,
+    ambulance: boolean = false,
   ): Street {
     const frequency = lightTraffic ? 4 : 2;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
@@ -466,7 +500,7 @@ export class ScenarioProducer {
     y = y + turnLaneWidth;
     const turnLaneProducers: ObstacleProducer[] = [];
     if (delivery) {
-      turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
+      turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y,ambulance));
     }
     street = street.addLane(
       LaneDirection.LEFT,
@@ -511,8 +545,8 @@ export class ScenarioProducer {
    * @returns An array of obstacle producers.
    */
   private parkingLaneObstacleProducers(y: number): readonly ObstacleProducer[] {
-    const frequency = 1;
-    const speed = 0;
+    const frequency = 10000; // only produce one obstacle for each parking spot...do not repeat
+    const speed = ObstacleSpeeds.STOPPED;
     const xForEach = [20, 120, 240, 360, 560, 840, 940, 1040, 1150];
     const producers: ObstacleProducer[] = [];
     for (const x of xForEach) {
@@ -542,7 +576,7 @@ export class ScenarioProducer {
    * @param y the middle of the center lane
    * @returns the producers for the delivery trucks
    */
-  private centerlaneDeliveryObstacleProducers(y: number): readonly ObstacleProducer[] {
+  private centerlaneDeliveryObstacleProducers(y: number, ambulance:boolean = false): readonly ObstacleProducer[] {
     const producers: ObstacleProducer[] = [];
 
     // produce a delivery truck in the center lane
@@ -552,6 +586,11 @@ export class ScenarioProducer {
       LaneDirection.RIGHT,
     );
     producers.push(new ObstacleProducer(deliveryTruckSB, 10000, false, false));
+
+    if (ambulance) {
+      const ambulance = this.ambulanceObstacle(y, LaneDirection.RIGHT);
+      producers.push(new ObstacleProducer(ambulance, 10000, false, false));
+    }    
     return producers
   }
   /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene.
