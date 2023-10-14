@@ -54,6 +54,7 @@ export class Obstacle extends GameObject {
     image?: HTMLImageElement,
     public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
     public readonly detectCollisions: boolean = false,
+    public readonly emergencyVehicle: boolean = false,
     private readonly originalSpeed: ObstacleSpeeds = speed,
     private readonly originalY: number = y,
   ) {
@@ -70,7 +71,7 @@ export class Obstacle extends GameObject {
   }
 
   /** Helps the producers create a new obstacle in the given location.  */
-  public clone(x:number){
+  public clone(x: number) {
     return new Obstacle(
       x,
       this.y,
@@ -81,6 +82,7 @@ export class Obstacle extends GameObject {
       this.image,
       this.avoidance,
       this.detectCollisions,
+      this.emergencyVehicle,
       this.originalSpeed,
       this.originalY,
     );
@@ -90,14 +92,11 @@ export class Obstacle extends GameObject {
     player: Player,
     obstacles: readonly Obstacle[],
   ): Obstacle {
-    const adjustedSpeed = this.calculateSpeed(player, obstacles);
-    const newX = this.x + adjustedSpeed * this.direction;
-    const newY = this.calculateYForPassing(player, obstacles);
-    const collided = this.detectCollisions &&  this.collisionDetected(obstacles);
+    const collided = this.detectCollisions && this.collisionDetected(obstacles);
     if (collided) {
       return new Obstacle(
-        newX,
-        newY,
+        this.x,
+        this.y,
         this.width,
         this.height,
         ObstacleSpeeds.STOPPED,
@@ -105,10 +104,14 @@ export class Obstacle extends GameObject {
         Obstacle.getCrashedImage(),
         ObstacleAvoidanceType.NONE,
         false, // no collision detection for crashed obstacles
+        this.emergencyVehicle,
         this.originalSpeed,
         this.originalY,
       );
     }
+    const adjustedSpeed = this.calculateSpeed(player, obstacles);
+    const newX = this.x + adjustedSpeed * this.direction;
+    const newY = this.calculateYForPassing(player, obstacles);
     return new Obstacle(
       newX,
       newY,
@@ -119,16 +122,17 @@ export class Obstacle extends GameObject {
       this.image,
       this.avoidance,
       this.detectCollisions,
+      this.emergencyVehicle,
       this.originalSpeed,
       this.originalY,
     );
   }
 
   /** Returns true if this obstacle is colliding with any other obstacle
-   * 
-   * @param obstacles 
+   *
+   * @param obstacles
    */
-  private collisionDetected(obstacles: readonly Obstacle[]) {
+  public collisionDetected(obstacles: readonly Obstacle[]) {
     const collision = obstacles.some((obstacle) => {
       if (obstacle === this) {
         return false;
@@ -137,8 +141,6 @@ export class Obstacle extends GameObject {
     });
     return collision;
   }
-
-  
 
   private getClosestObject(
     gameObjects: readonly GameObject[],
@@ -166,42 +168,45 @@ export class Obstacle extends GameObject {
     return closestObstacle;
   }
 
-  public calculateTimeToCollision(gameObjects: GameObject[]): number | undefined {
+  public calculateTimeToCollision(
+    gameObjects: GameObject[],
+  ): number | undefined {
     const closestObstacle = this.getClosestObject(gameObjects);
     if (!closestObstacle) {
       return undefined;
     }
-    
+
     const distanceToClosestObstacle = this.getDistanceTo(closestObstacle);
-    
+
     // Calculate relative speed between this obstacle and the closest obstacle
-    const relativeSpeed = this.speed - ( closestObstacle instanceof Obstacle? (closestObstacle as Obstacle).speed : 0);
-    
+    const relativeSpeed =
+      this.speed -
+      (closestObstacle instanceof Obstacle
+        ? (closestObstacle as Obstacle).speed
+        : 0);
 
     // If the relative speed is negative, the objects are moving away from each other
     if (relativeSpeed <= 0) {
       return -Infinity;
     }
-    
+
     // Calculate time to collision
     const timeToCollision = distanceToClosestObstacle / relativeSpeed;
-    
+
     return timeToCollision;
   }
-  
+
   private getDistanceTo(gameObject: GameObject): number {
     return Math.abs(this.x - gameObject.x);
   }
 
   private calculateDistanceToClosestObject(gameObjects: GameObject[]): number {
     const closest = this.getClosestObject(gameObjects);
-    if (closest)  {
+    if (closest) {
       return this.getDistanceTo(closest);
     }
     return Infinity;
   }
-
-  
 
   /**
    * Calculates the speed of the street object based on the player's position and obstacles on the street.
@@ -220,21 +225,22 @@ export class Obstacle extends GameObject {
       const gameObjects: GameObject[] = [...obstacles, player].filter(
         (gameObject) => gameObject !== this,
       );
-      
+
       const timeToCollision = this.calculateTimeToCollision(gameObjects);
       let newSpeed = this.speed;
-      if(timeToCollision && timeToCollision > 0 && timeToCollision < 100 ) {
+      if (timeToCollision && timeToCollision > 0 && timeToCollision < 100) {
         // If time to collision is less than a certain threshold, slow down
         newSpeed -= 0.5; // Reduce speed by 10%
-      } 
+      }
 
-      const distanceToClosest = this.calculateDistanceToClosestObject(gameObjects);
-      if ( distanceToClosest < 200 ) {
+      const distanceToClosest =
+        this.calculateDistanceToClosestObject(gameObjects);
+      if (distanceToClosest < 200) {
         newSpeed -= 0.5;
       }
-      if( distanceToClosest < 100) {
+      if (distanceToClosest < 100 || this.emergencyVehicleDetected(obstacles)) {
         newSpeed -= 1;
-      } else if(this.originalSpeed && newSpeed < this.originalSpeed) {
+      } else if (this.originalSpeed && newSpeed < this.originalSpeed) {
         newSpeed += 0.25;
       }
 
@@ -244,36 +250,54 @@ export class Obstacle extends GameObject {
     return this.speed;
   }
 
+  /** Returns true if an emergency vehicle is detected in the obstacles given
+   *
+   * @param obstacles any collection of obstacles where emergency vehicles may be found
+   * @returns true if an emergency vehicle is detected in the obstacles given
+   */
+  private emergencyVehicleDetected(obstacles: readonly Obstacle[]): boolean {
+    const emergencyVehicleDetected = obstacles.some((obstacle) => {
+      if (obstacle === this) {
+        return false;
+      }
+      return obstacle.emergencyVehicle;
+    });
+    return emergencyVehicleDetected;
+  }
+
   /**
    * Determine a new y which may be the same as this.
-   * If the obstacle is going to collide with another obstacle, 
+   * If the obstacle is going to collide with another obstacle,
    * it will change lanes if ObstacleAvoidanceType is PASS.
    * The passing vehicle never returns to its original lane.
    * This is intended to demonstrate bicycle and vehicles passing each other
-   * on the shared street so using Heavy Traffic provides the best demonstration. 
-   * 
+   * on the shared street so using Heavy Traffic provides the best demonstration.
+   *
    * @param player to be considered for collision avoidance. It won't pass the player
    * @param obstacles will pass these obstacles if blocked
-   * @returns 
+   * @returns
    */
-  public calculateYForPassing(player: Player, obstacles: readonly Obstacle[]): number {
+  public calculateYForPassing(
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number {
     if (this.avoidance !== ObstacleAvoidanceType.PASS) {
       return this.y;
     }
     const closestObstacle = this.getClosestObject(obstacles) as Obstacle;
-    
-    if (!closestObstacle){
+
+    if (!closestObstacle) {
       return this.y;
-    } 
+    }
     //only pass slower objects. If this is a slow object, put it back in the original lane
     if (this.speed < closestObstacle.speed) {
       return this.originalY;
     }
-    
-    if(this.getDistanceTo(closestObstacle) > 2* this.width) {
+
+    if (this.getDistanceTo(closestObstacle) > 2 * this.width) {
       return this.y;
     }
-    
+
     let newY = this.y;
     const directionMultiplier = this.direction === LaneDirection.RIGHT ? -1 : 1; // -1 for right, 1 for left
     const yAdjustment = 5 * directionMultiplier; // Adjust based on lane direction
@@ -284,10 +308,9 @@ export class Obstacle extends GameObject {
     if (distanceAwayFromOriginal < maxPassDistance) {
       newY = this.y + yAdjustment;
     }
-  
+
     return newY;
   }
-  
 }
 
 /**
@@ -350,7 +373,7 @@ export class TargetObstacleProducer extends ObstacleProducer {
     assignX: boolean,
     public readonly target: GameObject,
   ) {
-    super(template, maxFrequencyInSeconds, assignX, false);// do not randomize traffic
+    super(template, maxFrequencyInSeconds, assignX, false); // do not randomize traffic
   }
 
   /**
@@ -563,16 +586,23 @@ export class Street {
               : 0 - offsetOffCanvas;
           const producersCount = lane.obstacleProducers.length;
           const randomProducerIndex = Math.floor(
-                Math.random() * producersCount,
-              );
+            Math.random() * producersCount,
+          );
           lane.obstacleProducers.map((producer, index) => {
             if (producer.readyForNext(player)) {
               if (!producer.randomizeTraffic || index === randomProducerIndex) {
-              lane = lane.addObstacle(producer.next(x));
+                let safeX = x;
+                let newObstacle;
+                let attempts = 0; // circuit breaker
+                do {
+                  newObstacle = producer.next(safeX);
+                  safeX += 2 * newObstacle.width * -lane.direction;
+                  attempts++;
+                } while (attempts < 3 && newObstacle.collisionDetected(lane.obstacles));
+                lane = lane.addObstacle(newObstacle);
+              }
             }
-          }
-          }
-          );
+          });
         }
       }
       return lane;

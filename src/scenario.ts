@@ -194,7 +194,7 @@ export class ScenarioProducer {
         street = this.bridgeway2023(
           HEAVY_TRAFFIC,
           PARKING_INCLUDED,
-          ObstacleAvoidanceType.PASS,
+          ObstacleAvoidanceType.BRAKE,
           BICYCLES_NOT_INCLUDED,
           DELIVERY_INCLUDED,
           AMBULANCE_INCLUDED,
@@ -226,6 +226,7 @@ export class ScenarioProducer {
     imageWidth: number,
     imageHeight: number,
     imageScale: number,
+    detectCollision: boolean = false,
   ): Obstacle {
     // Place obstacles at the beginning or end of the lane based on the lane direction.
     const objectWidth = imageWidth * imageScale;
@@ -241,6 +242,7 @@ export class ScenarioProducer {
       direction,
       image,
       obstacleAvoidance,
+      detectCollision,
     );
   }
 
@@ -301,11 +303,12 @@ export class ScenarioProducer {
       y,
       direction,
       ObstacleSpeeds.MEDIUM,
-      ObstacleAvoidanceType.PASS,
+      ObstacleAvoidanceType.BRAKE,
       "images/obstacles/truck-ambulance.png",
       426,
       249,
       0.22,
+      true,// detect collision
     );
   }
 
@@ -388,6 +391,7 @@ export class ScenarioProducer {
     obstacleAvoidance: ObstacleAvoidanceType,
     bicycles: boolean = false,
     centerLaneDelivery: boolean = false,
+    ambulance: boolean = false,
   ): readonly ObstacleProducer[] {
     const vehicleTemplate = this.vehicleObstacle(
       0,
@@ -396,20 +400,32 @@ export class ScenarioProducer {
       ObstacleSpeeds.MEDIUM,
       obstacleAvoidance,
     );
-    const producers = [
-      new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds),
-    ];
+    const producers = [];
+    // always add cars
+    producers.push(new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds));
+
+    // add an ambulance first to demonstrate a clear path
+    if (ambulance) {
+      const ambulance = this.ambulanceObstacle(y, direction);
+      const ambulanceFrequency = 2; // multiple productions shows multiple scenarios
+      producers.push(new ObstacleProducer(ambulance, ambulanceFrequency));
+    }
+
+    // bicycles are optional and move slower than cars
     if (bicycles) {
       const bicycleTemplate = this.bicycleObstacle(y, direction);
       producers.push(
         new ObstacleProducer(bicycleTemplate, maxFrequencyInSeconds),
       );
     }
+
+    // ghost vehicles appear when the player reaches the lane hidden by parked cars
     if (parkingLineOfSightTriggeredVehicles) {
       producers.push(
         ...this.ghostVehicleTargetTriggeredProducers(y, LaneDirection.RIGHT),
       );
     }
+    // ghost vehicles appear when the player reaches the lane hidden by delivery vehicle
     if (centerLaneDelivery) {
       producers.push(
         ...this.ghostVehicleTargetTriggeredProducers(y, LaneDirection.LEFT),
@@ -493,6 +509,7 @@ export class ScenarioProducer {
         obstacleAvoidance,
         bicycles,
         delivery, // ghost vehicles appear because of delivery trucks
+        ambulance,
       ),
     );
 
@@ -500,7 +517,7 @@ export class ScenarioProducer {
     y = y + turnLaneWidth;
     const turnLaneProducers: ObstacleProducer[] = [];
     if (delivery) {
-      turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y,ambulance));
+      turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
     }
     street = street.addLane(
       LaneDirection.LEFT,
@@ -522,6 +539,8 @@ export class ScenarioProducer {
         parkingIncluded,
         obstacleAvoidance,
         bicycles,
+        false, // ghost vehicles do not appear because of delivery trucks in southbound lane
+        ambulance,
       ),
     );
 
