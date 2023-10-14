@@ -53,6 +53,7 @@ export class Obstacle extends GameObject {
     public readonly direction: LaneDirection,
     image?: HTMLImageElement,
     public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
+    public readonly detectCollisions: boolean = false,
     private readonly originalSpeed: ObstacleSpeeds = speed,
     private readonly originalY: number = y,
   ) {
@@ -68,6 +69,23 @@ export class Obstacle extends GameObject {
     return image;
   }
 
+  /** Helps the producers create a new obstacle in the given location.  */
+  public clone(x:number){
+    return new Obstacle(
+      x,
+      this.y,
+      this.width,
+      this.height,
+      this.speed,
+      this.direction,
+      this.image,
+      this.avoidance,
+      this.detectCollisions,
+      this.originalSpeed,
+      this.originalY,
+    );
+  }
+
   public moveObstacle(
     player: Player,
     obstacles: readonly Obstacle[],
@@ -75,16 +93,32 @@ export class Obstacle extends GameObject {
     const adjustedSpeed = this.calculateSpeed(player, obstacles);
     const newX = this.x + adjustedSpeed * this.direction;
     const newY = this.calculateYForPassing(player, obstacles);
-    const crashed = this.detectCollision(obstacles);
+    const collided = this.detectCollisions &&  this.collisionDetected(obstacles);
+    if (collided) {
+      return new Obstacle(
+        newX,
+        newY,
+        this.width,
+        this.height,
+        ObstacleSpeeds.STOPPED,
+        this.direction,
+        Obstacle.getCrashedImage(),
+        ObstacleAvoidanceType.NONE,
+        false, // no collision detection for crashed obstacles
+        this.originalSpeed,
+        this.originalY,
+      );
+    }
     return new Obstacle(
       newX,
       newY,
       this.width,
       this.height,
-      crashed? ObstacleSpeeds.STOPPED: adjustedSpeed,
+      adjustedSpeed,
       this.direction,
-      crashed?Obstacle.getCrashedImage():this.image,
+      this.image,
       this.avoidance,
+      this.detectCollisions,
       this.originalSpeed,
       this.originalY,
     );
@@ -94,7 +128,7 @@ export class Obstacle extends GameObject {
    * 
    * @param obstacles 
    */
-  private detectCollision(obstacles: readonly Obstacle[]) {
+  private collisionDetected(obstacles: readonly Obstacle[]) {
     const collision = obstacles.some((obstacle) => {
       if (obstacle === this) {
         return false;
@@ -291,16 +325,7 @@ export class ObstacleProducer {
     if (!this.assignX) {
       x = this.template.x;
     }
-    const obstacle = new Obstacle(
-      x,
-      this.template.y,
-      this.template.width,
-      this.template.height,
-      this.template.speed,
-      this.template.direction,
-      this.template.image,
-      this.template.avoidance,
-    );
+    const obstacle = this.template.clone(x);
     this.lastObstacleTime = Date.now();
     return obstacle;
   }
