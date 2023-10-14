@@ -296,16 +296,15 @@ export class Obstacle extends GameObject {
 
     // return to original lane if safe to do so
     const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
-    const yAdjustmentToReturn = 2 * this.direction;
     if (distanceAwayFromOriginal > this.height) {
       const returnPreview = this.clone(this.x, this.originalY);
       if (!returnPreview.collisionDetected(obstacles)) {
         const closestIfReturned = returnPreview.getClosestObject(obstacles);
         if (!closestIfReturned) {
-          return this.originalY;
+          return this.originalY; // abrupt return could be smoothed out
         }
         if (returnPreview.getDistanceTo(closestIfReturned) > 5 * this.width) {
-          return this.originalY;
+          return this.originalY; // abrupt return could be smoothed out
         }
       }
     }
