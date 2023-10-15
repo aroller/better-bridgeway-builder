@@ -215,7 +215,7 @@ export class ScenarioProducer {
           HEAVY_TRAFFIC,
           PARKING_INCLUDED,
           ObstacleAvoidanceType.BRAKE,
-          BICYCLES_INCLUDED,
+          BICYCLES_NOT_INCLUDED,
           DeliveryType.CURBSIDE,
           AMBULANCE_INCLUDED,
         );
