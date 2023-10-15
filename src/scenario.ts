@@ -40,6 +40,7 @@ export class Scenario {
    * @param street The street where the scenario takes place.
    * @param player The player involved in the scenario.
    * @param finishLineY The y coordinate of the finish line.
+   * @param background The path to the background image used for the scene.
    */
   constructor(
     public readonly key: ScenarioKey,
@@ -48,6 +49,7 @@ export class Scenario {
     public readonly street: Street,
     public readonly player: Player,
     public readonly finishLineY: number,
+    public readonly background: string,
   ) {}
 }
 
@@ -69,6 +71,11 @@ export enum DeliveryType {
   CENTER_LANE = "center-lane",
   CURBSIDE = "curbside",
   NONE = "none",
+}
+
+export enum Background {
+  EXISTING = "images/scene/better-bridgeway-background.png",
+  CURBSIDE = "images/scene/better-bridgeway-background-curbside.png",
 }
 /**
  * Creates specific scenarios to be executed in the game.
@@ -105,6 +112,7 @@ export class ScenarioProducer {
     let title;
     let description = "";
     let street;
+    let background: Background = Background.EXISTING;
     const LIGHT_TRAFFIC = true;
     const HEAVY_TRAFFIC = false;
     const PARKING_INCLUDED = true;
@@ -220,6 +228,7 @@ export class ScenarioProducer {
           AMBULANCE_INCLUDED,
         );
         player = this.curbsideDeliveryPlayer();
+        background = Background.CURBSIDE;
         break;
       case ScenarioKey.GAME_OVER:
       default:
@@ -233,6 +242,7 @@ export class ScenarioProducer {
       street,
       player,
       this.topOfStreetY,
+      background,
     );
   }
 
@@ -608,7 +618,8 @@ export class ScenarioProducer {
     const producers: ObstacleProducer[] = [];
     for (let i = 0; i < xForEach.length; i++) {
       const x: number = xForEach[i];
-      const comercialVehicle: boolean = curbsideLoading &&  commercialVehicleForEach[i];
+      const comercialVehicle: boolean =
+        curbsideLoading && commercialVehicleForEach[i];
       const obstacle = comercialVehicle
         ? this.deliveryVehicleObstacle(x, y, LaneDirection.RIGHT)
         : this.vehicleObstacle(
@@ -687,11 +698,13 @@ export class ScenarioProducer {
     );
   }
   /** A commercial delivery truck that parks curbside has a delivery person instead of a frog.
-   * 
+   *
    * @param speed Adjust the speeds of the player moving
-   * @returns 
+   * @returns
    */
-  private curbsideDeliveryPlayer(speed: PlayerSpeed = PlayerSpeed.NORMAL): Player {
+  private curbsideDeliveryPlayer(
+    speed: PlayerSpeed = PlayerSpeed.NORMAL,
+  ): Player {
     const imageWidth = 696;
     const imageScale = 0.07;
     const playerSize = imageWidth * imageScale;
