@@ -16,6 +16,10 @@ import { LaneDirection } from "./street";
  * Fathest left point putting the frog close to the parked cars.
  */
 const PLAYER_START_X = 440;
+const PARKED_CAR_2_X = 120;
+const PARKED_CAR_3_X = 240;
+const PARKED_CAR_4_X = 360;
+const PARKED_CAR_5_X = 560;
 const solidWhiteLineStyle = new LaneLineStyle();
 const solidYellowLineStyle = new LaneLineStyle("yellow");
 const dashedYellowLineStyle = new LaneLineStyle(
@@ -247,10 +251,10 @@ export class ScenarioProducer {
         description =
           "Crosswalks show drivers where to expect pedestrians.";
         street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
+          LIGHT_TRAFFIC,
           PARKING_INCLUDED,
           ObstacleAvoidanceType.BRAKE,
-          BICYCLES_INCLUDED,
+          BICYCLES_NOT_INCLUDED,
           DeliveryType.CURBSIDE,
           AMBULANCE_NOT_INCLUDED,
           CrosswalkType.BASIC,
@@ -497,6 +501,7 @@ export class ScenarioProducer {
   /**
    * Obstacle producers that trigger cars to appear when the player exits the parking
    * lane close to the parked cars.  This is to simulate the player's view being blocked.
+   * This is also used for the delivery truck in the center lane.
    *
    * @param vehicleLaneY The y-coordinate of the vehicle lane.
    * @returns An array of obstacle producers.
@@ -506,7 +511,7 @@ export class ScenarioProducer {
     direction: LaneDirection,
   ): readonly ObstacleProducer[] {
     // this vehicle appears when the player reaches the lane
-    const hiddenVehicleStartingX = PLAYER_START_X - 100 * direction;
+    const hiddenVehicleStartingX = PLAYER_START_X - 400 * direction;
     const hiddenVehicleTemplate = this.ghostVehicleObstacle(
       hiddenVehicleStartingX,
       vehicleLaneY,
@@ -514,14 +519,15 @@ export class ScenarioProducer {
     );
 
     // this is the target that will trigger the ghost car when the player reaches the lane
-    const closeToParkedCarX = PLAYER_START_X;
     console.log(`vehicleLaneY: ${vehicleLaneY}`);
     // trigger point is the bottom of the vehicle lane
     const yTriggerPoint = vehicleLaneY + hiddenVehicleTemplate.height;
-    const targetWidth = 50;
+    const targetX = PARKED_CAR_3_X;
+    // leave a small gap near the 5th parked car by the red curb
+    const targetWidth = 400; // emperically determined through observation
     const targetHeight = 5;
     const target = new GameObject(
-      closeToParkedCarX,
+      targetX,
       yTriggerPoint,
       targetWidth,
       targetHeight,
@@ -633,7 +639,7 @@ export class ScenarioProducer {
   ): readonly ObstacleProducer[] {
     const frequency = 10000; // only produce one obstacle for each parking spot...do not repeat
     const speed = ObstacleSpeeds.STOPPED;
-    const xForEach = [20, 120, 240, 360, 560, 840, 940, 1040, 1150];
+    const xForEach = [20, PARKED_CAR_2_X, PARKED_CAR_3_X, PARKED_CAR_4_X, PARKED_CAR_5_X, 840, 940, 1040, 1150];
     // array matches the x array, but indicates if the vehicle is a commercial vehicle
     const commercialVehicleForEach = [
       false,
