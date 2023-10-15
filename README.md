@@ -33,19 +33,19 @@ Demonstrates the problems with the current configuration (from east/top to west/
 
 ### Improved Infrastructure Levels
 
-The previous levels showed the challenges with the existing infrastructure.  Now improvements can be made to make it easier to cross the road. 
+The previous levels showed the challenges with the existing infrastructure.  Now improvements can be made to make it easier to cross the road. Continuing from previous levels...
 
-1. Crosswalk is added, but limited parking removed. A southbound vehicle appears instantly to squash the player in the crosswalk since the parked car blocks the view. 
-2. Parking near the crosswalk is removed to match DOT daylighting requirements.
-3. Delivery vehicle parks in the center turn lane and the line of sight problem returns to instantly produce a vehicle out of nowhere and squashed players.
+
+1. Curbside delivery clears the center lane for emergency vehicles. It also puts the delivery person on the sidewalk for delivery to The Trident. 
+2. Crosswalk is added, but limited parking removed. A southbound ghost vehicle appears instantly to squash the player in the crosswalk since the parked car blocks the view. 
+3. Parking near the crosswalk is removed to match DOT daylighting requirements.
 4. Rapid flashing beacon is added to warn drivers to stop, but now a delivery driver is squashed delivering goods. 
-5. Center turn lane is turned into a refuse island blocking deliveries from happening near the crosswalk.  Traffic clogs up due to slow bicycles and nobody passing in turn lane.
-6. Bicycle lanes added to both directions separating bicycle and vehicle traffic.  Deliveries take place in designated parking spots. 
-7. Emergency vehicle comes through and vehicles pull into the bicycle lane to allow passing.
-8. Southbound bicyclists in the bike lane get doored by a parked car or squashed by cars exiting parking lane.
-9.  Bi-directional bicycle lane moved to the east/top side of the street demonstrates the advantages of separating. 
-10. Emergency vehicle passes through with northbound vehicles pulling into the bicycle lanes.
-11. Emergency vehicle uses the bicycle lanes to pass stopped vehicles blocking the road. 
+5. Bicycle lanes added to both directions separating bicycle and vehicle traffic.  Deliveries take place in designated parking spots. 
+6. Emergency vehicle comes through and vehicles pull into the bicycle lane to allow passing.
+7.  Southbound bicyclists in the bike lane get doored by a parked car or squashed by cars exiting parking lane.
+8.  Bi-directional bicycle lane moved to the east/top side of the street demonstrates the advantages of separating. 
+9.  Emergency vehicle passes through with northbound vehicles pulling into the bicycle lanes.
+10. Emergency vehicle uses the bicycle lanes to pass stopped vehicles blocking the road. 
 
 ## Development
 

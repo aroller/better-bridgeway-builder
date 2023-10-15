@@ -64,6 +64,7 @@ export enum ScenarioKey {
   CENTER_LANE_DELIVERY = "center-lane-delivery",
   CENTER_LANE_AMBULANCE = "center-lane-ambulance",
   CURBSIDE_DELIVERY = "curbside-delivery",
+  CROSSWALK = "crosswalk",
   GAME_OVER = "game-over",
 }
 
@@ -76,6 +77,7 @@ export enum DeliveryType {
 export enum Background {
   EXISTING = "images/scene/better-bridgeway-background.png",
   CURBSIDE = "images/scene/better-bridgeway-background-curbside.png",
+  CROSSWALK = "images/scene/better-bridgeway-background-crosswalk.png",
 }
 /**
  * Creates specific scenarios to be executed in the game.
@@ -120,6 +122,7 @@ export class ScenarioProducer {
     const BICYCLES_INCLUDED = true;
     const BICYCLES_NOT_INCLUDED = false;
     const AMBULANCE_INCLUDED = true;
+    const AMBULANCE_NOT_INCLUDED = false;
     switch (key) {
       case ScenarioKey.LIGHT_TRAFFIC:
         title = "Light Traffic is Easy to Cross";
@@ -229,6 +232,21 @@ export class ScenarioProducer {
         );
         player = this.curbsideDeliveryPlayer();
         background = Background.CURBSIDE;
+        break;
+      case ScenarioKey.CROSSWALK:
+        title = "A Crosswalk is a Safer Place to Cross";
+        description =
+          "Crosswalks show drivers where to expect pedestrians.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_INCLUDED,
+          DeliveryType.CURBSIDE,
+          AMBULANCE_NOT_INCLUDED,
+        );
+        player = this.curbsideDeliveryPlayer();
+        background = Background.CROSSWALK;
         break;
       case ScenarioKey.GAME_OVER:
       default:
@@ -532,7 +550,7 @@ export class ScenarioProducer {
     street = street.addLane(
       LaneDirection.LEFT,
       vehicleLaneWidth,
-      new LaneLinesStyles(hiddenLineStyle, solidYellowLineStyle),
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
         y,
         LaneDirection.LEFT,
@@ -554,7 +572,7 @@ export class ScenarioProducer {
     street = street.addLane(
       LaneDirection.LEFT,
       turnLaneWidth,
-      new LaneLinesStyles(dashedYellowLineStyle, dashedYellowLineStyle),
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       turnLaneProducers,
     );
 
@@ -563,7 +581,7 @@ export class ScenarioProducer {
     street = street.addLane(
       LaneDirection.RIGHT,
       vehicleLaneWidth,
-      new LaneLinesStyles(solidYellowLineStyle, hiddenLineStyle),
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
         y,
         LaneDirection.RIGHT,
