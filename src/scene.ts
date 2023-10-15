@@ -290,7 +290,7 @@ export class Scene {
     // Display the current level number and scenario title.
     this.ctx.font = "bold 24px sans-serif";
     this.ctx.fillStyle = "white";
-    this.ctx.fillText(`Level ${currentLevel} - ${scenarioTitle}`, 10, 30);
+    this.ctx.fillText(`${currentLevel}: ${scenarioTitle}`, 10, 30);
 
     // Display the failed attempts and time elapsed.
     let x = 10;
