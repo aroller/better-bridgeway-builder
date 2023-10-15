@@ -79,6 +79,15 @@ export enum Background {
   CURBSIDE = "images/scene/better-bridgeway-background-curbside.png",
   CROSSWALK = "images/scene/better-bridgeway-background-crosswalk.png",
 }
+
+/** Indicates the type of crosswalk to be implemented on the roadway. */
+export enum CrosswalkType {
+  NONE = "none",
+  BASIC = "basic", // minimal paint 
+  DAYLIGHT = "daylight", // removed parking to improve visibility
+  SIGNAL = "signal", // Rapid Flashing Beacon
+}
+
 /**
  * Creates specific scenarios to be executed in the game.
  */
@@ -244,6 +253,7 @@ export class ScenarioProducer {
           BICYCLES_INCLUDED,
           DeliveryType.CURBSIDE,
           AMBULANCE_NOT_INCLUDED,
+          CrosswalkType.BASIC,
         );
         player = this.curbsideDeliveryPlayer();
         background = Background.CROSSWALK;
@@ -538,6 +548,7 @@ export class ScenarioProducer {
     bicycles: boolean = false,
     delivery: DeliveryType = DeliveryType.NONE,
     ambulance: boolean = false,
+    crosswalk: CrosswalkType = CrosswalkType.NONE,
   ): Street {
     const frequency = lightTraffic ? 4 : 2;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
@@ -602,7 +613,7 @@ export class ScenarioProducer {
         LaneDirection.RIGHT,
         parkingLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        this.parkingLaneObstacleProducers(y, delivery == DeliveryType.CURBSIDE),
+        this.parkingLaneObstacleProducers(y, delivery == DeliveryType.CURBSIDE, crosswalk),
       );
     }
     return street;
@@ -612,11 +623,13 @@ export class ScenarioProducer {
    * Populates the parking lane with parked cars.
    * @param y The y-coordinate of the obstacle producers.
    * @param curbsideLoading if true, trucks are parked in the designated curbside loading zone
+   * @param crosswalk indicates the type of crosswalk to be implemented on the roadway
    * @returns An array of obstacle producers.
    */
   private parkingLaneObstacleProducers(
     y: number,
     curbsideLoading: boolean = false,
+    crosswalk: CrosswalkType = CrosswalkType.NONE,
   ): readonly ObstacleProducer[] {
     const frequency = 10000; // only produce one obstacle for each parking spot...do not repeat
     const speed = ObstacleSpeeds.STOPPED;
@@ -633,6 +646,16 @@ export class ScenarioProducer {
       true,
       true,
     ];
+    // remove the fourth spot where the crosswalk will be painted
+    if (crosswalk != CrosswalkType.NONE) {
+      xForEach.splice(3, 1);
+      commercialVehicleForEach.splice(2, 1);
+      // remove the third spot to daylight the crosswalk
+      if (crosswalk == CrosswalkType.DAYLIGHT) {
+        xForEach.splice(2, 1);
+        commercialVehicleForEach.splice(2, 1);
+      }
+    }
     const producers: ObstacleProducer[] = [];
     for (let i = 0; i < xForEach.length; i++) {
       const x: number = xForEach[i];
