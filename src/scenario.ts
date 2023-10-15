@@ -21,11 +21,6 @@ const PARKED_CAR_3_X = 240;
 const PARKED_CAR_4_X = 360;
 const PARKED_CAR_5_X = 560;
 const solidWhiteLineStyle = new LaneLineStyle();
-const solidYellowLineStyle = new LaneLineStyle("yellow");
-const dashedYellowLineStyle = new LaneLineStyle(
-  solidYellowLineStyle.color,
-  true,
-);
 const hiddenLineStyle = new LaneLineStyle(
   solidWhiteLineStyle.color,
   false,
@@ -69,6 +64,7 @@ export enum ScenarioKey {
   CENTER_LANE_AMBULANCE = "center-lane-ambulance",
   CURBSIDE_DELIVERY = "curbside-delivery",
   CROSSWALK = "crosswalk",
+  CROSSWALK_DAYLIGHT = "crosswalk-daylight",
   GAME_OVER = "game-over",
 }
 
@@ -82,6 +78,7 @@ export enum Background {
   EXISTING = "images/scene/better-bridgeway-background.png",
   CURBSIDE = "images/scene/better-bridgeway-background-curbside.png",
   CROSSWALK = "images/scene/better-bridgeway-background-crosswalk.png",
+  CROSSWALK_DAYLIGHT = "images/scene/better-bridgeway-background-daylight.png",
 }
 
 /** Indicates the type of crosswalk to be implemented on the roadway. */
@@ -146,7 +143,6 @@ export class ScenarioProducer {
           ObstacleAvoidanceType.NONE,
           BICYCLES_NOT_INCLUDED,
         );
-        // player.moveUp();
         break;
       case ScenarioKey.HEAVY_TRAFFIC:
         title = "Heavy Traffic is Challenging to Cross";
@@ -261,6 +257,22 @@ export class ScenarioProducer {
         );
         player = this.curbsideDeliveryPlayer();
         background = Background.CROSSWALK;
+        break;
+      case ScenarioKey.CROSSWALK_DAYLIGHT:
+        title = "Open Space Before Crosswalks Improves Visibility";
+        description =
+          "Ghost vehicles no longer a problem since pedestrians and drivers are not blocked by parked cars.";
+        street = this.bridgeway2023(
+          LIGHT_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_NOT_INCLUDED,
+          DeliveryType.CURBSIDE,
+          AMBULANCE_NOT_INCLUDED,
+          CrosswalkType.DAYLIGHT,
+        );
+        player = this.curbsideDeliveryPlayer();
+        background = Background.CROSSWALK_DAYLIGHT;
         break;
       case ScenarioKey.GAME_OVER:
       default:
@@ -454,6 +466,7 @@ export class ScenarioProducer {
     bicycles: boolean = false,
     centerLaneDelivery: boolean = false,
     ambulance: boolean = false,
+    crosswalk: CrosswalkType = CrosswalkType.NONE,
   ): readonly ObstacleProducer[] {
     const vehicleTemplate = this.vehicleObstacle(
       0,
@@ -484,7 +497,7 @@ export class ScenarioProducer {
     }
 
     // ghost vehicles appear when the player reaches the lane hidden by parked cars
-    if (parkingLineOfSightTriggeredVehicles) {
+    if (parkingLineOfSightTriggeredVehicles && crosswalk != CrosswalkType.DAYLIGHT) {
       producers.push(
         ...this.ghostVehicleTargetTriggeredProducers(y, LaneDirection.RIGHT),
       );
@@ -608,6 +621,7 @@ export class ScenarioProducer {
         bicycles,
         false, // ghost vehicles do not appear because of delivery trucks in southbound lane
         ambulance,
+        crosswalk, // affects if ghost vehicles appear
       ),
     );
 
@@ -652,10 +666,16 @@ export class ScenarioProducer {
       true,
       true,
     ];
-    // remove the fourth spot where the crosswalk will be painted
     if (crosswalk != CrosswalkType.NONE) {
+      // remove the second to last parking spot giving delivery some room
+      xForEach.splice(7, 1);
+      commercialVehicleForEach.splice(7, 1);
+
+      // remove the fourth spot where the crosswalk will be painted
       xForEach.splice(3, 1);
       commercialVehicleForEach.splice(2, 1);
+
+      
       // remove the third spot to daylight the crosswalk
       if (crosswalk == CrosswalkType.DAYLIGHT) {
         xForEach.splice(2, 1);
@@ -752,21 +772,21 @@ export class ScenarioProducer {
   private curbsideDeliveryPlayer(
     speed: PlayerSpeed = PlayerSpeed.NORMAL,
   ): Player {
-    const imageWidth = 696;
     const imageScale = 0.07;
-    const playerSize = imageWidth * imageScale;
+    const imageWidth = 386 * imageScale;
+    const imageHeight = 739 * imageScale;
     const playerImage = new Image();
     playerImage.src = "images/players/delivery.png";
     const pixelsPerMove = 10;
     // place the player on the sidewalk.  the scene must be fixed in size
-    const playerX = 950;
+    const playerX = 1080;
     const playerY = 470;
 
     return new Player(
       playerX,
       playerY,
-      playerSize,
-      playerSize,
+      imageWidth,
+      imageHeight,
       playerImage,
       pixelsPerMove,
       false,
