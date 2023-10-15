@@ -65,6 +65,7 @@ export enum ScenarioKey {
   CURBSIDE_DELIVERY = "curbside-delivery",
   CROSSWALK = "crosswalk",
   CROSSWALK_DAYLIGHT = "crosswalk-daylight",
+  WHEELCHAIR = "wheelchair",
   GAME_OVER = "game-over",
 }
 
@@ -79,6 +80,7 @@ export enum Background {
   CURBSIDE = "images/scene/better-bridgeway-background-curbside.png",
   CROSSWALK = "images/scene/better-bridgeway-background-crosswalk.png",
   CROSSWALK_DAYLIGHT = "images/scene/better-bridgeway-background-daylight.png",
+  HANDICAP = "images/scene/better-bridgeway-background-handicap.png",
 }
 
 /** Indicates the type of crosswalk to be implemented on the roadway. */
@@ -273,6 +275,22 @@ export class ScenarioProducer {
         );
         player = this.curbsideDeliveryPlayer();
         background = Background.CROSSWALK_DAYLIGHT;
+        break;
+      case ScenarioKey.WHEELCHAIR:
+        title = "Wheelchairs Cross Safely with Rapid Flashing Beacons";
+        description =
+          "Flashing sign alerts drivers to stop for pedestrians in the crosswalk. Accessibile parking for wheelchairs.";
+        street = this.bridgeway2023(
+          LIGHT_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_NOT_INCLUDED,
+          DeliveryType.CURBSIDE,
+          AMBULANCE_NOT_INCLUDED,
+          CrosswalkType.DAYLIGHT,
+        );
+        player = this.wheelchairPlayer();
+        background = Background.HANDICAP;
         break;
       case ScenarioKey.GAME_OVER:
       default:
@@ -780,6 +798,30 @@ export class ScenarioProducer {
     const pixelsPerMove = 10;
     // place the player on the sidewalk.  the scene must be fixed in size
     const playerX = 1080;
+    const playerY = 470;
+
+    return new Player(
+      playerX,
+      playerY,
+      imageWidth,
+      imageHeight,
+      playerImage,
+      pixelsPerMove,
+      false,
+      speed,
+    );
+  }
+  private wheelchairPlayer(
+    speed: PlayerSpeed = PlayerSpeed.SLOW,
+  ): Player {
+    const imageScale = 0.2;
+    const imageWidth = 131 * imageScale;
+    const imageHeight = 209 * imageScale;
+    const playerImage = new Image();
+    playerImage.src = "images/players/wheelchair.png";
+    const pixelsPerMove = 10;
+    // place the player on the sidewalk.  the scene must be fixed in size
+    const playerX = PARKED_CAR_5_X - 75;
     const playerY = 470;
 
     return new Player(
