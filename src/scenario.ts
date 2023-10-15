@@ -61,9 +61,15 @@ export enum ScenarioKey {
   CARS_PASS_BICYCLES = "cars-pass-bicycles",
   CENTER_LANE_DELIVERY = "center-lane-delivery",
   CENTER_LANE_AMBULANCE = "center-lane-ambulance",
+  CURBSIDE_DELIVERY = "curbside-delivery",
   GAME_OVER = "game-over",
 }
 
+export enum DeliveryType {
+  CENTER_LANE = "center-lane",
+  CURBSIDE = "curbside",
+  NONE = "none",
+}
 /**
  * Creates specific scenarios to be executed in the game.
  */
@@ -105,7 +111,6 @@ export class ScenarioProducer {
     const PARKING_NOT_INCLUDED = false;
     const BICYCLES_INCLUDED = true;
     const BICYCLES_NOT_INCLUDED = false;
-    const DELIVERY_INCLUDED = true;
     const AMBULANCE_INCLUDED = true;
     switch (key) {
       case ScenarioKey.LIGHT_TRAFFIC:
@@ -183,12 +188,13 @@ export class ScenarioProducer {
           PARKING_INCLUDED,
           ObstacleAvoidanceType.BRAKE,
           BICYCLES_INCLUDED,
-          DELIVERY_INCLUDED,
+          DeliveryType.CENTER_LANE,
         );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CENTER_LANE_AMBULANCE:
-        title = "First Responders blocked by Delivery Trucks in Center Turn Lane";
+        title =
+          "First Responders blocked by Delivery Trucks in Center Turn Lane";
         description =
           "The center turn lane can not both be a delivery lane and emergency lane.";
         street = this.bridgeway2023(
@@ -196,7 +202,21 @@ export class ScenarioProducer {
           PARKING_INCLUDED,
           ObstacleAvoidanceType.BRAKE,
           BICYCLES_NOT_INCLUDED,
-          DELIVERY_INCLUDED,
+          DeliveryType.CENTER_LANE,
+          AMBULANCE_INCLUDED,
+        );
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        break;
+      case ScenarioKey.CURBSIDE_DELIVERY:
+        title = "Curbside Commercial Delivery Zones Improve Safety";
+        description =
+          "Leaves center lane for Ambulance, improves safety for pedestrians, and reduces congestion.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_INCLUDED,
+          DeliveryType.CURBSIDE,
           AMBULANCE_INCLUDED,
         );
         player = this.frogPlayer(PlayerSpeed.SLOW);
@@ -296,10 +316,7 @@ export class ScenarioProducer {
     );
   }
 
-  private ambulanceObstacle(
-    y: number,
-    direction: LaneDirection,
-  ): Obstacle {
+  private ambulanceObstacle(y: number, direction: LaneDirection): Obstacle {
     return this.obstacle(
       0,
       y,
@@ -310,11 +327,10 @@ export class ScenarioProducer {
       426,
       249,
       0.22,
-      true,// detect collision
-      true, // emergency vehicle  
+      true, // detect collision
+      true, // emergency vehicle
     );
   }
-
 
   /** Regular cars that populate the lanes.
    * The car is a red racer if obstacleAvoidance will not stop for the player.
@@ -406,7 +422,9 @@ export class ScenarioProducer {
     );
     const producers = [];
     // always add cars
-    producers.push(new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds));
+    producers.push(
+      new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds),
+    );
 
     // add an ambulance first to demonstrate a clear path
     if (ambulance) {
@@ -460,7 +478,7 @@ export class ScenarioProducer {
     // this is the target that will trigger the ghost car when the player reaches the lane
     const closeToParkedCarX = PLAYER_START_X;
     console.log(`vehicleLaneY: ${vehicleLaneY}`);
-    // trigger point is the bottom of the vehicle lane 
+    // trigger point is the bottom of the vehicle lane
     const yTriggerPoint = vehicleLaneY + hiddenVehicleTemplate.height;
     const targetWidth = 50;
     const targetHeight = 5;
@@ -490,7 +508,7 @@ export class ScenarioProducer {
     parkingIncluded: boolean = false,
     obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
     bicycles: boolean = false,
-    delivery: boolean = false,
+    delivery: DeliveryType = DeliveryType.NONE,
     ambulance: boolean = false,
   ): Street {
     const frequency = lightTraffic ? 4 : 2;
@@ -512,7 +530,7 @@ export class ScenarioProducer {
         false,
         obstacleAvoidance,
         bicycles,
-        delivery, // ghost vehicles appear because of delivery trucks
+        delivery == DeliveryType.CENTER_LANE, // ghost vehicles appear because of delivery trucks
         //no ambulance - only travels southbound from Fire Station to Old Town
       ),
     );
@@ -520,7 +538,7 @@ export class ScenarioProducer {
     // center turn lane
     y = y + turnLaneWidth;
     const turnLaneProducers: ObstacleProducer[] = [];
-    if (delivery) {
+    if (delivery == DeliveryType.CENTER_LANE) {
       turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
     }
     street = street.addLane(
@@ -556,7 +574,7 @@ export class ScenarioProducer {
         LaneDirection.RIGHT,
         parkingLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        this.parkingLaneObstacleProducers(y),
+        this.parkingLaneObstacleProducers(y, delivery == DeliveryType.CURBSIDE),
       );
     }
     return street;
@@ -565,21 +583,41 @@ export class ScenarioProducer {
   /**
    * Populates the parking lane with parked cars.
    * @param y The y-coordinate of the obstacle producers.
+   * @param curbsideLoading if true, trucks are parked in the designated curbside loading zone
    * @returns An array of obstacle producers.
    */
-  private parkingLaneObstacleProducers(y: number): readonly ObstacleProducer[] {
+  private parkingLaneObstacleProducers(
+    y: number,
+    curbsideLoading: boolean = false,
+  ): readonly ObstacleProducer[] {
     const frequency = 10000; // only produce one obstacle for each parking spot...do not repeat
     const speed = ObstacleSpeeds.STOPPED;
     const xForEach = [20, 120, 240, 360, 560, 840, 940, 1040, 1150];
+    // array matches the x array, but indicates if the vehicle is a commercial vehicle
+    const commercialVehicleForEach = [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+    ];
     const producers: ObstacleProducer[] = [];
-    for (const x of xForEach) {
-      const obstacle = this.vehicleObstacle(
-        x,
-        y,
-        LaneDirection.RIGHT,
-        speed,
-        ObstacleAvoidanceType.NONE,
-      );
+    for (let i = 0; i < xForEach.length; i++) {
+      const x: number = xForEach[i];
+      const comercialVehicle: boolean = curbsideLoading &&  commercialVehicleForEach[i];
+      const obstacle = comercialVehicle
+        ? this.deliveryVehicleObstacle(x, y, LaneDirection.RIGHT)
+        : this.vehicleObstacle(
+            x,
+            y,
+            LaneDirection.RIGHT,
+            speed,
+            ObstacleAvoidanceType.NONE,
+          );
       const DO_NOT_ASSIGN_X = false;
       const DO_NOT_RANDOMIZE = false;
       producers.push(
@@ -594,12 +632,15 @@ export class ScenarioProducer {
     return producers;
   }
 
-  /** parks delivery trucks in the center lane. 
-   * 
+  /** parks delivery trucks in the center lane.
+   *
    * @param y the middle of the center lane
    * @returns the producers for the delivery trucks
    */
-  private centerlaneDeliveryObstacleProducers(y: number, ambulance:boolean = false): readonly ObstacleProducer[] {
+  private centerlaneDeliveryObstacleProducers(
+    y: number,
+    ambulance: boolean = false,
+  ): readonly ObstacleProducer[] {
     const producers: ObstacleProducer[] = [];
 
     // produce a delivery truck in the center lane
@@ -613,8 +654,8 @@ export class ScenarioProducer {
     if (ambulance) {
       const ambulance = this.ambulanceObstacle(y, LaneDirection.RIGHT);
       producers.push(new ObstacleProducer(ambulance, 10000, false, false));
-    }    
-    return producers
+    }
+    return producers;
   }
   /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene.
    *
