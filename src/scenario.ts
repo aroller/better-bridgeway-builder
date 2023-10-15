@@ -219,7 +219,7 @@ export class ScenarioProducer {
           DeliveryType.CURBSIDE,
           AMBULANCE_INCLUDED,
         );
-        player = this.frogPlayer(PlayerSpeed.SLOW);
+        player = this.curbsideDeliveryPlayer();
         break;
       case ScenarioKey.GAME_OVER:
       default:
@@ -673,6 +673,33 @@ export class ScenarioProducer {
     const pixelsPerMove = 10;
     // place the player on the sidewalk.  the scene must be fixed in size
     const playerX = PLAYER_START_X;
+    const playerY = 470;
+
+    return new Player(
+      playerX,
+      playerY,
+      playerSize,
+      playerSize,
+      playerImage,
+      pixelsPerMove,
+      false,
+      speed,
+    );
+  }
+  /** A commercial delivery truck that parks curbside has a delivery person instead of a frog.
+   * 
+   * @param speed Adjust the speeds of the player moving
+   * @returns 
+   */
+  private curbsideDeliveryPlayer(speed: PlayerSpeed = PlayerSpeed.NORMAL): Player {
+    const imageWidth = 696;
+    const imageScale = 0.07;
+    const playerSize = imageWidth * imageScale;
+    const playerImage = new Image();
+    playerImage.src = "images/players/delivery.png";
+    const pixelsPerMove = 10;
+    // place the player on the sidewalk.  the scene must be fixed in size
+    const playerX = 950;
     const playerY = 470;
 
     return new Player(
