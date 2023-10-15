@@ -57,11 +57,6 @@ export class Scene {
     this.gameAttempts = new GameAttempts().startNewLevel();
 
     this.playNextLevel(scenarioKey);
-    // The background image shows the familar street scene.
-    canvas.style.backgroundImage =
-      `url('${this.scenario.background}')`;
-    canvas.style.backgroundSize = "cover";
-    // Create the street object with four lanes, two for vehicles and two for bikes.
 
     // Listen for keyboard input to move the player.
     document.addEventListener("keydown", this.handleKeyDown.bind(this));
@@ -81,7 +76,7 @@ export class Scene {
   }
 
   /**
-   * 
+   *
    * @param scenarioKey - The scenario key to play. If not provided, the next level will be played.
    */
   private playNextLevel(scenarioKey?: ScenarioKey | string) {
@@ -94,6 +89,11 @@ export class Scene {
     this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.street = this.scenario.street;
     this.player = this.scenario.player;
+    // The background image shows the familar street scene.
+    this.ctx.canvas.style.backgroundImage = `url('${this.scenario.background}')`;
+    this.ctx.canvas.style.backgroundSize = "cover";
+    // Create the street object with four lanes, two for vehicles and two for bikes.
+
     this.displayDialogWithHtmlFromFile(
       `dialogs/${scenarioKey}.html`,
       "Play",
@@ -361,7 +361,7 @@ export class Scene {
   }
 
   /** The key in the http url to indicate if a level is to be played upon visiting. */
-  public static getLevelHttpParamKey(): string  {
+  public static getLevelHttpParamKey(): string {
     return "level";
   }
 
@@ -371,7 +371,7 @@ export class Scene {
    */
   public static getLevelHttpParamValue(): string | null {
     const urlParams = new URLSearchParams(window.location.search);
-    const level = urlParams.get('level');
+    const level = urlParams.get("level");
     return level;
   }
 
@@ -389,10 +389,10 @@ export class Scene {
   /** Entry point into the game, this will create a scene.
    * Optionally a level can be specified in the URL query string with values matching the ScenarioKey enum.
    * Example: http://localhost:8080/?level=light-traffic
-   * 
+   *
    * @param ctx - The CanvasRenderingContext2D to use for rendering.
    */
-  public static show(ctx: CanvasRenderingContext2D): Scene{
+  public static show(ctx: CanvasRenderingContext2D): Scene {
     const level = Scene.getLevelHttpParamValue();
     if (level) {
       console.log(`Starting with Level: ${level}`);
