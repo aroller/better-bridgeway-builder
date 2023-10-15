@@ -546,14 +546,23 @@ export class Lane {
  * @class
  */
 export class Street {
-  private lanes: Lane[];
-
   constructor(
     public readonly topOfStreetY: number = 0,
     public readonly streetLength: number = 600,
-    lanes: Lane[] = [],
-  ) {
-    this.lanes = lanes;
+    public readonly lanes: readonly Lane[] = [],
+    public readonly sceneObjects: readonly GameObject[] = [],
+  ) {}
+
+  public clone(
+    lanes: readonly Lane[] = this.lanes,
+    sceneObjects: readonly GameObject[] = this.sceneObjects,
+  ): Street {
+    return new Street(
+      this.topOfStreetY,
+      this.streetLength,
+      lanes,
+      sceneObjects,
+    );
   }
 
   public addLane(
@@ -573,7 +582,12 @@ export class Street {
         obstacleProducers,
       ),
     ];
-    return new Street(this.topOfStreetY, this.streetLength, newLanes);
+    return this.clone(newLanes);
+  }
+
+  public addSceneObject(sceneObject: GameObject): Street {
+    const newSceneObjects = [...this.sceneObjects, sceneObject];
+    return this.clone(this.lanes, newSceneObjects);
   }
 
   private getCenterY(laneWidth: number): number {
@@ -624,7 +638,7 @@ export class Street {
       }
       return lane;
     });
-    return new Street(this.topOfStreetY, this.streetLength, newLanes);
+    return this.clone(newLanes);
   }
 
   public updateObstacles(
@@ -634,7 +648,7 @@ export class Street {
     const newLanes = this.lanes.map((lane) =>
       lane.updateObstacles(player, obstacles),
     );
-    return new Street(this.topOfStreetY, this.streetLength, newLanes);
+    return this.clone(newLanes);
   }
 
   /**
@@ -660,6 +674,10 @@ export class Street {
   public draw(ctx: CanvasRenderingContext2D): void {
     for (const lane of this.lanes) {
       lane.draw(ctx);
+    }
+
+    for (const sceneObject of this.sceneObjects) {
+      sceneObject.draw(ctx);
     }
   }
 

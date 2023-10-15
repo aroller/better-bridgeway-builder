@@ -289,6 +289,8 @@ export class ScenarioProducer {
           AMBULANCE_NOT_INCLUDED,
           CrosswalkType.DAYLIGHT,
         );
+
+        street = this.withCrosswalkSigns(street);
         player = this.wheelchairPlayer();
         background = Background.HANDICAP;
         break;
@@ -834,5 +836,28 @@ export class ScenarioProducer {
       false,
       speed,
     );
+  }
+
+  /** Adds crosswalk signs that are not flashing. 
+   * 
+   * @param street the street to add the flashing beacons to
+   * @returns Street with crosswalk signs
+   */
+  private withCrosswalkSigns(street:Street): Street {
+    const scale = 0.1;
+    const imageWidth = 389 * scale;
+    const imageHeight = 342 * scale;
+
+    // southbound sign near starting sidewalk
+    const southboundSignImage = new Image();
+    southboundSignImage.src = "images/scene/flashing.png";
+    const southboundSign = new GameObject(285, 410, imageWidth, imageHeight, southboundSignImage);
+    
+    // northbound sign near finish line
+    const northboundSignImage = new Image();
+    northboundSignImage.src = "images/scene/flashing.png";
+    const northboundSign = new GameObject(435, 220, imageWidth, imageHeight, northboundSignImage,false, Math.PI);
+    
+    return street.addSceneObject(southboundSign).addSceneObject(northboundSign);
   }
 }
