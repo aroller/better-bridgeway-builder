@@ -59,7 +59,7 @@ export class Scene {
     this.playNextLevel(scenarioKey);
     // The background image shows the familar street scene.
     canvas.style.backgroundImage =
-      "url('images/scene/better-bridgeway-background.svg')";
+      "url('images/scene/better-bridgeway-background.png')";
     canvas.style.backgroundSize = "cover";
     // Create the street object with four lanes, two for vehicles and two for bikes.
 
