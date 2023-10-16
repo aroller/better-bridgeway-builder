@@ -827,8 +827,7 @@ export class CrosswalkSign extends GameObject {
 export class CrosswalkObstacleProducer extends ObstacleProducer {
 
   constructor(
-    template: Obstacle,
-    public readonly crosswalkSign: CrosswalkSign,
+    template: Obstacle
   ) {
     super(template, 100000, false, false); // do not randomize traffic
   }
@@ -839,6 +838,6 @@ export class CrosswalkObstacleProducer extends ObstacleProducer {
    * @returns true if the crosswalk sign is flashing and not yet produced. Only one is needed.
    */
   public readyForNext(player: Player): boolean {
-    return this.crosswalkSign.flashing && super.readyForNext(player);
+    return super.readyForNext(player);
   }
 }

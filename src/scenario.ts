@@ -476,7 +476,8 @@ export class ScenarioProducer {
     y: number,
     direction: LaneDirection,
   ): Obstacle {
-    const x = direction == LaneDirection.RIGHT ? 200 : 800;
+    // values emperically determined base don stop line location and vehicle braking behavior
+    const x = direction == LaneDirection.RIGHT ? 350 : 375;
     return new Obstacle(x, y, 100, 100, ObstacleSpeeds.STOPPED, direction);
   }
 
@@ -512,7 +513,6 @@ export class ScenarioProducer {
     centerLaneDelivery: boolean = false,
     ambulance: boolean = false,
     crosswalk: CrosswalkType = CrosswalkType.NONE,
-    crosswalkSign: CrosswalkSign | null = null,
   ): readonly ObstacleProducer[] {
     const vehicleTemplate = this.vehicleObstacle(
       0,
@@ -561,14 +561,8 @@ export class ScenarioProducer {
     // produce stop line obstacles when the crosswalk is flashing
     if (crosswalk == CrosswalkType.SIGNAL) {
       const stopLineTemplate = this.crosswalkStoplineObstacle(y, direction);
-      if (crosswalkSign == null) {
-        throw new Error(
-          "crosswalk sign must be provided when crosswalk is a signal",
-        );
-      }
       const stopLineObstacleProducer = new CrosswalkObstacleProducer(
-        stopLineTemplate,
-        crosswalkSign,
+        stopLineTemplate
       );
       producers.push(stopLineObstacleProducer);
     }
