@@ -282,7 +282,7 @@ export class ScenarioProducer {
         description =
           "Flashing sign alerts drivers to stop for pedestrians in the crosswalk. Accessibile parking for wheelchairs.";
         street = this.bridgeway2023(
-          LIGHT_TRAFFIC,
+          HEAVY_TRAFFIC,
           PARKING_INCLUDED,
           ObstacleAvoidanceType.BRAKE,
           BICYCLES_NOT_INCLUDED,
