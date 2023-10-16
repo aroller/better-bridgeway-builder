@@ -87,6 +87,7 @@ enum ObstacleType {
   BICYCLE = "bicycle",
   GHOST = "ghost",
   AMBULANCE = "ambulance",
+  AMBULANCE_CRASHING = "ambulance-crashing",
 }
 
 export enum Background {
@@ -326,7 +327,7 @@ export class ScenarioProducer {
         background = Background.BIKE_LANES;
         break;
       case ScenarioKey.BIKE_LANES_AMBULANCE:
-        title = "Emergency Vehicles Drive Down the Middle";
+        title = "Cars Pull into Bike Lanes to Allow Ambulance to Pass";
         description =
           "Cars and bicycles pull over into the bike lanes leaving the center lane open for emergency vehicles.";
         street = this.bridgeway2023(
@@ -335,7 +336,7 @@ export class ScenarioProducer {
           ObstacleAvoidanceType.BRAKE,
           BICYCLES_NOT_INCLUDED,
           DeliveryType.CURBSIDE,
-          AMBULANCE_NOT_INCLUDED,
+          AMBULANCE_INCLUDED,
           CrosswalkType.SIGNAL,
           true, // bike lanes
         );
@@ -468,6 +469,7 @@ export class ScenarioProducer {
         false, // ghost vehicles do not appear because of delivery trucks in southbound lane
         ambulance,
         crosswalk, // affects if ghost vehicles appear
+        ambulance && delivery == DeliveryType.CENTER_LANE ? [ObstacleType.AMBULANCE_CRASHING,ObstacleType.STOPPING_VEHICLE] : [ObstacleType.AMBULANCE,ObstacleType.STOPPING_VEHICLE], //exclusively ambulance traffic
       ),
     );
     y = y + vehicleLaneWidth / 2;
@@ -563,7 +565,9 @@ export class ScenarioProducer {
     }
     // add an ambulance first to demonstrate a clear path
     if (ambulance) {
-      const ambulance = this.ambulanceObstacle(y, direction);
+      // detectCollsion if traffic contains ObstacleType.AMBULANCE_CRASHING
+      const detectCollision = traffic.includes(ObstacleType.AMBULANCE_CRASHING);
+      const ambulance = this.ambulanceObstacle(y, direction,detectCollision);
       const ambulanceFrequency = 10; // multiple productions shows multiple scenarios
       producers.push(new ObstacleProducer(ambulance, ambulanceFrequency));
     }
@@ -928,7 +932,7 @@ export class ScenarioProducer {
     );
   }
 
-  private ambulanceObstacle(y: number, direction: LaneDirection): Obstacle {
+  private ambulanceObstacle(y: number, direction: LaneDirection,detectCollision:boolean = false): Obstacle {
     return this.obstacle(
       0,
       y,
@@ -939,7 +943,7 @@ export class ScenarioProducer {
       426,
       249,
       0.21,
-      true, // detect collision
+      detectCollision, // detect collision
       true, // emergency vehicle
     );
   }

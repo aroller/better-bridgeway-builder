@@ -237,7 +237,7 @@ export class Obstacle extends GameObject {
         newSpeed -= 0.5;
       }
       if (distanceToClosest < 100 || this.emergencyVehicleDetected(obstacles)) {
-        newSpeed -= 1;
+        newSpeed -= .25;
       } else if (this.originalSpeed && newSpeed < this.originalSpeed) {
         newSpeed += 0.25;
       }
@@ -263,6 +263,14 @@ export class Obstacle extends GameObject {
     return emergencyVehicleDetected;
   }
 
+  private yToMoveRight(): number {
+    return this.y + 2 * this.direction;
+  }
+
+  private yToMoveLeft(): number {
+    return this.y - 2 * this.direction;
+  }
+
   /**
    * Determine a new y which may be the same as this.
    * If the obstacle is going to collide with another obstacle,
@@ -279,9 +287,26 @@ export class Obstacle extends GameObject {
     player: Player,
     obstacles: readonly Obstacle[],
   ): number {
+
     if (this.avoidance !== ObstacleAvoidanceType.PASS) {
+      // pull over for emergency vehicles
+      const maxEmergencyDistance = Math.floor(this.width * 0.6);
+      const distanceFromOriginal = Math.abs(this.originalY - this.y);
+      if (this.emergencyVehicleDetected(obstacles)) {
+        if (this.originalSpeed !== ObstacleSpeeds.STOPPED) {
+          //far enough if hitting something
+          if (distanceFromOriginal < maxEmergencyDistance) {
+            if (!this.collisionDetected(obstacles)) {
+              return this.yToMoveRight();
+            }
+          }
+        }
+      } else if (distanceFromOriginal > 5) {
+        return this.yToMoveLeft();
+      } 
       return this.y;
     }
+
     const closestObstacle = this.getClosestObject(obstacles) as Obstacle;
 
     if (!closestObstacle) {
@@ -348,7 +373,7 @@ export class ObstacleProducer {
    * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    * @returns True if the producer is ready to produce another obstacle, false otherwise.
    */
-  public readyForNext(objects:readonly GameObject[]): boolean {
+  public readyForNext(objects: readonly GameObject[]): boolean {
     const currentTime = Date.now();
     const timeSinceLastObstacle = (currentTime - this.lastObstacleTime) / 1000;
     return timeSinceLastObstacle > this.maxFrequencyInSeconds;
@@ -392,12 +417,14 @@ export class TargetObstacleProducer extends ObstacleProducer {
    * @param player - The player object to check for intersection with the target object.
    * @returns True if the producer is ready and the player intersects with the target object, false otherwise.
    */
-  public readyForNext(objects:readonly GameObject[]): boolean {
+  public readyForNext(objects: readonly GameObject[]): boolean {
     const ready = super.readyForNext(objects);
     if (ready) {
       const player = objects.find((object) => object instanceof Player);
       if (!player) {
-        throw new Error("Player not found and is required for TargetObstacleProducer.readyForNext");
+        throw new Error(
+          "Player not found and is required for TargetObstacleProducer.readyForNext",
+        );
       }
       const intersects = player.intersects(this.target);
       return intersects;
@@ -617,7 +644,7 @@ export class Street {
           const randomProducerIndex = Math.floor(
             Math.random() * producersCount,
           );
-          const objects =[...lane.obstacles, ...this.sceneObjects, player]
+          const objects = [...lane.obstacles, ...this.sceneObjects, player];
           lane.obstacleProducers.map((producer, index) => {
             if (producer.readyForNext(objects)) {
               if (!producer.randomizeTraffic || index === randomProducerIndex) {
@@ -652,7 +679,7 @@ export class Street {
       lane.updateObstacles(player, obstacles),
     );
     const newSceneObjects = this.sceneObjects.map((sceneObject) =>
-      sceneObject.update([...obstacles,player]),
+      sceneObject.update([...obstacles, player]),
     );
     return this.clone(newLanes, newSceneObjects);
   }
@@ -705,16 +732,16 @@ export class Street {
 
 /**
  * A crosswalk sign warning vehicles when a pedestrian is crossing the street.
- * Rapid flashing beacon (RFB) flashes when the player is in the target area. 
- * 
+ * Rapid flashing beacon (RFB) flashes when the player is in the target area.
+ *
  */
 export class CrosswalkSign extends GameObject {
   /**
-   * 
+   *
    * @param x horizontal location of the post of the sign.
-   * @param y vertical location of the post of the sign. 
-   * @param direction 
-   * @param crosswalk 
+   * @param y vertical location of the post of the sign.
+   * @param direction
+   * @param crosswalk
    */
   constructor(
     x: number,
@@ -732,17 +759,21 @@ export class CrosswalkSign extends GameObject {
       y,
       CrosswalkSign.getImageWidth(),
       CrosswalkSign.getImageHeight(),
-      flashing ?  flashingImage : notFlashingImage,
-      CrosswalkSign.calculateFlipHorizontal(flashing,flashingSequence,direction),
-      CrosswalkSign.calculateAngle(flashing,flashingSequence,direction),
+      flashing ? flashingImage : notFlashingImage,
+      CrosswalkSign.calculateFlipHorizontal(
+        flashing,
+        flashingSequence,
+        direction,
+      ),
+      CrosswalkSign.calculateAngle(flashing, flashingSequence, direction),
     );
   }
 
   /** Called during update indicating which of the sign's beacon should be lit up.
-   * 
-   * @param sequence simply a binary indicator to switch between beacons. Which beacon doesn't matter, as long as they switch. 
+   *
+   * @param sequence simply a binary indicator to switch between beacons. Which beacon doesn't matter, as long as they switch.
    */
-  public flash(sequence:boolean):CrosswalkSign{
+  public flash(sequence: boolean): CrosswalkSign {
     return new CrosswalkSign(
       this.x,
       this.y,
@@ -760,7 +791,7 @@ export class CrosswalkSign extends GameObject {
     // if the player is in the crosswalk, flash the beacon
     // find the player in the others
     const player = others.find((other) => other instanceof Player);
-    if (this.flashing || player && player.intersects(this.crosswalk)) {
+    if (this.flashing || (player && player.intersects(this.crosswalk))) {
       const now = Date.now();
       const timeSinceLastFlash = now - this.timestampOfPreviousFlash;
       if (timeSinceLastFlash > CrosswalkSign.getFlashIntervalInMilliseconds()) {
@@ -770,28 +801,36 @@ export class CrosswalkSign extends GameObject {
     return this;
   }
 
-  private static calculateFlipHorizontal(flashing:boolean,flashingSequence:boolean,direction: LaneDirection): boolean {
-    if(!flashing){
+  private static calculateFlipHorizontal(
+    flashing: boolean,
+    flashingSequence: boolean,
+    direction: LaneDirection,
+  ): boolean {
+    if (!flashing) {
       return false;
     }
-    if(direction === LaneDirection.RIGHT){
+    if (direction === LaneDirection.RIGHT) {
       return !flashingSequence;
     } else {
       return flashingSequence;
     }
   }
-  private static calculateAngle(flashing:boolean,flashingSequence:boolean,direction: LaneDirection): number {
-    if(!flashing){
+  private static calculateAngle(
+    flashing: boolean,
+    flashingSequence: boolean,
+    direction: LaneDirection,
+  ): number {
+    if (!flashing) {
       return 0;
     }
-    if(direction === LaneDirection.RIGHT){
+    if (direction === LaneDirection.RIGHT) {
       if (flashingSequence) {
         return 0;
       } else {
         return Math.PI;
       }
     } else {
-      if(flashingSequence){
+      if (flashingSequence) {
         return 0;
       } else {
         return Math.PI;
@@ -800,7 +839,7 @@ export class CrosswalkSign extends GameObject {
   }
   private static getImageScale(): number {
     return 0.1;
-  } 
+  }
 
   private static getImageHeight(): number {
     return 342 * CrosswalkSign.getImageScale();
@@ -830,23 +869,24 @@ export class CrosswalkSign extends GameObject {
  * at the crosswalk stop line to block courteous vehicles when the sign is flashing.
  */
 export class CrosswalkObstacleProducer extends ObstacleProducer {
-
-  constructor(
-    template: Obstacle
-  ) {
+  constructor(template: Obstacle) {
     super(template, 100000, false, false); // do not randomize traffic
   }
 
   /**
-   * 
+   *
    * @param player not used, but required by the base class
    * @returns true if the crosswalk sign is flashing and not yet produced. Only one is needed.
    */
-  public readyForNext(objects:readonly GameObject[]): boolean {
-    if( super.readyForNext(objects)){
-      const sign = objects.find((object) => object instanceof CrosswalkSign) as CrosswalkSign;
+  public readyForNext(objects: readonly GameObject[]): boolean {
+    if (super.readyForNext(objects)) {
+      const sign = objects.find(
+        (object) => object instanceof CrosswalkSign,
+      ) as CrosswalkSign;
       if (!sign) {
-        throw new Error("CrosswalkSign not found and is required for CrosswalkObstacleProducer.readyForNext");
+        throw new Error(
+          "CrosswalkSign not found and is required for CrosswalkObstacleProducer.readyForNext",
+        );
       }
       return sign.flashing;
     }
