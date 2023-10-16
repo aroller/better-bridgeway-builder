@@ -2,6 +2,7 @@ import { Player, PlayerSpeed } from "./player";
 import { GameObject } from "./game";
 import {
   CrosswalkSign,
+  CrosswalkObstacleProducer,
   LaneLineStyle,
   LaneLinesStyles,
   Obstacle,
@@ -87,7 +88,7 @@ export enum Background {
 /** Indicates the type of crosswalk to be implemented on the roadway. */
 export enum CrosswalkType {
   NONE = "none",
-  BASIC = "basic", // minimal paint 
+  BASIC = "basic", // minimal paint
   DAYLIGHT = "daylight", // removed parking to improve visibility
   SIGNAL = "signal", // Rapid Flashing Beacon
 }
@@ -247,8 +248,7 @@ export class ScenarioProducer {
         break;
       case ScenarioKey.CROSSWALK:
         title = "A Crosswalk is a Safer Place to Cross";
-        description =
-          "Crosswalks show drivers where to expect pedestrians.";
+        description = "Crosswalks show drivers where to expect pedestrians.";
         street = this.bridgeway2023(
           LIGHT_TRAFFIC,
           PARKING_INCLUDED,
@@ -288,10 +288,9 @@ export class ScenarioProducer {
           BICYCLES_NOT_INCLUDED,
           DeliveryType.CURBSIDE,
           AMBULANCE_NOT_INCLUDED,
-          CrosswalkType.DAYLIGHT,
+          CrosswalkType.SIGNAL,
         );
 
-        street = this.withCrosswalkSigns(street);
         player = this.wheelchairPlayer();
         background = Background.ACCESSIBLE;
         break;
@@ -466,6 +465,31 @@ export class ScenarioProducer {
     );
   }
 
+  /** An invisible obstacle that stops other vehicles at the crosswalk stop line
+   *  when the crosswalk signal is flashing.
+   *
+   * @param y
+   * @param direction
+   * @returns
+   */
+  private crosswalkStoplineObstacle(
+    y: number,
+    direction: LaneDirection,
+  ): Obstacle {
+    const x = direction == LaneDirection.RIGHT ? 200 : 800;
+    return new Obstacle(x, y, 100, 100, ObstacleSpeeds.STOPPED, direction);
+  }
+
+  /** Produces the crosswalk sign, scene object used to notify vehicles when player is in the crosswalk. */
+  private crosswalkSign(direction: LaneDirection): CrosswalkSign {
+    // invisible area that represents the boundary of the crosswalk
+    const crosswalk = new GameObject(285, 220, 150, 400);
+    // signs are empirically placed to be in the correct location corresponding to daylighted crosswalk
+    const x = direction == LaneDirection.RIGHT ? 285 : 435;
+    const y = direction == LaneDirection.RIGHT ? 410 : 220;
+    return new CrosswalkSign(x, y, direction, crosswalk);
+  }
+
   /**
    * Returns an array of obstacle producers that produce vehicle obstacles.
    * If parkingLineOfSightTriggeredVehicles is true, vehicles will be produced
@@ -488,6 +512,7 @@ export class ScenarioProducer {
     centerLaneDelivery: boolean = false,
     ambulance: boolean = false,
     crosswalk: CrosswalkType = CrosswalkType.NONE,
+    crosswalkSign: CrosswalkSign | null = null,
   ): readonly ObstacleProducer[] {
     const vehicleTemplate = this.vehicleObstacle(
       0,
@@ -518,7 +543,11 @@ export class ScenarioProducer {
     }
 
     // ghost vehicles appear when the player reaches the lane hidden by parked cars
-    if (parkingLineOfSightTriggeredVehicles && crosswalk != CrosswalkType.DAYLIGHT) {
+    if (
+      parkingLineOfSightTriggeredVehicles &&
+      crosswalk != CrosswalkType.DAYLIGHT &&
+      crosswalk != CrosswalkType.SIGNAL
+    ) {
       producers.push(
         ...this.ghostVehicleTargetTriggeredProducers(y, LaneDirection.RIGHT),
       );
@@ -528,6 +557,20 @@ export class ScenarioProducer {
       producers.push(
         ...this.ghostVehicleTargetTriggeredProducers(y, LaneDirection.LEFT),
       );
+    }
+    // produce stop line obstacles when the crosswalk is flashing
+    if (crosswalk == CrosswalkType.SIGNAL) {
+      const stopLineTemplate = this.crosswalkStoplineObstacle(y, direction);
+      if (crosswalkSign == null) {
+        throw new Error(
+          "crosswalk sign must be provided when crosswalk is a signal",
+        );
+      }
+      const stopLineObstacleProducer = new CrosswalkObstacleProducer(
+        stopLineTemplate,
+        crosswalkSign,
+      );
+      producers.push(stopLineObstacleProducer);
     }
     return producers;
   }
@@ -598,19 +641,26 @@ export class ScenarioProducer {
     let street = new Street(this.topOfStreetY, this.streetLength);
 
     // northbound vehicle lane
+    const northboundDirection = LaneDirection.LEFT;
+    const northboundCrosswalkSign =
+      crosswalk == CrosswalkType.SIGNAL
+        ? this.crosswalkSign(northboundDirection)
+        : null;
     street = street.addLane(
-      LaneDirection.LEFT,
+      northboundDirection,
       vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
         y,
-        LaneDirection.LEFT,
+        northboundDirection,
         frequency,
         false,
         obstacleAvoidance,
         bicycles,
         delivery == DeliveryType.CENTER_LANE, // ghost vehicles appear because of delivery trucks
-        //no ambulance - only travels southbound from Fire Station to Old Town
+        false, // no ambulance ever
+        crosswalk, // stops traffic at the stop line when the crosswalk is flashing
+        northboundCrosswalkSign,
       ),
     );
 
@@ -628,14 +678,19 @@ export class ScenarioProducer {
     );
 
     // southbound vehicle lane
+    const southboundDirection = LaneDirection.RIGHT;
+    const southboundCrosswalkSign =
+      crosswalk == CrosswalkType.SIGNAL
+        ? this.crosswalkSign(southboundDirection)
+        : null;
     y = y + vehicleLaneWidth;
     street = street.addLane(
-      LaneDirection.RIGHT,
+      southboundDirection,
       vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
         y,
-        LaneDirection.RIGHT,
+        southboundDirection,
         frequency,
         parkingIncluded,
         obstacleAvoidance,
@@ -643,6 +698,7 @@ export class ScenarioProducer {
         false, // ghost vehicles do not appear because of delivery trucks in southbound lane
         ambulance,
         crosswalk, // affects if ghost vehicles appear
+        southboundCrosswalkSign,
       ),
     );
 
@@ -654,8 +710,19 @@ export class ScenarioProducer {
         LaneDirection.RIGHT,
         parkingLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        this.parkingLaneObstacleProducers(y, delivery == DeliveryType.CURBSIDE, crosswalk),
+        this.parkingLaneObstacleProducers(
+          y,
+          delivery == DeliveryType.CURBSIDE,
+          crosswalk,
+        ),
       );
+    }
+    // crosswalk signs optionally added to the scene
+    if (southboundCrosswalkSign != null) {
+      street = street.addSceneObject(southboundCrosswalkSign);
+    }
+    if (northboundCrosswalkSign != null) {
+      street = street.addSceneObject(northboundCrosswalkSign);
     }
     return street;
   }
@@ -674,7 +741,17 @@ export class ScenarioProducer {
   ): readonly ObstacleProducer[] {
     const frequency = 10000; // only produce one obstacle for each parking spot...do not repeat
     const speed = ObstacleSpeeds.STOPPED;
-    const xForEach = [20, PARKED_CAR_2_X, PARKED_CAR_3_X, PARKED_CAR_4_X, PARKED_CAR_5_X, 840, 940, 1040, 1150];
+    const xForEach = [
+      20,
+      PARKED_CAR_2_X,
+      PARKED_CAR_3_X,
+      PARKED_CAR_4_X,
+      PARKED_CAR_5_X,
+      840,
+      940,
+      1040,
+      1150,
+    ];
     // array matches the x array, but indicates if the vehicle is a commercial vehicle
     const commercialVehicleForEach = [
       false,
@@ -696,9 +773,8 @@ export class ScenarioProducer {
       xForEach.splice(3, 1);
       commercialVehicleForEach.splice(2, 1);
 
-      
       // remove the third spot to daylight the crosswalk
-      if (crosswalk == CrosswalkType.DAYLIGHT) {
+      if (crosswalk == CrosswalkType.DAYLIGHT || crosswalk == CrosswalkType.SIGNAL) {
         xForEach.splice(2, 1);
         commercialVehicleForEach.splice(2, 1);
       }
@@ -814,9 +890,7 @@ export class ScenarioProducer {
       speed,
     );
   }
-  private wheelchairPlayer(
-    speed: PlayerSpeed = PlayerSpeed.SLOW,
-  ): Player {
+  private wheelchairPlayer(speed: PlayerSpeed = PlayerSpeed.SLOW): Player {
     const imageScale = 0.2;
     const imageWidth = 131 * imageScale;
     const imageHeight = 209 * imageScale;
@@ -837,20 +911,5 @@ export class ScenarioProducer {
       false,
       speed,
     );
-  }
-
-  /** Adds crosswalk signs that are not flashing. 
-   * 
-   * These signs match the background scene with daylighted crosswalks.
-   * 
-   * @param street the street to add the flashing beacons to
-   * @returns Street with crosswalk signs
-   */
-  private withCrosswalkSigns(street:Street): Street {
-
-    const crosswalk = new GameObject(285, 220, 150, 400);
-    const southboundSign = new CrosswalkSign(285, 410,LaneDirection.RIGHT,crosswalk);
-    const northboundSign = new CrosswalkSign(435, 220,LaneDirection.LEFT,crosswalk);
-    return street.addSceneObject(southboundSign).addSceneObject(northboundSign);
   }
 }

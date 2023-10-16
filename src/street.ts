@@ -58,9 +58,7 @@ export class Obstacle extends GameObject {
     private readonly originalSpeed: ObstacleSpeeds = speed,
     private readonly originalY: number = y,
   ) {
-    if (!image) {
-      throw new Error("Image is required, but missing");
-    }
+    // some obstacles are hidden so image can be undefined
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
   }
 
@@ -819,5 +817,28 @@ export class CrosswalkSign extends GameObject {
 
   private static getFlashIntervalInMilliseconds(): number {
     return 500;
+  }
+}
+
+/**
+ * Given the crosswalk sign, this produces an invisible obstacle that will stop
+ * at the crosswalk stop line to block courteous vehicles when the sign is flashing.
+ */
+export class CrosswalkObstacleProducer extends ObstacleProducer {
+
+  constructor(
+    template: Obstacle,
+    public readonly crosswalkSign: CrosswalkSign,
+  ) {
+    super(template, 100000, false, false); // do not randomize traffic
+  }
+
+  /**
+   * 
+   * @param player not used, but required by the base class
+   * @returns true if the crosswalk sign is flashing and not yet produced. Only one is needed.
+   */
+  public readyForNext(player: Player): boolean {
+    return this.crosswalkSign.flashing && super.readyForNext(player);
   }
 }
