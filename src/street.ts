@@ -843,6 +843,13 @@ export class CrosswalkObstacleProducer extends ObstacleProducer {
    * @returns true if the crosswalk sign is flashing and not yet produced. Only one is needed.
    */
   public readyForNext(objects:readonly GameObject[]): boolean {
-    return super.readyForNext(objects);
+    if( super.readyForNext(objects)){
+      const sign = objects.find((object) => object instanceof CrosswalkSign) as CrosswalkSign;
+      if (!sign) {
+        throw new Error("CrosswalkSign not found and is required for CrosswalkObstacleProducer.readyForNext");
+      }
+      return sign.flashing;
+    }
+    return false;
   }
 }

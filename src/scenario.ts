@@ -484,7 +484,7 @@ export class ScenarioProducer {
   /** Produces the crosswalk sign, scene object used to notify vehicles when player is in the crosswalk. */
   private crosswalkSign(direction: LaneDirection): CrosswalkSign {
     // invisible area that represents the boundary of the crosswalk
-    const crosswalk = new GameObject(285, 220, 150, 400);
+    const crosswalk = new GameObject(PARKED_CAR_4_X, 220, 120, 400);
     // signs are empirically placed to be in the correct location corresponding to daylighted crosswalk
     const x = direction == LaneDirection.RIGHT ? 285 : 435;
     const y = direction == LaneDirection.RIGHT ? 410 : 220;
