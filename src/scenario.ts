@@ -318,7 +318,7 @@ export class ScenarioProducer {
           DeliveryType.CURBSIDE,
           AMBULANCE_NOT_INCLUDED,
           CrosswalkType.SIGNAL,
-          false, // bike lanes
+          true, // bike lanes
         );
 
         player = this.wheelchairPlayer();
@@ -353,8 +353,9 @@ export class ScenarioProducer {
     const frequency = lightTraffic ? 4 : 2;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
     const bikeLaneWidth = 30;
-    const vehicleLaneWidth = bikeLanes ? 2 * bikeLaneWidth : 65;
+    const historicVehicleLaneWidth = 65;
     const turnLaneWidth = 50;
+    const vehicleLaneWidth = bikeLanes ? turnLaneWidth : historicVehicleLaneWidth;
     let y = this.topOfStreetY;
     let street = new Street(this.topOfStreetY, this.streetLength);
 
@@ -408,18 +409,19 @@ export class ScenarioProducer {
     );
 
     // center turn lane
-    y = y + turnLaneWidth;
-    const turnLaneProducers: ObstacleProducer[] = [];
-    if (delivery == DeliveryType.CENTER_LANE) {
-      turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
+    if (!bikeLanes) {
+      y = y + turnLaneWidth;
+      const turnLaneProducers: ObstacleProducer[] = [];
+      if (delivery == DeliveryType.CENTER_LANE) {
+        turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
+      }
+      street = street.addLane(
+        LaneDirection.LEFT,
+        turnLaneWidth,
+        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+        turnLaneProducers,
+      );
     }
-    street = street.addLane(
-      LaneDirection.LEFT,
-      turnLaneWidth,
-      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-      turnLaneProducers,
-    );
-
     // southbound vehicle lane
     const southboundDirection = LaneDirection.RIGHT;
     const southboundCrosswalkSign =
