@@ -718,6 +718,7 @@ export class CrosswalkSign extends GameObject {
     y: number,
     direction: LaneDirection,
     public readonly crosswalk: GameObject,
+    public readonly flashing: boolean = false,
     public readonly notFlashingImage: HTMLImageElement = CrosswalkSign.getNotFlashinImage(),
     public readonly flashingImage: HTMLImageElement = CrosswalkSign.getFlashingImage(),
   ) {
@@ -726,7 +727,7 @@ export class CrosswalkSign extends GameObject {
       y,
       CrosswalkSign.getImageWidth(),
       CrosswalkSign.getImageHeight(),
-      CrosswalkSign.getNotFlashinImage(),
+      flashing ?  flashingImage : notFlashingImage,
       direction === LaneDirection.LEFT,
       direction === LaneDirection.LEFT ? 0 : Math.PI,
     );
@@ -736,11 +737,12 @@ export class CrosswalkSign extends GameObject {
    * 
    * @param sequence simply a binary indicator to switch between beacons. Which beacon doesn't matter, as long as they switch. 
    */
-  public flash(sequence:boolean){
-
+  public flash(sequence:boolean):CrosswalkSign{
+    return this;
   }
 
   public update(others: readonly GameObject[]): GameObject {
+    
     return this;
   }
 
