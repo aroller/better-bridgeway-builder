@@ -648,7 +648,10 @@ export class Street {
     const newLanes = this.lanes.map((lane) =>
       lane.updateObstacles(player, obstacles),
     );
-    return this.clone(newLanes);
+    const newSceneObjects = this.sceneObjects.map((sceneObject) =>
+      sceneObject.update(obstacles),
+    );
+    return this.clone(newLanes, newSceneObjects);
   }
 
   /**
@@ -694,5 +697,72 @@ export class Street {
    */
   public getAllObstacles(): readonly Obstacle[] {
     return this.lanes.flatMap((lane) => lane.obstacles);
+  }
+}
+
+/**
+ * A crosswalk sign warning vehicles when a pedestrian is crossing the street.
+ * Rapid flashing beacon (RFB) flashes when the player is in the target area. 
+ * 
+ */
+export class CrosswalkSign extends GameObject {
+  /**
+   * 
+   * @param x horizontal location of the post of the sign.
+   * @param y vertical location of the post of the sign. 
+   * @param direction 
+   * @param crosswalk 
+   */
+  constructor(
+    x: number,
+    y: number,
+    direction: LaneDirection,
+    public readonly crosswalk: GameObject,
+    public readonly notFlashingImage: HTMLImageElement = CrosswalkSign.getNotFlashinImage(),
+    public readonly flashingImage: HTMLImageElement = CrosswalkSign.getFlashingImage(),
+  ) {
+    super(
+      x,
+      y,
+      CrosswalkSign.getImageWidth(),
+      CrosswalkSign.getImageHeight(),
+      CrosswalkSign.getNotFlashinImage(),
+      direction === LaneDirection.LEFT,
+      direction === LaneDirection.LEFT ? 0 : Math.PI,
+    );
+  }
+
+  /** Called during update indicating which of the sign's beacon should be lit up.
+   * 
+   * @param sequence simply a binary indicator to switch between beacons. Which beacon doesn't matter, as long as they switch. 
+   */
+  public flash(sequence:boolean){
+
+  }
+
+  public update(others: readonly GameObject[]): GameObject {
+    return this;
+  }
+
+  private static getImageScale(): number {
+    return 0.1;
+  } 
+
+  private static getImageHeight(): number {
+    return 342 * CrosswalkSign.getImageScale();
+  }
+  private static getImageWidth(): number {
+    return 389 * CrosswalkSign.getImageScale();
+  }
+  private static getNotFlashinImage(): HTMLImageElement {
+    const image = new Image();
+    image.src = "images/scene/crosswalk-sign.png";
+    return image;
+  }
+
+  private static getFlashingImage(): HTMLImageElement {
+    const image = new Image();
+    image.src = "images/scene/crosswalk-sign-flashing.png";
+    return image;
   }
 }

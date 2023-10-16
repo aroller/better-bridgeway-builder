@@ -46,6 +46,15 @@ export class GameObject {
   }
 
   /**
+   * Updates the game object based on the current state of the game.
+   * @param others The other game objects in the game that may affect. 
+   * @returns The updated game object which may be the same object or a new object.
+   */
+  public update(others:readonly GameObject[]): GameObject {
+    return this;
+  }
+
+  /**
    * Draws the game object on the canvas, if the image exists.
    * @param ctx The canvas rendering context to draw on.
    */
