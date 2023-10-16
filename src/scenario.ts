@@ -476,9 +476,9 @@ export class ScenarioProducer {
     y: number,
     direction: LaneDirection,
   ): Obstacle {
-    // values emperically determined base don stop line location and vehicle braking behavior
-    const x = direction == LaneDirection.RIGHT ? 350 : 375;
-    return new Obstacle(x, y, 100, 100, ObstacleSpeeds.STOPPED, direction);
+    // values emperically determined based on stopping near stopline without obstacle in crosswalk
+    const x = direction == LaneDirection.RIGHT ? 300 : 425;
+    return new Obstacle(x, y, 5, 10, ObstacleSpeeds.STOPPED, direction);
   }
 
   /** Produces the crosswalk sign, scene object used to notify vehicles when player is in the crosswalk. */
@@ -654,7 +654,6 @@ export class ScenarioProducer {
         delivery == DeliveryType.CENTER_LANE, // ghost vehicles appear because of delivery trucks
         false, // no ambulance ever
         crosswalk, // stops traffic at the stop line when the crosswalk is flashing
-        northboundCrosswalkSign,
       ),
     );
 
@@ -692,7 +691,6 @@ export class ScenarioProducer {
         false, // ghost vehicles do not appear because of delivery trucks in southbound lane
         ambulance,
         crosswalk, // affects if ghost vehicles appear
-        southboundCrosswalkSign,
       ),
     );
 
