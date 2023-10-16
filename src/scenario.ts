@@ -69,6 +69,7 @@ export enum ScenarioKey {
   CROSSWALK_DAYLIGHT = "crosswalk-daylight",
   WHEELCHAIR = "wheelchair",
   BIKE_LANES = "bike-lanes",
+  BIKE_LANES_AMBULANCE = "bike-lanes-ambulance",
   GAME_OVER = "game-over",
 }
 
@@ -321,7 +322,25 @@ export class ScenarioProducer {
           true, // bike lanes
         );
 
-        player = this.wheelchairPlayer();
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        background = Background.BIKE_LANES;
+        break;
+      case ScenarioKey.BIKE_LANES_AMBULANCE:
+        title = "Emergency Vehicles Drive Down the Middle";
+        description =
+          "Cars and bicycles pull over into the bike lanes leaving the center lane open for emergency vehicles.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_NOT_INCLUDED,
+          DeliveryType.CURBSIDE,
+          AMBULANCE_NOT_INCLUDED,
+          CrosswalkType.SIGNAL,
+          true, // bike lanes
+        );
+
+        player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
         break;
       case ScenarioKey.GAME_OVER:
