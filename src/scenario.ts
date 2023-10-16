@@ -68,6 +68,7 @@ export enum ScenarioKey {
   CROSSWALK = "crosswalk",
   CROSSWALK_DAYLIGHT = "crosswalk-daylight",
   WHEELCHAIR = "wheelchair",
+  BIKE_LANES = "bike-lanes",
   GAME_OVER = "game-over",
 }
 
@@ -83,6 +84,7 @@ export enum Background {
   CROSSWALK = "images/scene/better-bridgeway-background-crosswalk.png",
   CROSSWALK_DAYLIGHT = "images/scene/better-bridgeway-background-daylight.png",
   ACCESSIBLE = "images/scene/better-bridgeway-background-accessible.png",
+  BIKE_LANES = "images/scene/better-bridgeway-background-bike-lanes.png",
 }
 
 /** Indicates the type of crosswalk to be implemented on the roadway. */
@@ -293,6 +295,23 @@ export class ScenarioProducer {
 
         player = this.wheelchairPlayer();
         background = Background.ACCESSIBLE;
+        break;
+      case ScenarioKey.BIKE_LANES:
+        title = "Bike Lanes Separate Traffic for Improved Efficiency & Safety";
+        description =
+          "Cars and bicycles travel at different speeds.  Separate them and reduce frustration, fear and chaos.";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.BRAKE,
+          BICYCLES_NOT_INCLUDED,
+          DeliveryType.CURBSIDE,
+          AMBULANCE_NOT_INCLUDED,
+          CrosswalkType.SIGNAL,
+        );
+
+        player = this.wheelchairPlayer();
+        background = Background.BIKE_LANES;
         break;
       case ScenarioKey.GAME_OVER:
       default:
