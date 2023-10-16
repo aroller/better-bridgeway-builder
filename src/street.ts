@@ -740,8 +740,6 @@ export class CrosswalkSign extends GameObject {
    * @param sequence simply a binary indicator to switch between beacons. Which beacon doesn't matter, as long as they switch. 
    */
   public flash(sequence:boolean):CrosswalkSign{
-    console.log(`flash ${sequence}`);
-
     return new CrosswalkSign(
       this.x,
       this.y,
@@ -770,10 +768,32 @@ export class CrosswalkSign extends GameObject {
   }
 
   private static calculateFlipHorizontal(flashing:boolean,flashingSequence:boolean,direction: LaneDirection): boolean {
-    return direction === LaneDirection.LEFT && flashingSequence;
+    if(!flashing){
+      return false;
+    }
+    if(direction === LaneDirection.RIGHT){
+      return !flashingSequence;
+    } else {
+      return flashingSequence;
+    }
   }
   private static calculateAngle(flashing:boolean,flashingSequence:boolean,direction: LaneDirection): number {
-    return direction === LaneDirection.LEFT && flashingSequence ? 0 : Math.PI;
+    if(!flashing){
+      return 0;
+    }
+    if(direction === LaneDirection.RIGHT){
+      if (flashingSequence) {
+        return Math.PI;
+      } else {
+        return 0;
+      }
+    } else {
+      if(flashingSequence){
+        return 0;
+      } else {
+        return Math.PI;
+      }
+    }
   }
   private static getImageScale(): number {
     return 0.1;
