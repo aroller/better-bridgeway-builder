@@ -649,7 +649,7 @@ export class Street {
       lane.updateObstacles(player, obstacles),
     );
     const newSceneObjects = this.sceneObjects.map((sceneObject) =>
-      sceneObject.update(obstacles),
+      sceneObject.update([...obstacles,player]),
     );
     return this.clone(newLanes, newSceneObjects);
   }
@@ -716,9 +716,11 @@ export class CrosswalkSign extends GameObject {
   constructor(
     x: number,
     y: number,
-    direction: LaneDirection,
+    public readonly direction: LaneDirection,
     public readonly crosswalk: GameObject,
     public readonly flashing: boolean = false,
+    public readonly flashingSequence: boolean = false,
+    public readonly timestampOfPreviousFlash: number = 0,
     public readonly notFlashingImage: HTMLImageElement = CrosswalkSign.getNotFlashinImage(),
     public readonly flashingImage: HTMLImageElement = CrosswalkSign.getFlashingImage(),
   ) {
@@ -728,8 +730,8 @@ export class CrosswalkSign extends GameObject {
       CrosswalkSign.getImageWidth(),
       CrosswalkSign.getImageHeight(),
       flashing ?  flashingImage : notFlashingImage,
-      direction === LaneDirection.LEFT,
-      direction === LaneDirection.LEFT ? 0 : Math.PI,
+      CrosswalkSign.calculateFlipHorizontal(flashing,flashingSequence,direction),
+      CrosswalkSign.calculateAngle(flashing,flashingSequence,direction),
     );
   }
 
@@ -738,14 +740,41 @@ export class CrosswalkSign extends GameObject {
    * @param sequence simply a binary indicator to switch between beacons. Which beacon doesn't matter, as long as they switch. 
    */
   public flash(sequence:boolean):CrosswalkSign{
-    return this;
+    console.log(`flash ${sequence}`);
+
+    return new CrosswalkSign(
+      this.x,
+      this.y,
+      this.direction,
+      this.crosswalk,
+      true,
+      sequence,
+      Date.now(),
+      this.notFlashingImage,
+      this.flashingImage,
+    );
   }
 
   public update(others: readonly GameObject[]): GameObject {
-    
+    // if the player is in the crosswalk, flash the beacon
+    // find the player in the others
+    const player = others.find((other) => other instanceof Player);
+    if (player && player.intersects(this.crosswalk)) {
+      const now = Date.now();
+      const timeSinceLastFlash = now - this.timestampOfPreviousFlash;
+      if (timeSinceLastFlash > CrosswalkSign.getFlashIntervalInMilliseconds()) {
+        return this.flash(!this.flashingSequence);
+      }
+    }
     return this;
   }
 
+  private static calculateFlipHorizontal(flashing:boolean,flashingSequence:boolean,direction: LaneDirection): boolean {
+    return direction === LaneDirection.LEFT && flashingSequence;
+  }
+  private static calculateAngle(flashing:boolean,flashingSequence:boolean,direction: LaneDirection): number {
+    return direction === LaneDirection.LEFT && flashingSequence ? 0 : Math.PI;
+  }
   private static getImageScale(): number {
     return 0.1;
   } 
@@ -766,5 +795,9 @@ export class CrosswalkSign extends GameObject {
     const image = new Image();
     image.src = "images/scene/crosswalk-sign-flashing.png";
     return image;
+  }
+
+  private static getFlashIntervalInMilliseconds(): number {
+    return 500;
   }
 }

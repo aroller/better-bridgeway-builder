@@ -846,7 +846,7 @@ export class ScenarioProducer {
    */
   private withCrosswalkSigns(street:Street): Street {
 
-    const crosswalk = new GameObject(285, 220, 150, 200);
+    const crosswalk = new GameObject(285, 220, 150, 400);
     const southboundSign = new CrosswalkSign(285, 410,LaneDirection.RIGHT,crosswalk);
     const northboundSign = new CrosswalkSign(435, 220,LaneDirection.LEFT,crosswalk);
     return street.addSceneObject(southboundSign).addSceneObject(northboundSign);
