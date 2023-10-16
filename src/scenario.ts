@@ -477,7 +477,7 @@ export class ScenarioProducer {
 
     // southbound parking lane
     if (parkingIncluded) {
-      const parkingLaneWidth = 60;
+      const parkingLaneWidth = 50;
       y = y + parkingLaneWidth / 2;
       street = street.addLane(
         LaneDirection.RIGHT,
@@ -668,7 +668,7 @@ export class ScenarioProducer {
       false,
       false,
       false,
-      true,
+      false,
       true,
     ];
     if (crosswalk != CrosswalkType.NONE) {
@@ -689,6 +689,12 @@ export class ScenarioProducer {
         commercialVehicleForEach.splice(2, 1);
       }
     }
+    // remove the second to last parking spot to give delivery person space to move
+    if(curbsideLoading) {
+      xForEach.splice(7, 1);
+      commercialVehicleForEach.splice(7, 1);
+    }
+
     const producers: ObstacleProducer[] = [];
     for (let i = 0; i < xForEach.length; i++) {
       const x: number = xForEach[i];
