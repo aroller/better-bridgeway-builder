@@ -355,12 +355,13 @@ export class ScenarioProducer {
     const bikeLaneWidth = 30;
     const historicVehicleLaneWidth = 65;
     const turnLaneWidth = 50;
-    const vehicleLaneWidth = bikeLanes ? turnLaneWidth : historicVehicleLaneWidth;
+    const vehicleLaneWidth = bikeLanes ? 60 : historicVehicleLaneWidth;
     let y = this.topOfStreetY;
     let street = new Street(this.topOfStreetY, this.streetLength);
 
     //norbound bike lane
     if (bikeLanes) {
+      // y is the center of the lane.
       y += bikeLaneWidth / 2;
       street = street.addLane(
         LaneDirection.LEFT,
@@ -379,6 +380,8 @@ export class ScenarioProducer {
           [ObstacleType.BICYCLE], //exclusively bicycle traffic
         ),
       );
+      //jump to the bike lane line
+      y += bikeLaneWidth / 2;
     }
 
     // northbound vehicle lane
@@ -389,12 +392,12 @@ export class ScenarioProducer {
         ? this.crosswalkSign(northboundDirection)
         : null;
 
-    // adjust y differently based on if bike lanes are included
-    y += bikeLanes ? vehicleLaneWidth : vehicleLaneWidth / 2;
+    // Jump to the middle of the next lane
+    y +=  vehicleLaneWidth / 2;
     street = street.addLane(
       northboundDirection,
       vehicleLaneWidth,
-      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+      new LaneLinesStyles(solidWhiteLineStyle, solidWhiteLineStyle),
       this.vehicleTrafficObstacleProducers(
         y,
         northboundDirection,
@@ -407,10 +410,12 @@ export class ScenarioProducer {
         crosswalk, // stops traffic at the stop line when the crosswalk is flashing
       ),
     );
+    //jump to the bottom line of the northbound vehicle lane
+    y +=  vehicleLaneWidth / 2;
 
     // center turn lane
     if (!bikeLanes) {
-      y = y + turnLaneWidth;
+      y += turnLaneWidth / 2;
       const turnLaneProducers: ObstacleProducer[] = [];
       if (delivery == DeliveryType.CENTER_LANE) {
         turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
@@ -418,9 +423,10 @@ export class ScenarioProducer {
       street = street.addLane(
         LaneDirection.LEFT,
         turnLaneWidth,
-        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+        new LaneLinesStyles(solidWhiteLineStyle, solidWhiteLineStyle),
         turnLaneProducers,
       );
+      y = y + turnLaneWidth / 2;
     }
     // southbound vehicle lane
     const southboundDirection = LaneDirection.RIGHT;
@@ -428,7 +434,7 @@ export class ScenarioProducer {
       crosswalk == CrosswalkType.SIGNAL
         ? this.crosswalkSign(southboundDirection)
         : null;
-    y = y + vehicleLaneWidth;
+    y = y + vehicleLaneWidth / 2;
     street = street.addLane(
       southboundDirection,
       vehicleLaneWidth,
@@ -445,11 +451,34 @@ export class ScenarioProducer {
         crosswalk, // affects if ghost vehicles appear
       ),
     );
+    y = y + vehicleLaneWidth / 2;
+
+    if (bikeLanes) {
+      y += bikeLaneWidth / 2;
+      street = street.addLane(
+        LaneDirection.RIGHT,
+        bikeLaneWidth,
+        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+        this.vehicleTrafficObstacleProducers(
+          y,
+          LaneDirection.RIGHT,
+          frequency,
+          parkingIncluded,
+          obstacleAvoidance,
+          false, // bicycle boolean deprecated...use traffic instead to avoid getting cars
+          false, // no ghost vehicles
+          false, // no ambulance in this bike lane
+          crosswalk, // stops traffic at the stop line when the crosswalk is flashing
+          [ObstacleType.BICYCLE], //exclusively bicycle traffic
+        ),
+      );
+      y += bikeLaneWidth / 2;
+    }
 
     // southbound parking lane
     if (parkingIncluded) {
       const parkingLaneWidth = 60;
-      y = y + parkingLaneWidth;
+      y = y + parkingLaneWidth / 2;
       street = street.addLane(
         LaneDirection.RIGHT,
         parkingLaneWidth,
@@ -702,7 +731,7 @@ export class ScenarioProducer {
     // produce a delivery truck in the center lane
     const deliveryTruckSB = this.deliveryVehicleObstacle(
       500, // specifically located blocking the safe path for the pedestrian.
-      y + 10, // it is not clear why the +10, but it is needed to make the truck appear in the correct location
+      y, 
       LaneDirection.RIGHT,
     );
     producers.push(new ObstacleProducer(deliveryTruckSB, 10000, false, false));
@@ -870,7 +899,7 @@ export class ScenarioProducer {
       "images/obstacles/truck-delivery.png",
       426,
       249,
-      0.22,
+      0.21,
     );
   }
 
@@ -884,7 +913,7 @@ export class ScenarioProducer {
       "images/obstacles/truck-ambulance.png",
       426,
       249,
-      0.22,
+      0.21,
       true, // detect collision
       true, // emergency vehicle
     );
