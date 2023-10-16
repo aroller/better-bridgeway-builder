@@ -783,9 +783,9 @@ export class CrosswalkSign extends GameObject {
     }
     if(direction === LaneDirection.RIGHT){
       if (flashingSequence) {
-        return Math.PI;
-      } else {
         return 0;
+      } else {
+        return Math.PI;
       }
     } else {
       if(flashingSequence){
