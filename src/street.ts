@@ -760,7 +760,7 @@ export class CrosswalkSign extends GameObject {
     // if the player is in the crosswalk, flash the beacon
     // find the player in the others
     const player = others.find((other) => other instanceof Player);
-    if (player && player.intersects(this.crosswalk)) {
+    if (this.flashing || player && player.intersects(this.crosswalk)) {
       const now = Date.now();
       const timeSinceLastFlash = now - this.timestampOfPreviousFlash;
       if (timeSinceLastFlash > CrosswalkSign.getFlashIntervalInMilliseconds()) {
