@@ -348,7 +348,7 @@ export class ObstacleProducer {
    * @param player The player's position may be used to determine if the producer is ready to produce another obstacle.
    * @returns True if the producer is ready to produce another obstacle, false otherwise.
    */
-  public readyForNext(player: Player): boolean {
+  public readyForNext(objects:readonly GameObject[]): boolean {
     const currentTime = Date.now();
     const timeSinceLastObstacle = (currentTime - this.lastObstacleTime) / 1000;
     return timeSinceLastObstacle > this.maxFrequencyInSeconds;
@@ -392,9 +392,13 @@ export class TargetObstacleProducer extends ObstacleProducer {
    * @param player - The player object to check for intersection with the target object.
    * @returns True if the producer is ready and the player intersects with the target object, false otherwise.
    */
-  public readyForNext(player: Player): boolean {
-    const ready = super.readyForNext(player);
+  public readyForNext(objects:readonly GameObject[]): boolean {
+    const ready = super.readyForNext(objects);
     if (ready) {
+      const player = objects.find((object) => object instanceof Player);
+      if (!player) {
+        throw new Error("Player not found and is required for TargetObstacleProducer.readyForNext");
+      }
       const intersects = player.intersects(this.target);
       return intersects;
     }
@@ -613,8 +617,9 @@ export class Street {
           const randomProducerIndex = Math.floor(
             Math.random() * producersCount,
           );
+          const objects =[...lane.obstacles, ...this.sceneObjects, player]
           lane.obstacleProducers.map((producer, index) => {
-            if (producer.readyForNext(player)) {
+            if (producer.readyForNext(objects)) {
               if (!producer.randomizeTraffic || index === randomProducerIndex) {
                 // only produce if a safe location is found
                 let safeX = x;
@@ -837,7 +842,7 @@ export class CrosswalkObstacleProducer extends ObstacleProducer {
    * @param player not used, but required by the base class
    * @returns true if the crosswalk sign is flashing and not yet produced. Only one is needed.
    */
-  public readyForNext(player: Player): boolean {
-    return super.readyForNext(player);
+  public readyForNext(objects:readonly GameObject[]): boolean {
+    return super.readyForNext(objects);
   }
 }
