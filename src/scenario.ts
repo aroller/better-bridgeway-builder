@@ -81,7 +81,7 @@ export enum Background {
   CURBSIDE = "images/scene/better-bridgeway-background-curbside.png",
   CROSSWALK = "images/scene/better-bridgeway-background-crosswalk.png",
   CROSSWALK_DAYLIGHT = "images/scene/better-bridgeway-background-daylight.png",
-  HANDICAP = "images/scene/better-bridgeway-background-handicap.png",
+  ACCESSIBLE = "images/scene/better-bridgeway-background-accessible.png",
 }
 
 /** Indicates the type of crosswalk to be implemented on the roadway. */
@@ -293,7 +293,7 @@ export class ScenarioProducer {
 
         street = this.withCrosswalkSigns(street);
         player = this.wheelchairPlayer();
-        background = Background.HANDICAP;
+        background = Background.ACCESSIBLE;
         break;
       case ScenarioKey.GAME_OVER:
       default:
@@ -840,6 +840,8 @@ export class ScenarioProducer {
   }
 
   /** Adds crosswalk signs that are not flashing. 
+   * 
+   * These signs match the background scene with daylighted crosswalks.
    * 
    * @param street the street to add the flashing beacons to
    * @returns Street with crosswalk signs
