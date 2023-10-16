@@ -397,7 +397,7 @@ export class ScenarioProducer {
     street = street.addLane(
       northboundDirection,
       vehicleLaneWidth,
-      new LaneLinesStyles(solidWhiteLineStyle, solidWhiteLineStyle),
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
         y,
         northboundDirection,
@@ -423,7 +423,7 @@ export class ScenarioProducer {
       street = street.addLane(
         LaneDirection.LEFT,
         turnLaneWidth,
-        new LaneLinesStyles(solidWhiteLineStyle, solidWhiteLineStyle),
+        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         turnLaneProducers,
       );
       y = y + turnLaneWidth / 2;
