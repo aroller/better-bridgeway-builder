@@ -288,7 +288,7 @@ export class ScenarioProducer {
           AMBULANCE_NOT_INCLUDED,
           CrosswalkType.DAYLIGHT,
         );
-        player = this.curbsideDeliveryPlayer();
+        player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.CROSSWALK_DAYLIGHT;
         break;
       case ScenarioKey.WHEELCHAIR:
