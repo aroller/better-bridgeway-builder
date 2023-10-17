@@ -93,6 +93,15 @@ enum ObstacleType {
   AMBULANCE_CRASHING = "ambulance-crashing",
 }
 
+enum Lane {
+  NORTHBOUND_BIKE = "northbound-bike",
+  NORTHBOUND_VEHICLE = "northbound-vehicle",
+  CENTER_TURN = "center-turn",
+  SOUTHBOUND_VEHICLE = "southbound-vehicle",
+  SOUTHBOUND_BIKE = "southbound-bike",
+  SOUTHBOUND_PARKING = "southbound-parking",
+}
+
 export enum Background {
   EXISTING = "images/scene/better-bridgeway-background.png",
   CURBSIDE = "images/scene/better-bridgeway-background-curbside.png",
@@ -151,14 +160,6 @@ export class ScenarioProducer {
     );
 
     let background: Background = Background.EXISTING;
-    const LIGHT_TRAFFIC = true;
-    const HEAVY_TRAFFIC = false;
-    const PARKING_INCLUDED = true;
-    const PARKING_NOT_INCLUDED = false;
-    const BICYCLES_INCLUDED = true;
-    const BICYCLES_NOT_INCLUDED = false;
-    const AMBULANCE_INCLUDED = true;
-    const AMBULANCE_NOT_INCLUDED = false;
     switch (key) {
       case ScenarioKey.LIGHT_TRAFFIC:
         title = "Light Traffic is Easy to Cross";
@@ -321,6 +322,7 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL)
+          .withParkingCars()
           .withBikeLanes()
           .withBicyclesThatCrash();
 
@@ -443,7 +445,7 @@ class StreetBuilder {
   private crosswalk: CrosswalkType;
   private bikeLanes: boolean;
   private ambulance: boolean;
-  private obstacleTypes: ObstacleType[];
+  private obstacleTypes: { readonly lane: Lane; readonly type: ObstacleType }[];
 
   constructor(
     public readonly streetWidth: number,
@@ -471,6 +473,10 @@ class StreetBuilder {
     return this;
   }
 
+  public withParkingCars(): StreetBuilder {
+    this.obstacleTypes.push({lane:Lane.SOUTHBOUND_VEHICLE, type:ObstacleType.PARKING_VEHICLE});
+    return this;
+  }
   public withObstacleAvoidance(
     obstacleAvoidance: ObstacleAvoidanceType,
   ): StreetBuilder {
@@ -478,15 +484,19 @@ class StreetBuilder {
     return this;
   }
 
-  public withBicycles(): StreetBuilder {
+  public withBicycles(lanes:Lane[]=[]): StreetBuilder {
     this.bicycles = true;
-    this.obstacleTypes.push(ObstacleType.BICYCLE);
+    for (const lane of lanes) {
+      this.obstacleTypes.push({lane, type:ObstacleType.BICYCLE});
+    }
     return this;
   }
 
-  public withBicyclesThatCrash(): StreetBuilder {
-    this.obstacleTypes.push(ObstacleType.BICYCLE_CRASHING);
-    return this.withBicycles();
+  public withBicyclesThatCrash(lanes:Lane[]=[]): StreetBuilder {
+    for (const lane of lanes) {
+      this.obstacleTypes.push({lane, type:ObstacleType.BICYCLE_CRASHING});
+    }
+    return this.withBicycles(lanes);
   }
 
   public withDelivery(delivery: DeliveryType): StreetBuilder {
@@ -558,6 +568,7 @@ class StreetBuilder {
         this.bikeLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         this.vehicleTrafficObstacleProducers(
+          Lane.SOUTHBOUND_BIKE,
           y,
           LaneDirection.RIGHT,
           this.obstacleFrequency,
@@ -567,7 +578,6 @@ class StreetBuilder {
           false,
           false,
           this.crosswalk,
-          this.obstacleTypes,
         ),
       );
       y += this.bikeLaneWidth / 2;
@@ -589,6 +599,7 @@ class StreetBuilder {
       this.vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
+        Lane.SOUTHBOUND_VEHICLE,
         y,
         southboundDirection,
         this.obstacleFrequency,
@@ -643,6 +654,7 @@ class StreetBuilder {
       this.vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
+        Lane.NORTHBOUND_VEHICLE,
         y,
         northboundDirection,
         this.obstacleFrequency,
@@ -671,6 +683,7 @@ class StreetBuilder {
         this.bikeLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         this.vehicleTrafficObstacleProducers(
+          Lane.NORTHBOUND_BIKE,
           y,
           LaneDirection.LEFT,
           this.obstacleFrequency,
@@ -724,6 +737,7 @@ class StreetBuilder {
    * @returns An array of obstacle producers.
    */
   private vehicleTrafficObstacleProducers(
+    lane: Lane,
     y: number,
     direction: LaneDirection,
     maxFrequencyInSeconds: number = 1,
@@ -763,8 +777,8 @@ class StreetBuilder {
     }
 
     // bicycles are optional and move slower than cars
-    if (bicycles || traffic.includes(ObstacleType.BICYCLE)) {
-      const bicycleTemplate = this.bicycleObstacle(y, direction);
+    if (bicycles || traffic.includes(ObstacleType.BICYCLE) || this.obstacleTypes.some(obstacle=>obstacle.lane==lane && obstacle.type==ObstacleType.BICYCLE)) {
+      const bicycleTemplate = this.bicycleObstacle(lane,y, direction);
       producers.push(
         new ObstacleProducer(bicycleTemplate, maxFrequencyInSeconds),
       );
@@ -1101,6 +1115,7 @@ class StreetBuilder {
   }
 
   private bicycleObstacle(
+    lane: Lane,
     y: number,
     direction: LaneDirection,
     obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.BRAKE,
@@ -1115,27 +1130,11 @@ class StreetBuilder {
       332,
       140,
       0.15,
-      this.obstacleTypes.includes(ObstacleType.BICYCLE_CRASHING),
+      this.obstacleTypes.some((ot) => ot.lane == lane && ot.type == ObstacleType.BICYCLE_CRASHING),
     );
   }
 
-  private carDoorOpenObstacle(
-    y: number,
-    obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.BRAKE,
-  ): Obstacle {
-    return this.obstacle(
-      0,
-      y,
-      LaneDirection.RIGHT,
-      ObstacleSpeeds.STOPPED,
-      obstacleAvoidance,
-      "images/obstacles/car-door-open.png",
-      656,
-      669,
-      0.15,
-      this.obstacleTypes.includes(ObstacleType.BICYCLE_CRASHING),
-    );
-  }
+
 
   /** An invisible obstacle that stops other vehicles at the crosswalk stop line
    *  when the crosswalk signal is flashing.
@@ -1161,5 +1160,47 @@ class StreetBuilder {
     const x = direction == LaneDirection.RIGHT ? 285 : 435;
     const y = direction == LaneDirection.RIGHT ? 410 : 220;
     return new CrosswalkSign(x, y, direction, crosswalk);
+  }
+}
+
+/** A single obstacle that drives in the soutbound lane and parks
+ * in an open parking spot.  The doors open and close causing danger
+ * for bicyclists in the bike lane.
+ *
+ */
+export class ParkingCarObstacle extends Obstacle {
+  private readonly doorsOpen: boolean;
+
+  constructor(
+    y: number,
+    public readonly parkingSpotX: number,
+    public readonly parkingSpotY: number,
+    doorsOpen: boolean,
+    closedDoorImage: HTMLImageElement = ParkingCarObstacle.getClosesDoorImage(),
+    openDoorImage: HTMLImageElement = ParkingCarObstacle.getOpenDoorImage(),
+  ) {
+    super(
+      0,
+      y,
+      doorsOpen ? 656 : 720,
+      doorsOpen ? 669 : 332,
+      ObstacleSpeeds.MEDIUM,
+      LaneDirection.RIGHT,
+      doorsOpen ? openDoorImage : closedDoorImage,
+      ObstacleAvoidanceType.BRAKE,
+    );
+    this.doorsOpen = doorsOpen;
+  }
+
+  private static getClosesDoorImage(): HTMLImageElement {
+    const image = new Image();
+    image.src = "images/obstacles/car-door-closed.png";
+    return image;
+  }
+
+  private static getOpenDoorImage(): HTMLImageElement {
+    const image = new Image();
+    image.src = "images/obstacles/car-door-open.png";
+    return image;
   }
 }
