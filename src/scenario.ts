@@ -141,7 +141,12 @@ export class ScenarioProducer {
     let player = this.frogPlayer();
     let title;
     let description = "";
-    let street;
+    const streetBuilder = new StreetBuilder(
+      this.streetWidth,
+      this.streetLength,
+      this.topOfStreetY,
+    );
+
     let background: Background = Background.EXISTING;
     const LIGHT_TRAFFIC = true;
     const HEAVY_TRAFFIC = false;
@@ -155,79 +160,98 @@ export class ScenarioProducer {
       case ScenarioKey.LIGHT_TRAFFIC:
         title = "Light Traffic is Easy to Cross";
         description = "Normal speed person crossing with light traffic.";
-        street = this.bridgeway2023(
-          LIGHT_TRAFFIC,
-          PARKING_NOT_INCLUDED,
-          ObstacleAvoidanceType.NONE,
-          BICYCLES_NOT_INCLUDED,
-        );
+        streetBuilder.withLightTraffic();
+        // .bridgeway2023(
+        //   LIGHT_TRAFFIC,
+        //   PARKING_NOT_INCLUDED,
+        //   ObstacleAvoidanceType.NONE,
+        //   BICYCLES_NOT_INCLUDED,
+        // );
         break;
       case ScenarioKey.HEAVY_TRAFFIC:
         title = "Heavy Traffic is Challenging to Cross";
         description = "Normal speed person crossing with heavy traffic.";
-        street = this.bridgeway2023();
+        //default street builder...no changes
         break;
       case ScenarioKey.SLOW_MOVING:
         title = "Slow Moving Frogs Can Barely Cross in Heavy Traffic";
         description = "Slow moving person crossing with heavy traffic.";
-        street = this.bridgeway2023();
+        //default street builder...no changes
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CARS_STOP:
         title = "Cars Stop for Slow Moving Frogs";
         description = "Cars stop for a person crossing with heavy traffic.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_NOT_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-        );
+        streetBuilder.withObstacleAvoidance(ObstacleAvoidanceType.BRAKE);
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_NOT_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.PARKED_CARS:
         title = "Parked Cars Block the View of Slow Moving Frogs";
         description =
           "Parked cars block the view of a slow moving person crossing with heavy traffic.";
-        street = this.bridgeway2023(
-          LIGHT_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withLightTraffic()
+          .withParkingIncluded();
+        // street = this.bridgeway2023(
+        //   LIGHT_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.BICYCLES_SHARED_LANE:
         title = "Bicycles Move Slower than Cars";
         description =
           "Traffic congestion increases when bicycles are present because they share the lane.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_INCLUDED,
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withBicycles();
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_INCLUDED,
+        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CARS_PASS_BICYCLES:
         title = "Cars Pass Bicycles";
         description = "Cars use the middle lane to pass the slower bicycles.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.PASS,
-          BICYCLES_INCLUDED,
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.PASS)
+          .withParkingIncluded()
+          .withBicycles();
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.PASS,
+        //   BICYCLES_INCLUDED,
+        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CENTER_LANE_DELIVERY:
         title = "Commercial Delivery in the Center Turn Lane";
         description =
           "Trucks block the center lane so cars no longer pass bicycles.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_INCLUDED,
-          DeliveryType.CENTER_LANE,
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withBicycles()
+          .withDelivery(DeliveryType.CENTER_LANE);
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_INCLUDED,
+        //   DeliveryType.CENTER_LANE,
+        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CENTER_LANE_AMBULANCE:
@@ -235,43 +259,59 @@ export class ScenarioProducer {
           "First Responders blocked by Delivery Trucks in Center Turn Lane";
         description =
           "The center turn lane can not both be a delivery lane and emergency lane.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_NOT_INCLUDED,
-          DeliveryType.CENTER_LANE,
-          AMBULANCE_INCLUDED,
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CENTER_LANE)
+          .withAmbulance();
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_NOT_INCLUDED,
+        //   DeliveryType.CENTER_LANE,
+        //   AMBULANCE_INCLUDED,
+        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CURBSIDE_DELIVERY:
         title = "Curbside Commercial Delivery Zones Improve Safety";
         description =
           "Leaves center lane for Ambulance, improves safety for pedestrians, and reduces congestion.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_NOT_INCLUDED,
-          DeliveryType.CURBSIDE,
-          AMBULANCE_INCLUDED,
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withAmbulance();
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_NOT_INCLUDED,
+        //   DeliveryType.CURBSIDE,
+        //   AMBULANCE_INCLUDED,
+        // );
         player = this.curbsideDeliveryPlayer();
         background = Background.CURBSIDE;
         break;
       case ScenarioKey.CROSSWALK:
         title = "A Crosswalk is a Safer Place to Cross";
         description = "Crosswalks show drivers where to expect pedestrians.";
-        street = this.bridgeway2023(
-          LIGHT_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_NOT_INCLUDED,
-          DeliveryType.CURBSIDE,
-          AMBULANCE_NOT_INCLUDED,
-          CrosswalkType.BASIC,
-        );
+        streetBuilder
+          .withLightTraffic()
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.BASIC);
+        // street = this.bridgeway2023(
+        //   LIGHT_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_NOT_INCLUDED,
+        //   DeliveryType.CURBSIDE,
+        //   AMBULANCE_NOT_INCLUDED,
+        //   CrosswalkType.BASIC,
+        // );
         player = this.curbsideDeliveryPlayer();
         background = Background.CROSSWALK;
         break;
@@ -279,15 +319,21 @@ export class ScenarioProducer {
         title = "Open Space Before Crosswalks Improves Visibility";
         description =
           "Ghost vehicles no longer a problem since pedestrians and drivers are not blocked by parked cars.";
-        street = this.bridgeway2023(
-          LIGHT_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_NOT_INCLUDED,
-          DeliveryType.CURBSIDE,
-          AMBULANCE_NOT_INCLUDED,
-          CrosswalkType.DAYLIGHT,
-        );
+        streetBuilder
+          .withLightTraffic()
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.DAYLIGHT);
+        // street = this.bridgeway2023(
+        //   LIGHT_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_NOT_INCLUDED,
+        //   DeliveryType.CURBSIDE,
+        //   AMBULANCE_NOT_INCLUDED,
+        //   CrosswalkType.DAYLIGHT,
+        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.CROSSWALK_DAYLIGHT;
         break;
@@ -295,15 +341,20 @@ export class ScenarioProducer {
         title = "Wheelchairs Cross Safely with Rapid Flashing Beacons";
         description =
           "Flashing sign alerts drivers to stop for pedestrians in the crosswalk. Accessibile parking for wheelchairs.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_NOT_INCLUDED,
-          DeliveryType.CURBSIDE,
-          AMBULANCE_NOT_INCLUDED,
-          CrosswalkType.SIGNAL,
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.SIGNAL);
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_NOT_INCLUDED,
+        //   DeliveryType.CURBSIDE,
+        //   AMBULANCE_NOT_INCLUDED,
+        //   CrosswalkType.SIGNAL,
+        // );
 
         player = this.wheelchairPlayer();
         background = Background.ACCESSIBLE;
@@ -312,16 +363,22 @@ export class ScenarioProducer {
         title = "Bike Lanes Separate Traffic for Improved Efficiency & Safety";
         description =
           "Cars and bicycles travel at different speeds.  Separate them and reduce frustration, fear and chaos.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_NOT_INCLUDED,
-          DeliveryType.CURBSIDE,
-          AMBULANCE_NOT_INCLUDED,
-          CrosswalkType.SIGNAL,
-          true, // bike lanes
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.SIGNAL)
+          .withBikeLanes();
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_NOT_INCLUDED,
+        //   DeliveryType.CURBSIDE,
+        //   AMBULANCE_NOT_INCLUDED,
+        //   CrosswalkType.SIGNAL,
+        //   true, // bike lanes
+        // );
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
@@ -330,16 +387,23 @@ export class ScenarioProducer {
         title = "Cars Pull into Bike Lanes to Allow Ambulance to Pass";
         description =
           "Cars and bicycles pull over into the bike lanes leaving the center lane open for emergency vehicles.";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.BRAKE,
-          BICYCLES_NOT_INCLUDED,
-          DeliveryType.CURBSIDE,
-          AMBULANCE_INCLUDED,
-          CrosswalkType.SIGNAL,
-          true, // bike lanes
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.SIGNAL)
+          .withBikeLanes()
+          .withAmbulance();
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.BRAKE,
+        //   BICYCLES_NOT_INCLUDED,
+        //   DeliveryType.CURBSIDE,
+        //   AMBULANCE_INCLUDED,
+        //   CrosswalkType.SIGNAL,
+        //   true, // bike lanes
+        // );
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
@@ -347,16 +411,24 @@ export class ScenarioProducer {
       case ScenarioKey.GAME_OVER:
       default:
         title = "Game Over - Nobody Wins if Bridgeway is Not Improved";
-        street = this.bridgeway2023(
-          HEAVY_TRAFFIC,
-          PARKING_INCLUDED,
-          ObstacleAvoidanceType.PASS,
-          BICYCLES_INCLUDED,
-          DeliveryType.CENTER_LANE,
-          AMBULANCE_INCLUDED,
-        );
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBicycles()
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CENTER_LANE)
+          .withCrosswalk(CrosswalkType.SIGNAL)
+          .withAmbulance();
+        // street = this.bridgeway2023(
+        //   HEAVY_TRAFFIC,
+        //   PARKING_INCLUDED,
+        //   ObstacleAvoidanceType.PASS,
+        //   BICYCLES_INCLUDED,
+        //   DeliveryType.CENTER_LANE,
+        //   AMBULANCE_INCLUDED,
+        // );
         break;
     }
+    const street = streetBuilder.build();
     return new Scenario(
       key as ScenarioKey,
       title,
@@ -368,27 +440,170 @@ export class ScenarioProducer {
     );
   }
 
-  private bridgeway2023(
-    lightTraffic: boolean = false,
-    parkingIncluded: boolean = false,
-    obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
-    bicycles: boolean = false,
-    delivery: DeliveryType = DeliveryType.NONE,
-    ambulance: boolean = false,
-    crosswalk: CrosswalkType = CrosswalkType.NONE,
-    bikeLanes: boolean = false,
-  ): Street {
-    const frequency = lightTraffic ? 4 : 2;
+  /**
+   * Creates a new frog player with the specified speed.
+   * @param speed - The speed of the player, defaults to PlayerSpeed.NORMAL.
+   * @returns A new Player object representing the frog player.
+   */
+  private frogPlayer(speed: PlayerSpeed = PlayerSpeed.NORMAL): Player {
+    const playerSize = 30;
+    const playerImage = new Image();
+    playerImage.src = "images/players/frog.svg";
+    const pixelsPerMove = 10;
+    // place the player on the sidewalk.  the scene must be fixed in size
+    const playerX = PLAYER_START_X;
+    const playerY = 470;
+
+    return new Player(
+      playerX,
+      playerY,
+      playerSize,
+      playerSize,
+      playerImage,
+      pixelsPerMove,
+      false,
+      speed,
+    );
+  }
+  /** A commercial delivery truck that parks curbside has a delivery person instead of a frog.
+   *
+   * @param speed Adjust the speeds of the player moving
+   * @returns
+   */
+  private curbsideDeliveryPlayer(
+    speed: PlayerSpeed = PlayerSpeed.NORMAL,
+  ): Player {
+    const imageScale = 0.07;
+    const imageWidth = 386 * imageScale;
+    const imageHeight = 739 * imageScale;
+    const playerImage = new Image();
+    playerImage.src = "images/players/delivery.png";
+    const pixelsPerMove = 10;
+    // place the player on the sidewalk.  the scene must be fixed in size
+    const playerX = 1080;
+    const playerY = 470;
+
+    return new Player(
+      playerX,
+      playerY,
+      imageWidth,
+      imageHeight,
+      playerImage,
+      pixelsPerMove,
+      false,
+      speed,
+    );
+  }
+  private wheelchairPlayer(speed: PlayerSpeed = PlayerSpeed.SLOW): Player {
+    const imageScale = 0.2;
+    const imageWidth = 131 * imageScale;
+    const imageHeight = 209 * imageScale;
+    const playerImage = new Image();
+    playerImage.src = "images/players/wheelchair.png";
+    const pixelsPerMove = 10;
+    // place the player on the sidewalk.  the scene must be fixed in size
+    const playerX = PARKED_CAR_5_X - 75;
+    const playerY = 470;
+
+    return new Player(
+      playerX,
+      playerY,
+      imageWidth,
+      imageHeight,
+      playerImage,
+      pixelsPerMove,
+      false,
+      speed,
+    );
+  }
+}
+
+class StreetBuilder {
+  private frequency: number;
+  private lightTraffic: boolean;
+  private parkingIncluded: boolean;
+  private obstacleAvoidance: ObstacleAvoidanceType;
+  private bicycles: boolean;
+  private delivery: DeliveryType;
+  private crosswalk: CrosswalkType;
+  private bikeLanes: boolean;
+  private ambulance: boolean;
+
+  constructor(
+    public readonly streetWidth: number,
+    public readonly streetLength: number,
+    public readonly topOfStreetY: number,
+  ) {
+    this.lightTraffic = false;
+    this.frequency = 1;
+    this.parkingIncluded = false;
+    this.obstacleAvoidance = ObstacleAvoidanceType.NONE;
+    this.bicycles = false;
+    this.delivery = DeliveryType.NONE;
+    this.crosswalk = CrosswalkType.NONE;
+    this.bikeLanes = false;
+    this.ambulance = false;
+  }
+
+  public withLightTraffic(): StreetBuilder {
+    this.lightTraffic = true;
+    return this;
+  }
+
+  public withFrequency(frequency: number): StreetBuilder {
+    this.frequency = frequency;
+    return this;
+  }
+
+  public withParkingIncluded(): StreetBuilder {
+    this.parkingIncluded = true;
+    return this;
+  }
+
+  public withObstacleAvoidance(
+    obstacleAvoidance: ObstacleAvoidanceType,
+  ): StreetBuilder {
+    this.obstacleAvoidance = obstacleAvoidance;
+    return this;
+  }
+
+  public withBicycles(): StreetBuilder {
+    this.bicycles = true;
+    return this;
+  }
+
+  public withDelivery(delivery: DeliveryType): StreetBuilder {
+    this.delivery = delivery;
+    return this;
+  }
+
+  public withCrosswalk(crosswalk: CrosswalkType): StreetBuilder {
+    this.crosswalk = crosswalk;
+    return this;
+  }
+
+  public withBikeLanes(): StreetBuilder {
+    this.bikeLanes = true;
+    return this;
+  }
+
+  public withAmbulance(): StreetBuilder {
+    this.ambulance = true;
+    return this;
+  }
+
+  public build(): Street {
+    const frequency = this.lightTraffic ? 4 : 2;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
     const bikeLaneWidth = 30;
     const historicVehicleLaneWidth = 65;
     const turnLaneWidth = 50;
-    const vehicleLaneWidth = bikeLanes ? 60 : historicVehicleLaneWidth;
+    const vehicleLaneWidth = this.bikeLanes ? 60 : historicVehicleLaneWidth;
     let y = this.topOfStreetY;
     let street = new Street(this.topOfStreetY, this.streetLength);
 
     //norbound bike lane
-    if (bikeLanes) {
+    if (this.bikeLanes) {
       // y is the center of the lane.
       y += bikeLaneWidth / 2;
       street = street.addLane(
@@ -399,12 +614,12 @@ export class ScenarioProducer {
           y,
           LaneDirection.LEFT,
           frequency,
-          parkingIncluded,
-          obstacleAvoidance,
+          this.parkingIncluded,
+          this.obstacleAvoidance,
           false, // bicycle boolean deprecated...use traffic instead to avoid getting cars
           false, // no ghost vehicles
           false, // no ambulance in this bike lane
-          crosswalk, // stops traffic at the stop line when the crosswalk is flashing
+          this.crosswalk, // stops traffic at the stop line when the crosswalk is flashing
           [ObstacleType.BICYCLE], //exclusively bicycle traffic
         ),
       );
@@ -416,12 +631,12 @@ export class ScenarioProducer {
 
     const northboundDirection = LaneDirection.LEFT;
     const northboundCrosswalkSign =
-      crosswalk == CrosswalkType.SIGNAL
+      this.crosswalk == CrosswalkType.SIGNAL
         ? this.crosswalkSign(northboundDirection)
         : null;
 
     // Jump to the middle of the next lane
-    y +=  vehicleLaneWidth / 2;
+    y += vehicleLaneWidth / 2;
     street = street.addLane(
       northboundDirection,
       vehicleLaneWidth,
@@ -431,21 +646,21 @@ export class ScenarioProducer {
         northboundDirection,
         frequency,
         false,
-        obstacleAvoidance,
-        bicycles,
-        delivery == DeliveryType.CENTER_LANE, // ghost vehicles appear because of delivery trucks
+        this.obstacleAvoidance,
+        this.bicycles,
+        this.delivery == DeliveryType.CENTER_LANE, // ghost vehicles appear because of delivery trucks
         false, // no ambulance ever
-        crosswalk, // stops traffic at the stop line when the crosswalk is flashing
+        this.crosswalk, // stops traffic at the stop line when the crosswalk is flashing
       ),
     );
     //jump to the bottom line of the northbound vehicle lane
-    y +=  vehicleLaneWidth / 2;
+    y += vehicleLaneWidth / 2;
 
     // center turn lane
-    if (!bikeLanes) {
+    if (!this.bikeLanes) {
       y += turnLaneWidth / 2;
       const turnLaneProducers: ObstacleProducer[] = [];
-      if (delivery == DeliveryType.CENTER_LANE) {
+      if (this.delivery == DeliveryType.CENTER_LANE) {
         turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
       }
       street = street.addLane(
@@ -459,7 +674,7 @@ export class ScenarioProducer {
     // southbound vehicle lane
     const southboundDirection = LaneDirection.RIGHT;
     const southboundCrosswalkSign =
-      crosswalk == CrosswalkType.SIGNAL
+      this.crosswalk == CrosswalkType.SIGNAL
         ? this.crosswalkSign(southboundDirection)
         : null;
     y = y + vehicleLaneWidth / 2;
@@ -471,18 +686,20 @@ export class ScenarioProducer {
         y,
         southboundDirection,
         frequency,
-        parkingIncluded,
-        obstacleAvoidance,
-        bicycles,
+        this.parkingIncluded,
+        this.obstacleAvoidance,
+        this.bicycles,
         false, // ghost vehicles do not appear because of delivery trucks in southbound lane
-        ambulance,
-        crosswalk, // affects if ghost vehicles appear
-        ambulance && delivery == DeliveryType.CENTER_LANE ? [ObstacleType.AMBULANCE_CRASHING,ObstacleType.STOPPING_VEHICLE] : [ObstacleType.AMBULANCE,ObstacleType.STOPPING_VEHICLE], //exclusively ambulance traffic
+        this.ambulance,
+        this.crosswalk, // affects if ghost vehicles appear
+        this.ambulance && this.delivery == DeliveryType.CENTER_LANE
+          ? [ObstacleType.AMBULANCE_CRASHING, ObstacleType.STOPPING_VEHICLE]
+          : [ObstacleType.AMBULANCE, ObstacleType.STOPPING_VEHICLE], //exclusively ambulance traffic
       ),
     );
     y = y + vehicleLaneWidth / 2;
 
-    if (bikeLanes) {
+    if (this.bikeLanes) {
       y += bikeLaneWidth / 2;
       street = street.addLane(
         LaneDirection.RIGHT,
@@ -492,12 +709,12 @@ export class ScenarioProducer {
           y,
           LaneDirection.RIGHT,
           frequency,
-          parkingIncluded,
-          obstacleAvoidance,
+          this.parkingIncluded,
+          this.obstacleAvoidance,
           false, // bicycle boolean deprecated...use traffic instead to avoid getting cars
           false, // no ghost vehicles
           false, // no ambulance in this bike lane
-          crosswalk, // stops traffic at the stop line when the crosswalk is flashing
+          this.crosswalk, // stops traffic at the stop line when the crosswalk is flashing
           [ObstacleType.BICYCLE], //exclusively bicycle traffic
         ),
       );
@@ -505,7 +722,7 @@ export class ScenarioProducer {
     }
 
     // southbound parking lane
-    if (parkingIncluded) {
+    if (this.parkingIncluded) {
       const parkingLaneWidth = 50;
       y = y + parkingLaneWidth / 2;
       street = street.addLane(
@@ -514,8 +731,8 @@ export class ScenarioProducer {
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         this.parkingLaneObstacleProducers(
           y,
-          delivery == DeliveryType.CURBSIDE,
-          crosswalk,
+          this.delivery == DeliveryType.CURBSIDE,
+          this.crosswalk,
         ),
       );
     }
@@ -575,7 +792,7 @@ export class ScenarioProducer {
     if (ambulance) {
       // detectCollsion if traffic contains ObstacleType.AMBULANCE_CRASHING
       const detectCollision = traffic.includes(ObstacleType.AMBULANCE_CRASHING);
-      const ambulance = this.ambulanceObstacle(y, direction,detectCollision);
+      const ambulance = this.ambulanceObstacle(y, direction, detectCollision);
       const ambulanceFrequency = 10; // multiple productions shows multiple scenarios
       producers.push(new ObstacleProducer(ambulance, ambulanceFrequency));
     }
@@ -721,7 +938,7 @@ export class ScenarioProducer {
       }
     }
     // remove the second to last parking spot to give delivery person space to move
-    if(curbsideLoading) {
+    if (curbsideLoading) {
       xForEach.splice(7, 1);
       commercialVehicleForEach.splice(7, 1);
     }
@@ -768,7 +985,7 @@ export class ScenarioProducer {
     // produce a delivery truck in the center lane
     const deliveryTruckSB = this.deliveryVehicleObstacle(
       500, // specifically located blocking the safe path for the pedestrian.
-      y, 
+      y,
       LaneDirection.RIGHT,
     );
     producers.push(new ObstacleProducer(deliveryTruckSB, 10000, false, false));
@@ -778,86 +995,6 @@ export class ScenarioProducer {
       producers.push(new ObstacleProducer(ambulance, 10000, false, false));
     }
     return producers;
-  }
-  /** Frog that walks rather than hops. Starts on the sidewalk of the fixed bridgeway scene.
-   *
-   * @returns
-   */
-  /**
-   * Creates a new frog player with the specified speed.
-   * @param speed - The speed of the player, defaults to PlayerSpeed.NORMAL.
-   * @returns A new Player object representing the frog player.
-   */
-  private frogPlayer(speed: PlayerSpeed = PlayerSpeed.NORMAL): Player {
-    const playerSize = 30;
-    const playerImage = new Image();
-    playerImage.src = "images/players/frog.svg";
-    const pixelsPerMove = 10;
-    // place the player on the sidewalk.  the scene must be fixed in size
-    const playerX = PLAYER_START_X;
-    const playerY = 470;
-
-    return new Player(
-      playerX,
-      playerY,
-      playerSize,
-      playerSize,
-      playerImage,
-      pixelsPerMove,
-      false,
-      speed,
-    );
-  }
-  /** A commercial delivery truck that parks curbside has a delivery person instead of a frog.
-   *
-   * @param speed Adjust the speeds of the player moving
-   * @returns
-   */
-  private curbsideDeliveryPlayer(
-    speed: PlayerSpeed = PlayerSpeed.NORMAL,
-  ): Player {
-    const imageScale = 0.07;
-    const imageWidth = 386 * imageScale;
-    const imageHeight = 739 * imageScale;
-    const playerImage = new Image();
-    playerImage.src = "images/players/delivery.png";
-    const pixelsPerMove = 10;
-    // place the player on the sidewalk.  the scene must be fixed in size
-    const playerX = 1080;
-    const playerY = 470;
-
-    return new Player(
-      playerX,
-      playerY,
-      imageWidth,
-      imageHeight,
-      playerImage,
-      pixelsPerMove,
-      false,
-      speed,
-    );
-  }
-  private wheelchairPlayer(speed: PlayerSpeed = PlayerSpeed.SLOW): Player {
-    const imageScale = 0.2;
-    const imageWidth = 131 * imageScale;
-    const imageHeight = 209 * imageScale;
-    const playerImage = new Image();
-    playerImage.src = "images/players/wheelchair.png";
-    const pixelsPerMove = 10;
-    // place the player on the sidewalk.  the scene must be fixed in size
-    const playerX = PARKED_CAR_5_X - 75;
-    const playerY = 470;
-
-    return new Player(
-      playerX,
-      playerY,
-      imageWidth,
-      imageHeight,
-      playerImage,
-      pixelsPerMove,
-      false,
-      speed,
-    );
   }
 
   private obstacle(
@@ -940,7 +1077,11 @@ export class ScenarioProducer {
     );
   }
 
-  private ambulanceObstacle(y: number, direction: LaneDirection,detectCollision:boolean = false): Obstacle {
+  private ambulanceObstacle(
+    y: number,
+    direction: LaneDirection,
+    detectCollision: boolean = false,
+  ): Obstacle {
     return this.obstacle(
       0,
       y,
