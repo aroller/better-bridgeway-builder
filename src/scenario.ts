@@ -70,6 +70,7 @@ export enum ScenarioKey {
   WHEELCHAIR = "wheelchair",
   BIKE_LANES = "bike-lanes",
   BIKE_LANES_AMBULANCE = "bike-lanes-ambulance",
+  BIKE_LANES_PARKING = "bike-lanes-parking",
   GAME_OVER = "game-over",
 }
 
@@ -83,8 +84,10 @@ export enum DeliveryType {
 enum ObstacleType {
   PASSING_VEHICLE = "passing-vehicle",
   STOPPING_VEHICLE = "stopping-vehicle",
+  PARKING_VEHICLE = "parking-vehicle",
   DELIVERY_TRUCK = "delivery",
   BICYCLE = "bicycle",
+  BICYCLE_CRASHING = "bicycle-crashing",
   GHOST = "ghost",
   AMBULANCE = "ambulance",
   AMBULANCE_CRASHING = "ambulance-crashing",
@@ -309,6 +312,21 @@ export class ScenarioProducer {
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
         break;
+      case ScenarioKey.BIKE_LANES_PARKING:
+        title = "The Parking Lane can be Dangerous for Bicycle Riders";
+        description =
+          "Drivers entering and exiting the parking spots can be dangerous for bicycle riders.  Opening doors can be tragic for a passing cyclist.";
+        streetBuilder
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.SIGNAL)
+          .withBikeLanes()
+          .withBicyclesThatCrash();
+
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        background = Background.BIKE_LANES;
+        break;
       case ScenarioKey.GAME_OVER:
       default:
         title = "Game Over - Nobody Wins if Bridgeway is Not Improved";
@@ -425,6 +443,7 @@ class StreetBuilder {
   private crosswalk: CrosswalkType;
   private bikeLanes: boolean;
   private ambulance: boolean;
+  private obstacleTypes: ObstacleType[];
 
   constructor(
     public readonly streetWidth: number,
@@ -439,6 +458,7 @@ class StreetBuilder {
     this.crosswalk = CrosswalkType.NONE;
     this.bikeLanes = false;
     this.ambulance = false;
+    this.obstacleTypes = [];
   }
 
   public withLightTraffic(): StreetBuilder {
@@ -460,7 +480,13 @@ class StreetBuilder {
 
   public withBicycles(): StreetBuilder {
     this.bicycles = true;
+    this.obstacleTypes.push(ObstacleType.BICYCLE);
     return this;
+  }
+
+  public withBicyclesThatCrash(): StreetBuilder {
+    this.obstacleTypes.push(ObstacleType.BICYCLE_CRASHING);
+    return this.withBicycles();
   }
 
   public withDelivery(delivery: DeliveryType): StreetBuilder {
@@ -537,11 +563,11 @@ class StreetBuilder {
           this.obstacleFrequency,
           this.parkingIncluded,
           this.obstacleAvoidance,
-          false,
+          false, //bicycles
           false,
           false,
           this.crosswalk,
-          [ObstacleType.BICYCLE],
+          this.obstacleTypes,
         ),
       );
       y += this.bikeLaneWidth / 2;
@@ -568,7 +594,7 @@ class StreetBuilder {
         this.obstacleFrequency,
         this.parkingIncluded,
         this.obstacleAvoidance,
-        this.bicycles,
+        this.bicycles && !this.bikeLanes,
         false,
         this.ambulance,
         this.crosswalk,
@@ -622,7 +648,7 @@ class StreetBuilder {
         this.obstacleFrequency,
         false,
         this.obstacleAvoidance,
-        this.bicycles,
+        this.bicycles && !this.bikeLanes,
         this.delivery == DeliveryType.CENTER_LANE,
         false,
         this.crosswalk,
@@ -1089,6 +1115,25 @@ class StreetBuilder {
       332,
       140,
       0.15,
+      this.obstacleTypes.includes(ObstacleType.BICYCLE_CRASHING),
+    );
+  }
+
+  private carDoorOpenObstacle(
+    y: number,
+    obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.BRAKE,
+  ): Obstacle {
+    return this.obstacle(
+      0,
+      y,
+      LaneDirection.RIGHT,
+      ObstacleSpeeds.STOPPED,
+      obstacleAvoidance,
+      "images/obstacles/car-door-open.png",
+      656,
+      669,
+      0.15,
+      this.obstacleTypes.includes(ObstacleType.BICYCLE_CRASHING),
     );
   }
 
