@@ -395,6 +395,7 @@ export class ScenarioProducer {
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withParkingCars()
+          .withBrakingVehicles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withBikeLanes()
           .withBicycles([Lane.NORTHBOUND_BIKE])
           .withBicyclesThatCrash([Lane.SOUTHBOUND_BIKE]);
@@ -820,17 +821,23 @@ class StreetBuilder {
     return this.bikeLanes ? 60 : this.historicVehicleLaneWidth;
   }
 
-  private getVehicleTypeForLane(lane: Lane): ObstacleType | undefined {
+  /** Given the lane, this returns all of the obstacleTypes declared for the lane that match  
+   * a vehicle type.  This is used to determine which vehicle types to produce for the lane.
+   */
+  private getVehicleTypesForLane(lane: Lane): ObstacleType[] {
+    const matchingObstacleTypes:ObstacleType[] = [];
     const vehicleTypes = [
       ObstacleType.VEHICLE,
       ObstacleType.PASSING_VEHICLE,
       ObstacleType.BRAKING_VEHICLE,
       ObstacleType.PARKING_VEHICLE,
     ];
-    return this.obstacleTypes.find(
-      (obstacle) =>
-        obstacle.lane == lane && vehicleTypes.includes(obstacle.type),
-    )?.type;
+    for (const obstacleType of this.obstacleTypes) {
+      if (obstacleType.lane == lane && vehicleTypes.includes(obstacleType.type)) {
+        matchingObstacleTypes.push(obstacleType.type);
+      }
+    }
+    return matchingObstacleTypes;
   }
 
   /**
@@ -860,9 +867,9 @@ class StreetBuilder {
   ): readonly ObstacleProducer[] {
     const producers = [];
 
-    const vehicle = this.getVehicleTypeForLane(lane);
-
-    if (vehicle) {
+    // add vehicles for the lane
+    const vehicles = this.getVehicleTypesForLane(lane);
+    for (const vehicle of vehicles) {
       const obstacleAvoidance = obstacleAvoidanceFromObstacleType(vehicle);
       const vehicleTemplate = this.vehicleObstacle(
         0,
