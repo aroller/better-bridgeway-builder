@@ -418,7 +418,6 @@ export class ScenarioProducer {
  *
  */
 class StreetBuilder {
-  private frequency: number;
   private lightTraffic: boolean;
   private parkingIncluded: boolean;
   private obstacleAvoidance: ObstacleAvoidanceType;
@@ -434,7 +433,6 @@ class StreetBuilder {
     public readonly topOfStreetY: number,
   ) {
     this.lightTraffic = false;
-    this.frequency = 1;
     this.parkingIncluded = false;
     this.obstacleAvoidance = ObstacleAvoidanceType.NONE;
     this.bicycles = false;
@@ -449,10 +447,6 @@ class StreetBuilder {
     return this;
   }
 
-  public withFrequency(frequency: number): StreetBuilder {
-    this.frequency = frequency;
-    return this;
-  }
 
   public withParkingIncluded(): StreetBuilder {
     this.parkingIncluded = true;
@@ -498,7 +492,7 @@ class StreetBuilder {
    * @returns
    */
   public build(): Street {
-    const frequency = this.lightTraffic ? 4 : 2;
+   
     //Pixels determined emperically...this should be a percentage of the streetWidth.
     const bikeLaneWidth = 30;
     const historicVehicleLaneWidth = 65;
@@ -511,26 +505,22 @@ class StreetBuilder {
       street,
       y,
       bikeLaneWidth,
-      frequency,
     ));
     ({ street, y } = this.northboundVehicleLane(
       street,
       y,
       vehicleLaneWidth,
-      frequency,
     ));
     ({ street, y } = this.centerTurnLane(street, y, turnLaneWidth));
     ({ street, y } = this.southboundVehicleLane(
       street,
       y,
       vehicleLaneWidth,
-      frequency,
     ));
     ({ street, y } = this.southboundBikeLane(
       street,
       y,
       bikeLaneWidth,
-      frequency,
     ));
     ({ street, y } = this.southboundParkingLane(street,y));
 
@@ -562,7 +552,6 @@ class StreetBuilder {
     street: Street,
     y: number,
     bikeLaneWidth: number,
-    frequency: number,
   ): { street: Street; y: number } {
     if (this.bikeLanes) {
       y += bikeLaneWidth / 2;
@@ -573,7 +562,7 @@ class StreetBuilder {
         this.vehicleTrafficObstacleProducers(
           y,
           LaneDirection.RIGHT,
-          frequency,
+          this.obstacleFrequency,
           this.parkingIncluded,
           this.obstacleAvoidance,
           false,
@@ -592,7 +581,6 @@ class StreetBuilder {
     street: Street,
     y: number,
     vehicleLaneWidth: number,
-    frequency: number,
   ): { street: Street; y: number } {
     const southboundDirection = LaneDirection.RIGHT;
     if (this.crosswalk == CrosswalkType.SIGNAL) {
@@ -605,7 +593,7 @@ class StreetBuilder {
       this.vehicleTrafficObstacleProducers(
         y,
         southboundDirection,
-        frequency,
+        this.obstacleFrequency,
         this.parkingIncluded,
         this.obstacleAvoidance,
         this.bicycles,
@@ -647,7 +635,6 @@ class StreetBuilder {
     street: Street,
     y: number,
     vehicleLaneWidth: number,
-    frequency: number,
   ): { street: Street; y: number } {
     const northboundDirection = LaneDirection.LEFT;
     if (this.crosswalk == CrosswalkType.SIGNAL) {
@@ -662,7 +649,7 @@ class StreetBuilder {
       this.vehicleTrafficObstacleProducers(
         y,
         northboundDirection,
-        frequency,
+        this.obstacleFrequency,
         false,
         this.obstacleAvoidance,
         this.bicycles,
@@ -680,7 +667,6 @@ class StreetBuilder {
     street: Street,
     y: number,
     bikeLaneWidth: number,
-    frequency: number,
   ): { street: Street; y: number } {
     if (this.bikeLanes) {
       // y is the center of the lane.
@@ -692,7 +678,7 @@ class StreetBuilder {
         this.vehicleTrafficObstacleProducers(
           y,
           LaneDirection.LEFT,
-          frequency,
+          this.obstacleFrequency,
           this.parkingIncluded,
           this.obstacleAvoidance,
           false,
@@ -708,6 +694,11 @@ class StreetBuilder {
     return { street, y };
   }
 
+
+  /** Provides the number of seconds between obstacle production */
+  private get obstacleFrequency(): number {
+    return this.lightTraffic ? 4 : 2;
+  }
   /**
    * Returns an array of obstacle producers that produce vehicle obstacles.
    * If parkingLineOfSightTriggeredVehicles is true, vehicles will be produced
