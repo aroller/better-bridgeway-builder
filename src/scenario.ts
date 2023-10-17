@@ -447,7 +447,6 @@ class StreetBuilder {
     return this;
   }
 
-
   public withParkingIncluded(): StreetBuilder {
     this.parkingIncluded = true;
     return this;
@@ -492,37 +491,17 @@ class StreetBuilder {
    * @returns
    */
   public build(): Street {
-   
     //Pixels determined emperically...this should be a percentage of the streetWidth.
-    const bikeLaneWidth = 30;
-    const historicVehicleLaneWidth = 65;
-    const turnLaneWidth = 50;
-    const vehicleLaneWidth = this.bikeLanes ? 60 : historicVehicleLaneWidth;
+
     let y = this.topOfStreetY;
     let street = new Street(this.topOfStreetY, this.streetLength);
     // setup the lanes from top to bottom
-    ({ street, y } = this.northboundBikeLane(
-      street,
-      y,
-      bikeLaneWidth,
-    ));
-    ({ street, y } = this.northboundVehicleLane(
-      street,
-      y,
-      vehicleLaneWidth,
-    ));
-    ({ street, y } = this.centerTurnLane(street, y, turnLaneWidth));
-    ({ street, y } = this.southboundVehicleLane(
-      street,
-      y,
-      vehicleLaneWidth,
-    ));
-    ({ street, y } = this.southboundBikeLane(
-      street,
-      y,
-      bikeLaneWidth,
-    ));
-    ({ street, y } = this.southboundParkingLane(street,y));
+    ({ street, y } = this.northboundBikeLane(street, y));
+    ({ street, y } = this.northboundVehicleLane(street, y));
+    ({ street, y } = this.centerTurnLane(street, y));
+    ({ street, y } = this.southboundVehicleLane(street, y));
+    ({ street, y } = this.southboundBikeLane(street, y));
+    ({ street, y } = this.southboundParkingLane(street, y));
 
     return street;
   }
@@ -545,19 +524,18 @@ class StreetBuilder {
         ),
       );
     }
-    return { y, street };
+    return { street, y };
   }
 
   private southboundBikeLane(
     street: Street,
     y: number,
-    bikeLaneWidth: number,
   ): { street: Street; y: number } {
     if (this.bikeLanes) {
-      y += bikeLaneWidth / 2;
+      y += this.bikeLaneWidth / 2;
       street = street.addLane(
         LaneDirection.RIGHT,
-        bikeLaneWidth,
+        this.bikeLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         this.vehicleTrafficObstacleProducers(
           y,
@@ -572,7 +550,7 @@ class StreetBuilder {
           [ObstacleType.BICYCLE],
         ),
       );
-      y += bikeLaneWidth / 2;
+      y += this.bikeLaneWidth / 2;
     }
     return { street, y };
   }
@@ -580,7 +558,6 @@ class StreetBuilder {
   private southboundVehicleLane(
     street: Street,
     y: number,
-    vehicleLaneWidth: number,
   ): { street: Street; y: number } {
     const southboundDirection = LaneDirection.RIGHT;
     if (this.crosswalk == CrosswalkType.SIGNAL) {
@@ -588,7 +565,7 @@ class StreetBuilder {
     }
     street = street.addLane(
       southboundDirection,
-      vehicleLaneWidth,
+      this.vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
         y,
@@ -605,28 +582,27 @@ class StreetBuilder {
           : [ObstacleType.AMBULANCE, ObstacleType.STOPPING_VEHICLE],
       ),
     );
-    y = y + vehicleLaneWidth / 2;
+    y = y + this.vehicleLaneWidth / 2;
     return { street, y };
   }
 
   private centerTurnLane(
     street: Street,
     y: number,
-    turnLaneWidth: number,
   ): { street: Street; y: number } {
     if (!this.bikeLanes) {
-      y += turnLaneWidth / 2;
+      y += this.turnLaneWidth / 2;
       const turnLaneProducers: ObstacleProducer[] = [];
       if (this.delivery == DeliveryType.CENTER_LANE) {
         turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
       }
       street = street.addLane(
         LaneDirection.LEFT,
-        turnLaneWidth,
+        this.turnLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         turnLaneProducers,
       );
-      y = y + turnLaneWidth / 2;
+      y = y + this.turnLaneWidth / 2;
     }
     return { street, y };
   }
@@ -634,17 +610,16 @@ class StreetBuilder {
   private northboundVehicleLane(
     street: Street,
     y: number,
-    vehicleLaneWidth: number,
   ): { street: Street; y: number } {
     const northboundDirection = LaneDirection.LEFT;
     if (this.crosswalk == CrosswalkType.SIGNAL) {
       street = street.addSceneObject(this.crosswalkSign(northboundDirection));
     }
     // Jump to the middle of the next lane
-    y += vehicleLaneWidth / 2;
+    y += this.vehicleLaneWidth / 2;
     street = street.addLane(
       northboundDirection,
-      vehicleLaneWidth,
+      this.vehicleLaneWidth,
       new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
       this.vehicleTrafficObstacleProducers(
         y,
@@ -659,21 +634,20 @@ class StreetBuilder {
       ),
     );
     //jump to the bottom line of the northbound vehicle lane
-    y += vehicleLaneWidth / 2;
+    y += this.vehicleLaneWidth / 2;
     return { street, y };
   }
 
   private northboundBikeLane(
     street: Street,
     y: number,
-    bikeLaneWidth: number,
   ): { street: Street; y: number } {
     if (this.bikeLanes) {
       // y is the center of the lane.
-      y += bikeLaneWidth / 2;
+      y += this.bikeLaneWidth / 2;
       street = street.addLane(
         LaneDirection.LEFT,
-        bikeLaneWidth,
+        this.bikeLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         this.vehicleTrafficObstacleProducers(
           y,
@@ -689,16 +663,33 @@ class StreetBuilder {
         ),
       );
       //jump to the bike lane line
-      y += bikeLaneWidth / 2;
+      y += this.bikeLaneWidth / 2;
     }
     return { street, y };
   }
-
 
   /** Provides the number of seconds between obstacle production */
   private get obstacleFrequency(): number {
     return this.lightTraffic ? 4 : 2;
   }
+
+  private get bikeLaneWidth(): number {
+    return 30;
+  }
+
+  private get historicVehicleLaneWidth(): number {
+    return 65;
+  }
+
+  private get turnLaneWidth(): number {
+    return 50;
+  }
+
+  /** Vehicle lane width changes if bike lanes exist. The lanes get more narrow in modern designs. */
+  private get vehicleLaneWidth(): number {
+    return this.bikeLanes ? 60 : this.historicVehicleLaneWidth;
+  }
+
   /**
    * Returns an array of obstacle producers that produce vehicle obstacles.
    * If parkingLineOfSightTriggeredVehicles is true, vehicles will be produced
