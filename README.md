@@ -43,7 +43,7 @@ The previous levels showed the challenges with the existing infrastructure.  Now
 5. Bicycle lanes added to both directions separating bicycle and vehicle traffic.  Deliveries take place in designated parking spots. 
 6. Emergency vehicle comes through and vehicles pull into the bicycle lane to allow passing.
 7.  Southbound bicyclists in the bike lane get doored by a parked car or squashed by cars exiting parking lane.
-8.  Bi-directional bicycle lane moved to the east/top side of the street demonstrates the advantages of separating. 
+8.  Bi-directional Class IV Cycletrack on the east/top side of the street provides separated travel for bikes. 
 9.  Emergency vehicle passes through with northbound vehicles pulling into the bicycle lanes.
 10. Emergency vehicle uses the bicycle lanes to pass stopped vehicles blocking the road. 
 
