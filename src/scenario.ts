@@ -324,7 +324,8 @@ export class ScenarioProducer {
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withParkingCars()
           .withBikeLanes()
-          .withBicyclesThatCrash();
+          .withBicycles([Lane.NORTHBOUND_BIKE])
+          .withBicyclesThatCrash([Lane.SOUTHBOUND_BIKE]);
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
@@ -562,8 +563,7 @@ class StreetBuilder {
           false,
           false,
           false,
-          this.crosswalk,
-          [ObstacleType.BICYCLE],
+          this.crosswalk
         ),
       );
       //jump to the bike lane line
@@ -599,6 +599,7 @@ class StreetBuilder {
         this.delivery == DeliveryType.CENTER_LANE,
         false,
         this.crosswalk,
+        [], // deprecated traffic. using this.obstacleTypes instead
       ),
     );
     //jump to the bottom line of the northbound vehicle lane
@@ -683,13 +684,14 @@ class StreetBuilder {
           false,
           false,
           this.crosswalk,
+          [], // deprecated traffic. using this.obstacleTypes instead
         ),
       );
       y += this.bikeLaneWidth / 2;
     }
     return { street, y };
   }
-  
+
   private southboundParkingLane(
     street: Street,
     y: number,
@@ -782,7 +784,7 @@ class StreetBuilder {
     }
 
     // bicycles are optional and move slower than cars
-    if (bicycles || traffic.includes(ObstacleType.BICYCLE) || this.obstacleTypes.some(obstacle=>obstacle.lane==lane && obstacle.type==ObstacleType.BICYCLE)) {
+    if (bicycles || this.obstacleTypes.some(obstacle=>obstacle.lane==lane && obstacle.type==ObstacleType.BICYCLE)) {
       const bicycleTemplate = this.bicycleObstacle(lane,y, direction);
       producers.push(
         new ObstacleProducer(bicycleTemplate, maxFrequencyInSeconds),
