@@ -346,8 +346,16 @@ export class ScenarioProducer {
         break;
       case ScenarioKey.GAME_OVER:
       default:
-        title = "Game Over";
-        street = this.bridgeway2023();
+        title = "Game Over - Nobody Wins if Bridgeway is Not Improved";
+        street = this.bridgeway2023(
+          HEAVY_TRAFFIC,
+          PARKING_INCLUDED,
+          ObstacleAvoidanceType.PASS,
+          BICYCLES_INCLUDED,
+          DeliveryType.CENTER_LANE,
+          AMBULANCE_INCLUDED,
+        );
+        break;
     }
     return new Scenario(
       key as ScenarioKey,
