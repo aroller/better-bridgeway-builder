@@ -416,7 +416,6 @@ export class ScenarioProducer {
           .withBicycles()
           .withParkingIncluded()
           .withDelivery(DeliveryType.CENTER_LANE)
-          .withCrosswalk(CrosswalkType.SIGNAL)
           .withAmbulance();
         // street = this.bridgeway2023(
         //   HEAVY_TRAFFIC,
