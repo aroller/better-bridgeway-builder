@@ -286,12 +286,11 @@ export class ScenarioProducer {
         description =
           "Cars and bicycles travel at different speeds.  Separate them and reduce frustration, fear and chaos.";
         streetBuilder
-        .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
-        .withParkingIncluded()
-        .withDelivery(DeliveryType.CURBSIDE)
-        .withCrosswalk(CrosswalkType.SIGNAL)
-        .withBikeLanes();
-
+          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.SIGNAL)
+          .withBikeLanes();
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
@@ -412,11 +411,11 @@ export class ScenarioProducer {
   }
 }
 
-/** A class that builds a street for a scenario. 
+/** A class that builds a street for a scenario.
  * Use the with methods to set up the scenario.
- * The build method puts it all together and returns a street 
- * that can be used to simulate the situation requested. 
- * 
+ * The build method puts it all together and returns a street
+ * that can be used to simulate the situation requested.
+ *
  */
 class StreetBuilder {
   private frequency: number;
@@ -494,9 +493,9 @@ class StreetBuilder {
 
   /** Based on the properties given, this prouces the street that will produce
    * the obstacles and scene objects for the scenario.
-   * 
-   * 
-   * @returns 
+   *
+   *
+   * @returns
    */
   public build(): Street {
     const frequency = this.lightTraffic ? 4 : 2;
@@ -507,127 +506,41 @@ class StreetBuilder {
     const vehicleLaneWidth = this.bikeLanes ? 60 : historicVehicleLaneWidth;
     let y = this.topOfStreetY;
     let street = new Street(this.topOfStreetY, this.streetLength);
-
-    //norbound bike lane
-    if (this.bikeLanes) {
-      // y is the center of the lane.
-      y += bikeLaneWidth / 2;
-      street = street.addLane(
-        LaneDirection.LEFT,
-        bikeLaneWidth,
-        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        this.vehicleTrafficObstacleProducers(
-          y,
-          LaneDirection.LEFT,
-          frequency,
-          this.parkingIncluded,
-          this.obstacleAvoidance,
-          false, // bicycle boolean deprecated...use traffic instead to avoid getting cars
-          false, // no ghost vehicles
-          false, // no ambulance in this bike lane
-          this.crosswalk, // stops traffic at the stop line when the crosswalk is flashing
-          [ObstacleType.BICYCLE], //exclusively bicycle traffic
-        ),
-      );
-      //jump to the bike lane line
-      y += bikeLaneWidth / 2;
-    }
-
-    // northbound vehicle lane
-
-    const northboundDirection = LaneDirection.LEFT;
-    const northboundCrosswalkSign =
-      this.crosswalk == CrosswalkType.SIGNAL
-        ? this.crosswalkSign(northboundDirection)
-        : null;
-
-    // Jump to the middle of the next lane
-    y += vehicleLaneWidth / 2;
-    street = street.addLane(
-      northboundDirection,
+    // setup the lanes from top to bottom
+    ({ street, y } = this.northboundBikeLane(
+      street,
+      y,
+      bikeLaneWidth,
+      frequency,
+    ));
+    ({ street, y } = this.northboundVehicleLane(
+      street,
+      y,
       vehicleLaneWidth,
-      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-      this.vehicleTrafficObstacleProducers(
-        y,
-        northboundDirection,
-        frequency,
-        false,
-        this.obstacleAvoidance,
-        this.bicycles,
-        this.delivery == DeliveryType.CENTER_LANE, // ghost vehicles appear because of delivery trucks
-        false, // no ambulance ever
-        this.crosswalk, // stops traffic at the stop line when the crosswalk is flashing
-      ),
-    );
-    //jump to the bottom line of the northbound vehicle lane
-    y += vehicleLaneWidth / 2;
-
-    // center turn lane
-    if (!this.bikeLanes) {
-      y += turnLaneWidth / 2;
-      const turnLaneProducers: ObstacleProducer[] = [];
-      if (this.delivery == DeliveryType.CENTER_LANE) {
-        turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
-      }
-      street = street.addLane(
-        LaneDirection.LEFT,
-        turnLaneWidth,
-        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        turnLaneProducers,
-      );
-      y = y + turnLaneWidth / 2;
-    }
-    // southbound vehicle lane
-    const southboundDirection = LaneDirection.RIGHT;
-    const southboundCrosswalkSign =
-      this.crosswalk == CrosswalkType.SIGNAL
-        ? this.crosswalkSign(southboundDirection)
-        : null;
-    y = y + vehicleLaneWidth / 2;
-    street = street.addLane(
-      southboundDirection,
+      frequency,
+    ));
+    ({ street, y } = this.centerTurnLane(street, y, turnLaneWidth));
+    ({ street, y } = this.southboundVehicleLane(
+      street,
+      y,
       vehicleLaneWidth,
-      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-      this.vehicleTrafficObstacleProducers(
-        y,
-        southboundDirection,
-        frequency,
-        this.parkingIncluded,
-        this.obstacleAvoidance,
-        this.bicycles,
-        false, // ghost vehicles do not appear because of delivery trucks in southbound lane
-        this.ambulance,
-        this.crosswalk, // affects if ghost vehicles appear
-        this.ambulance && this.delivery == DeliveryType.CENTER_LANE
-          ? [ObstacleType.AMBULANCE_CRASHING, ObstacleType.STOPPING_VEHICLE]
-          : [ObstacleType.AMBULANCE, ObstacleType.STOPPING_VEHICLE], //exclusively ambulance traffic
-      ),
-    );
-    y = y + vehicleLaneWidth / 2;
+      frequency,
+    ));
+    ({ street, y } = this.southboundBikeLane(
+      street,
+      y,
+      bikeLaneWidth,
+      frequency,
+    ));
+    ({ street, y } = this.southboundParkingLane(street,y));
 
-    if (this.bikeLanes) {
-      y += bikeLaneWidth / 2;
-      street = street.addLane(
-        LaneDirection.RIGHT,
-        bikeLaneWidth,
-        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        this.vehicleTrafficObstacleProducers(
-          y,
-          LaneDirection.RIGHT,
-          frequency,
-          this.parkingIncluded,
-          this.obstacleAvoidance,
-          false, // bicycle boolean deprecated...use traffic instead to avoid getting cars
-          false, // no ghost vehicles
-          false, // no ambulance in this bike lane
-          this.crosswalk, // stops traffic at the stop line when the crosswalk is flashing
-          [ObstacleType.BICYCLE], //exclusively bicycle traffic
-        ),
-      );
-      y += bikeLaneWidth / 2;
-    }
+    return street;
+  }
 
-    // southbound parking lane
+  private southboundParkingLane(
+    street: Street,
+    y: number,
+  ): { street: Street; y: number } {
     if (this.parkingIncluded) {
       const parkingLaneWidth = 50;
       y = y + parkingLaneWidth / 2;
@@ -642,14 +555,157 @@ class StreetBuilder {
         ),
       );
     }
-    // crosswalk signs optionally added to the scene
-    if (southboundCrosswalkSign != null) {
-      street = street.addSceneObject(southboundCrosswalkSign);
+    return { y, street };
+  }
+
+  private southboundBikeLane(
+    street: Street,
+    y: number,
+    bikeLaneWidth: number,
+    frequency: number,
+  ): { street: Street; y: number } {
+    if (this.bikeLanes) {
+      y += bikeLaneWidth / 2;
+      street = street.addLane(
+        LaneDirection.RIGHT,
+        bikeLaneWidth,
+        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+        this.vehicleTrafficObstacleProducers(
+          y,
+          LaneDirection.RIGHT,
+          frequency,
+          this.parkingIncluded,
+          this.obstacleAvoidance,
+          false,
+          false,
+          false,
+          this.crosswalk,
+          [ObstacleType.BICYCLE],
+        ),
+      );
+      y += bikeLaneWidth / 2;
     }
-    if (northboundCrosswalkSign != null) {
-      street = street.addSceneObject(northboundCrosswalkSign);
+    return { street, y };
+  }
+
+  private southboundVehicleLane(
+    street: Street,
+    y: number,
+    vehicleLaneWidth: number,
+    frequency: number,
+  ): { street: Street; y: number } {
+    const southboundDirection = LaneDirection.RIGHT;
+    if (this.crosswalk == CrosswalkType.SIGNAL) {
+      street = street.addSceneObject(this.crosswalkSign(southboundDirection));
     }
-    return street;
+    street = street.addLane(
+      southboundDirection,
+      vehicleLaneWidth,
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+      this.vehicleTrafficObstacleProducers(
+        y,
+        southboundDirection,
+        frequency,
+        this.parkingIncluded,
+        this.obstacleAvoidance,
+        this.bicycles,
+        false,
+        this.ambulance,
+        this.crosswalk,
+        this.ambulance && this.delivery == DeliveryType.CENTER_LANE
+          ? [ObstacleType.AMBULANCE_CRASHING, ObstacleType.STOPPING_VEHICLE]
+          : [ObstacleType.AMBULANCE, ObstacleType.STOPPING_VEHICLE],
+      ),
+    );
+    y = y + vehicleLaneWidth / 2;
+    return { street, y };
+  }
+
+  private centerTurnLane(
+    street: Street,
+    y: number,
+    turnLaneWidth: number,
+  ): { street: Street; y: number } {
+    if (!this.bikeLanes) {
+      y += turnLaneWidth / 2;
+      const turnLaneProducers: ObstacleProducer[] = [];
+      if (this.delivery == DeliveryType.CENTER_LANE) {
+        turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
+      }
+      street = street.addLane(
+        LaneDirection.LEFT,
+        turnLaneWidth,
+        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+        turnLaneProducers,
+      );
+      y = y + turnLaneWidth / 2;
+    }
+    return { street, y };
+  }
+
+  private northboundVehicleLane(
+    street: Street,
+    y: number,
+    vehicleLaneWidth: number,
+    frequency: number,
+  ): { street: Street; y: number } {
+    const northboundDirection = LaneDirection.LEFT;
+    if (this.crosswalk == CrosswalkType.SIGNAL) {
+      street = street.addSceneObject(this.crosswalkSign(northboundDirection));
+    }
+    // Jump to the middle of the next lane
+    y += vehicleLaneWidth / 2;
+    street = street.addLane(
+      northboundDirection,
+      vehicleLaneWidth,
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+      this.vehicleTrafficObstacleProducers(
+        y,
+        northboundDirection,
+        frequency,
+        false,
+        this.obstacleAvoidance,
+        this.bicycles,
+        this.delivery == DeliveryType.CENTER_LANE,
+        false,
+        this.crosswalk,
+      ),
+    );
+    //jump to the bottom line of the northbound vehicle lane
+    y += vehicleLaneWidth / 2;
+    return { street, y };
+  }
+
+  private northboundBikeLane(
+    street: Street,
+    y: number,
+    bikeLaneWidth: number,
+    frequency: number,
+  ): { street: Street; y: number } {
+    if (this.bikeLanes) {
+      // y is the center of the lane.
+      y += bikeLaneWidth / 2;
+      street = street.addLane(
+        LaneDirection.LEFT,
+        bikeLaneWidth,
+        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+        this.vehicleTrafficObstacleProducers(
+          y,
+          LaneDirection.LEFT,
+          frequency,
+          this.parkingIncluded,
+          this.obstacleAvoidance,
+          false,
+          false,
+          false,
+          this.crosswalk,
+          [ObstacleType.BICYCLE],
+        ),
+      );
+      //jump to the bike lane line
+      y += bikeLaneWidth / 2;
+    }
+    return { street, y };
   }
 
   /**
