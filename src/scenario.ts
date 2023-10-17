@@ -82,8 +82,9 @@ export enum DeliveryType {
 
 /** Internally used to indicate traffic diversity in a single lane. */
 enum ObstacleType {
+  VEHICLE = "vehicle", // Obstacle Avoidance: None
   PASSING_VEHICLE = "passing-vehicle",
-  STOPPING_VEHICLE = "stopping-vehicle",
+  BRAKING_VEHICLE = "stopping-vehicle",
   PARKING_VEHICLE = "parking-vehicle",
   DELIVERY_TRUCK = "delivery",
   BICYCLE = "bicycle",
@@ -119,6 +120,26 @@ export enum CrosswalkType {
   SIGNAL = "signal", // Rapid Flashing Beacon
 }
 
+function obstacleAvoidanceFromObstacleType(obstacleType: ObstacleType) {
+  switch (obstacleType) {
+    case ObstacleType.BICYCLE:
+    case ObstacleType.BICYCLE_CRASHING:
+      return ObstacleAvoidanceType.BRAKE;
+    case ObstacleType.AMBULANCE:
+    case ObstacleType.AMBULANCE_CRASHING:
+      return ObstacleAvoidanceType.PASS;
+    case ObstacleType.PARKING_VEHICLE:
+      return ObstacleAvoidanceType.BRAKE;
+    case ObstacleType.PASSING_VEHICLE:
+      return ObstacleAvoidanceType.PASS;
+    case ObstacleType.BRAKING_VEHICLE:
+      return ObstacleAvoidanceType.BRAKE;
+    case ObstacleType.VEHICLE:
+    case ObstacleType.DELIVERY_TRUCK:
+    default:
+      return ObstacleAvoidanceType.NONE;
+  }
+}
 /**
  * Creates specific scenarios to be executed in the game.
  */
@@ -164,23 +185,34 @@ export class ScenarioProducer {
       case ScenarioKey.LIGHT_TRAFFIC:
         title = "Light Traffic is Easy to Cross";
         description = "Normal speed person crossing with light traffic.";
-        streetBuilder.withLightTraffic();
+        streetBuilder
+          .withLightTraffic()
+          .withVehicles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE]);
         break;
       case ScenarioKey.HEAVY_TRAFFIC:
         title = "Heavy Traffic is Challenging to Cross";
         description = "Normal speed person crossing with heavy traffic.";
-        //default street builder...no changes
+        streetBuilder.withVehicles([
+          Lane.NORTHBOUND_VEHICLE,
+          Lane.SOUTHBOUND_VEHICLE,
+        ]);
         break;
       case ScenarioKey.SLOW_MOVING:
         title = "Slow Moving Frogs Can Barely Cross in Heavy Traffic";
         description = "Slow moving person crossing with heavy traffic.";
-        //default street builder...no changes
+        streetBuilder.withVehicles([
+          Lane.NORTHBOUND_VEHICLE,
+          Lane.SOUTHBOUND_VEHICLE,
+        ]);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CARS_STOP:
         title = "Cars Stop for Slow Moving Frogs";
         description = "Cars stop for a person crossing with heavy traffic.";
-        streetBuilder.withObstacleAvoidance(ObstacleAvoidanceType.BRAKE);
+        streetBuilder.withBrakingVehicles([
+          Lane.NORTHBOUND_VEHICLE,
+          Lane.SOUTHBOUND_VEHICLE,
+        ]);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.PARKED_CARS:
@@ -188,8 +220,11 @@ export class ScenarioProducer {
         description =
           "Parked cars block the view of a slow moving person crossing with heavy traffic.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
           .withLightTraffic()
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded();
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
@@ -198,18 +233,25 @@ export class ScenarioProducer {
         description =
           "Traffic congestion increases when bicycles are present because they share the lane.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
+          .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withParkingIncluded()
-          .withBicycles();
+          .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE]);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CARS_PASS_BICYCLES:
         title = "Cars Pass Bicycles";
         description = "Cars use the middle lane to pass the slower bicycles.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.PASS)
+          .withPassingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded()
-          .withBicycles();
+          .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE]);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CENTER_LANE_DELIVERY:
@@ -217,9 +259,12 @@ export class ScenarioProducer {
         description =
           "Trucks block the center lane so cars no longer pass bicycles.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
           .withParkingIncluded()
-          .withBicycles()
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
+          .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withDelivery(DeliveryType.CENTER_LANE);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
@@ -229,7 +274,10 @@ export class ScenarioProducer {
         description =
           "The center turn lane can not both be a delivery lane and emergency lane.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CENTER_LANE)
           .withAmbulance();
@@ -240,7 +288,10 @@ export class ScenarioProducer {
         description =
           "Leaves center lane for Ambulance, improves safety for pedestrians, and reduces congestion.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withAmbulance();
@@ -252,7 +303,10 @@ export class ScenarioProducer {
         description = "Crosswalks show drivers where to expect pedestrians.";
         streetBuilder
           .withLightTraffic()
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.BASIC);
@@ -264,7 +318,10 @@ export class ScenarioProducer {
         description =
           "Ghost vehicles no longer a problem since pedestrians and drivers are not blocked by parked cars.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.DAYLIGHT);
@@ -276,7 +333,10 @@ export class ScenarioProducer {
         description =
           "Flashing sign alerts drivers to stop for pedestrians in the crosswalk. Accessibile parking for wheelchairs.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL);
@@ -289,10 +349,18 @@ export class ScenarioProducer {
         description =
           "Cars and bicycles travel at different speeds.  Separate them and reduce frustration, fear and chaos.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL)
+          .withBicycles([Lane.NORTHBOUND_BIKE, Lane.SOUTHBOUND_BIKE])
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withBikeLanes();
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
@@ -303,11 +371,15 @@ export class ScenarioProducer {
         description =
           "Cars and bicycles pull over into the bike lanes leaving the center lane open for emergency vehicles.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withBikeLanes()
+          .withBicycles([Lane.NORTHBOUND_BIKE, Lane.SOUTHBOUND_BIKE])
           .withAmbulance();
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
@@ -335,7 +407,7 @@ export class ScenarioProducer {
         title = "Game Over - Nobody Wins if Bridgeway is Not Improved";
         streetBuilder
           .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
-          .withBicycles()
+          .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CENTER_LANE)
           .withAmbulance();
@@ -475,9 +547,31 @@ class StreetBuilder {
   }
 
   public withParkingCars(): StreetBuilder {
-    this.obstacleTypes.push({lane:Lane.SOUTHBOUND_VEHICLE, type:ObstacleType.PARKING_VEHICLE});
+    this.obstacleTypes.push({
+      lane: Lane.SOUTHBOUND_VEHICLE,
+      type: ObstacleType.PARKING_VEHICLE,
+    });
     return this;
   }
+  public withPassingVehicles(lanes: Lane[]): StreetBuilder {
+    for (const lane of lanes) {
+      this.obstacleTypes.push({ lane, type: ObstacleType.PASSING_VEHICLE });
+    }
+    return this;
+  }
+  public withBrakingVehicles(lanes: Lane[]): StreetBuilder {
+    for (const lane of lanes) {
+      this.obstacleTypes.push({ lane, type: ObstacleType.BRAKING_VEHICLE });
+    }
+    return this;
+  }
+  public withVehicles(lanes: Lane[]): StreetBuilder {
+    for (const lane of lanes) {
+      this.obstacleTypes.push({ lane, type: ObstacleType.VEHICLE });
+    }
+    return this;
+  }
+
   public withObstacleAvoidance(
     obstacleAvoidance: ObstacleAvoidanceType,
   ): StreetBuilder {
@@ -485,17 +579,17 @@ class StreetBuilder {
     return this;
   }
 
-  public withBicycles(lanes:Lane[]=[]): StreetBuilder {
+  public withBicycles(lanes: Lane[]): StreetBuilder {
     this.bicycles = true;
     for (const lane of lanes) {
-      this.obstacleTypes.push({lane, type:ObstacleType.BICYCLE});
+      this.obstacleTypes.push({ lane, type: ObstacleType.BICYCLE });
     }
     return this;
   }
 
-  public withBicyclesThatCrash(lanes:Lane[]=[]): StreetBuilder {
+  public withBicyclesThatCrash(lanes: Lane[] = []): StreetBuilder {
     for (const lane of lanes) {
-      this.obstacleTypes.push({lane, type:ObstacleType.BICYCLE_CRASHING});
+      this.obstacleTypes.push({ lane, type: ObstacleType.BICYCLE_CRASHING });
     }
     return this.withBicycles(lanes);
   }
@@ -541,7 +635,6 @@ class StreetBuilder {
     return street;
   }
 
-
   private northboundBikeLane(
     street: Street,
     y: number,
@@ -563,7 +656,8 @@ class StreetBuilder {
           false,
           false,
           false,
-          this.crosswalk
+          this.crosswalk,
+          [], // deprecated traffic. using this.obstacleTypes instead
         ),
       );
       //jump to the bike lane line
@@ -571,9 +665,7 @@ class StreetBuilder {
     }
     return { street, y };
   }
- 
 
- 
   private northboundVehicleLane(
     street: Street,
     y: number,
@@ -599,7 +691,6 @@ class StreetBuilder {
         this.delivery == DeliveryType.CENTER_LANE,
         false,
         this.crosswalk,
-        [], // deprecated traffic. using this.obstacleTypes instead
       ),
     );
     //jump to the bottom line of the northbound vehicle lane
@@ -628,8 +719,6 @@ class StreetBuilder {
     return { street, y };
   }
 
- 
-
   private southboundVehicleLane(
     street: Street,
     y: number,
@@ -655,8 +744,8 @@ class StreetBuilder {
         this.ambulance,
         this.crosswalk,
         this.ambulance && this.delivery == DeliveryType.CENTER_LANE
-          ? [ObstacleType.AMBULANCE_CRASHING, ObstacleType.STOPPING_VEHICLE]
-          : [ObstacleType.AMBULANCE, ObstacleType.STOPPING_VEHICLE],
+          ? [ObstacleType.AMBULANCE_CRASHING, ObstacleType.BRAKING_VEHICLE]
+          : [ObstacleType.AMBULANCE, ObstacleType.BRAKING_VEHICLE],
       ),
     );
     y = y + this.vehicleLaneWidth / 2;
@@ -731,6 +820,19 @@ class StreetBuilder {
     return this.bikeLanes ? 60 : this.historicVehicleLaneWidth;
   }
 
+  private getVehicleTypeForLane(lane: Lane): ObstacleType | undefined {
+    const vehicleTypes = [
+      ObstacleType.VEHICLE,
+      ObstacleType.PASSING_VEHICLE,
+      ObstacleType.BRAKING_VEHICLE,
+      ObstacleType.PARKING_VEHICLE,
+    ];
+    return this.obstacleTypes.find(
+      (obstacle) =>
+        obstacle.lane == lane && vehicleTypes.includes(obstacle.type),
+    )?.type;
+  }
+
   /**
    * Returns an array of obstacle producers that produce vehicle obstacles.
    * If parkingLineOfSightTriggeredVehicles is true, vehicles will be produced
@@ -758,10 +860,10 @@ class StreetBuilder {
   ): readonly ObstacleProducer[] {
     const producers = [];
 
-    if (
-      traffic.includes(ObstacleType.PASSING_VEHICLE) ||
-      traffic.includes(ObstacleType.STOPPING_VEHICLE)
-    ) {
+    const vehicle = this.getVehicleTypeForLane(lane);
+
+    if (vehicle) {
+      const obstacleAvoidance = obstacleAvoidanceFromObstacleType(vehicle);
       const vehicleTemplate = this.vehicleObstacle(
         0,
         y,
@@ -784,8 +886,14 @@ class StreetBuilder {
     }
 
     // bicycles are optional and move slower than cars
-    if (bicycles || this.obstacleTypes.some(obstacle=>obstacle.lane==lane && obstacle.type==ObstacleType.BICYCLE)) {
-      const bicycleTemplate = this.bicycleObstacle(lane,y, direction);
+    if (
+      bicycles ||
+      this.obstacleTypes.some(
+        (obstacle) =>
+          obstacle.lane == lane && obstacle.type == ObstacleType.BICYCLE,
+      )
+    ) {
+      const bicycleTemplate = this.bicycleObstacle(lane, y, direction);
       producers.push(
         new ObstacleProducer(bicycleTemplate, maxFrequencyInSeconds),
       );
@@ -1137,11 +1245,11 @@ class StreetBuilder {
       332,
       140,
       0.15,
-      this.obstacleTypes.some((ot) => ot.lane == lane && ot.type == ObstacleType.BICYCLE_CRASHING),
+      this.obstacleTypes.some(
+        (ot) => ot.lane == lane && ot.type == ObstacleType.BICYCLE_CRASHING,
+      ),
     );
   }
-
-
 
   /** An invisible obstacle that stops other vehicles at the crosswalk stop line
    *  when the crosswalk signal is flashing.
