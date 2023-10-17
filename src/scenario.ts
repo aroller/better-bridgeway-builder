@@ -515,11 +515,7 @@ class StreetBuilder {
         LaneDirection.RIGHT,
         parkingLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        this.parkingLaneObstacleProducers(
-          y,
-          this.delivery == DeliveryType.CURBSIDE,
-          this.crosswalk,
-        ),
+        this.parkingLaneObstacleProducers(y),
       );
     }
     return { street, y };
@@ -832,11 +828,7 @@ class StreetBuilder {
    * @param crosswalk indicates the type of crosswalk to be implemented on the roadway
    * @returns An array of obstacle producers.
    */
-  private parkingLaneObstacleProducers(
-    y: number,
-    curbsideLoading: boolean = false,
-    crosswalk: CrosswalkType = CrosswalkType.NONE,
-  ): readonly ObstacleProducer[] {
+  private parkingLaneObstacleProducers(y: number): readonly ObstacleProducer[] {
     const frequency = 10000; // only produce one obstacle for each parking spot...do not repeat
     const speed = ObstacleSpeeds.STOPPED;
     const xForEach = [
@@ -862,7 +854,8 @@ class StreetBuilder {
       false,
       true,
     ];
-    if (crosswalk != CrosswalkType.NONE) {
+    const curbsideLoading = this.delivery == DeliveryType.CURBSIDE;
+    if (this.crosswalk != CrosswalkType.NONE) {
       // remove the second to last parking spot giving delivery some room
       xForEach.splice(7, 1);
       commercialVehicleForEach.splice(7, 1);
@@ -873,8 +866,8 @@ class StreetBuilder {
 
       // remove the third spot to daylight the crosswalk
       if (
-        crosswalk == CrosswalkType.DAYLIGHT ||
-        crosswalk == CrosswalkType.SIGNAL
+        this.crosswalk == CrosswalkType.DAYLIGHT ||
+        this.crosswalk == CrosswalkType.SIGNAL
       ) {
         xForEach.splice(2, 1);
         commercialVehicleForEach.splice(2, 1);
