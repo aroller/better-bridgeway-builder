@@ -260,7 +260,6 @@ export class ScenarioProducer {
         description =
           "Ghost vehicles no longer a problem since pedestrians and drivers are not blocked by parked cars.";
         streetBuilder
-          .withLightTraffic()
           .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
@@ -495,14 +494,13 @@ class StreetBuilder {
 
     let y = this.topOfStreetY;
     let street = new Street(this.topOfStreetY, this.streetLength);
-    // setup the lanes from top to bottom
+    // setup the lanes from top to bottom. each contribute to the y coordinate of the next lane.
     ({ street, y } = this.northboundBikeLane(street, y));
     ({ street, y } = this.northboundVehicleLane(street, y));
     ({ street, y } = this.centerTurnLane(street, y));
     ({ street, y } = this.southboundVehicleLane(street, y));
     ({ street, y } = this.southboundBikeLane(street, y));
     ({ street, y } = this.southboundParkingLane(street, y));
-
     return street;
   }
 
@@ -563,6 +561,7 @@ class StreetBuilder {
     if (this.crosswalk == CrosswalkType.SIGNAL) {
       street = street.addSceneObject(this.crosswalkSign(southboundDirection));
     }
+    y = y + this.vehicleLaneWidth / 2;
     street = street.addLane(
       southboundDirection,
       this.vehicleLaneWidth,
