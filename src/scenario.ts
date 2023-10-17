@@ -161,12 +161,6 @@ export class ScenarioProducer {
         title = "Light Traffic is Easy to Cross";
         description = "Normal speed person crossing with light traffic.";
         streetBuilder.withLightTraffic();
-        // .bridgeway2023(
-        //   LIGHT_TRAFFIC,
-        //   PARKING_NOT_INCLUDED,
-        //   ObstacleAvoidanceType.NONE,
-        //   BICYCLES_NOT_INCLUDED,
-        // );
         break;
       case ScenarioKey.HEAVY_TRAFFIC:
         title = "Heavy Traffic is Challenging to Cross";
@@ -183,11 +177,6 @@ export class ScenarioProducer {
         title = "Cars Stop for Slow Moving Frogs";
         description = "Cars stop for a person crossing with heavy traffic.";
         streetBuilder.withObstacleAvoidance(ObstacleAvoidanceType.BRAKE);
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_NOT_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.PARKED_CARS:
@@ -198,11 +187,6 @@ export class ScenarioProducer {
           .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
           .withLightTraffic()
           .withParkingIncluded();
-        // street = this.bridgeway2023(
-        //   LIGHT_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.BICYCLES_SHARED_LANE:
@@ -213,12 +197,6 @@ export class ScenarioProducer {
           .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
           .withParkingIncluded()
           .withBicycles();
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_INCLUDED,
-        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CARS_PASS_BICYCLES:
@@ -228,12 +206,6 @@ export class ScenarioProducer {
           .withObstacleAvoidance(ObstacleAvoidanceType.PASS)
           .withParkingIncluded()
           .withBicycles();
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.PASS,
-        //   BICYCLES_INCLUDED,
-        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CENTER_LANE_DELIVERY:
@@ -245,13 +217,6 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withBicycles()
           .withDelivery(DeliveryType.CENTER_LANE);
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_INCLUDED,
-        //   DeliveryType.CENTER_LANE,
-        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CENTER_LANE_AMBULANCE:
@@ -264,14 +229,6 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withDelivery(DeliveryType.CENTER_LANE)
           .withAmbulance();
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_NOT_INCLUDED,
-        //   DeliveryType.CENTER_LANE,
-        //   AMBULANCE_INCLUDED,
-        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CURBSIDE_DELIVERY:
@@ -283,14 +240,6 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withAmbulance();
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_NOT_INCLUDED,
-        //   DeliveryType.CURBSIDE,
-        //   AMBULANCE_INCLUDED,
-        // );
         player = this.curbsideDeliveryPlayer();
         background = Background.CURBSIDE;
         break;
@@ -303,15 +252,6 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.BASIC);
-        // street = this.bridgeway2023(
-        //   LIGHT_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_NOT_INCLUDED,
-        //   DeliveryType.CURBSIDE,
-        //   AMBULANCE_NOT_INCLUDED,
-        //   CrosswalkType.BASIC,
-        // );
         player = this.curbsideDeliveryPlayer();
         background = Background.CROSSWALK;
         break;
@@ -325,15 +265,6 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.DAYLIGHT);
-        // street = this.bridgeway2023(
-        //   LIGHT_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_NOT_INCLUDED,
-        //   DeliveryType.CURBSIDE,
-        //   AMBULANCE_NOT_INCLUDED,
-        //   CrosswalkType.DAYLIGHT,
-        // );
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.CROSSWALK_DAYLIGHT;
         break;
@@ -346,15 +277,6 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL);
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_NOT_INCLUDED,
-        //   DeliveryType.CURBSIDE,
-        //   AMBULANCE_NOT_INCLUDED,
-        //   CrosswalkType.SIGNAL,
-        // );
 
         player = this.wheelchairPlayer();
         background = Background.ACCESSIBLE;
@@ -364,21 +286,12 @@ export class ScenarioProducer {
         description =
           "Cars and bicycles travel at different speeds.  Separate them and reduce frustration, fear and chaos.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
-          .withParkingIncluded()
-          .withDelivery(DeliveryType.CURBSIDE)
-          .withCrosswalk(CrosswalkType.SIGNAL)
-          .withBikeLanes();
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_NOT_INCLUDED,
-        //   DeliveryType.CURBSIDE,
-        //   AMBULANCE_NOT_INCLUDED,
-        //   CrosswalkType.SIGNAL,
-        //   true, // bike lanes
-        // );
+        .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+        .withParkingIncluded()
+        .withDelivery(DeliveryType.CURBSIDE)
+        .withCrosswalk(CrosswalkType.SIGNAL)
+        .withBikeLanes();
+
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
@@ -394,16 +307,6 @@ export class ScenarioProducer {
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withBikeLanes()
           .withAmbulance();
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.BRAKE,
-        //   BICYCLES_NOT_INCLUDED,
-        //   DeliveryType.CURBSIDE,
-        //   AMBULANCE_INCLUDED,
-        //   CrosswalkType.SIGNAL,
-        //   true, // bike lanes
-        // );
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
@@ -417,14 +320,6 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withDelivery(DeliveryType.CENTER_LANE)
           .withAmbulance();
-        // street = this.bridgeway2023(
-        //   HEAVY_TRAFFIC,
-        //   PARKING_INCLUDED,
-        //   ObstacleAvoidanceType.PASS,
-        //   BICYCLES_INCLUDED,
-        //   DeliveryType.CENTER_LANE,
-        //   AMBULANCE_INCLUDED,
-        // );
         break;
     }
     const street = streetBuilder.build();
@@ -517,6 +412,12 @@ export class ScenarioProducer {
   }
 }
 
+/** A class that builds a street for a scenario. 
+ * Use the with methods to set up the scenario.
+ * The build method puts it all together and returns a street 
+ * that can be used to simulate the situation requested. 
+ * 
+ */
 class StreetBuilder {
   private frequency: number;
   private lightTraffic: boolean;
@@ -591,6 +492,12 @@ class StreetBuilder {
     return this;
   }
 
+  /** Based on the properties given, this prouces the street that will produce
+   * the obstacles and scene objects for the scenario.
+   * 
+   * 
+   * @returns 
+   */
   public build(): Street {
     const frequency = this.lightTraffic ? 4 : 2;
     //Pixels determined emperically...this should be a percentage of the streetWidth.
