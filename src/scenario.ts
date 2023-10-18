@@ -22,6 +22,7 @@ const PARKED_CAR_2_X = 120;
 const PARKED_CAR_3_X = 240;
 const PARKED_CAR_4_X = 360;
 const PARKED_CAR_5_X = 560;
+const PARKED_CAR_7_X = 940;
 const solidWhiteLineStyle = new LaneLineStyle();
 const hiddenLineStyle = new LaneLineStyle(
   solidWhiteLineStyle.color,
@@ -395,7 +396,10 @@ export class ScenarioProducer {
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withParkingCars()
-          .withBrakingVehicles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
+          .withBrakingVehicles([
+            Lane.NORTHBOUND_VEHICLE,
+            Lane.SOUTHBOUND_VEHICLE,
+          ])
           .withBikeLanes()
           .withBicycles([Lane.NORTHBOUND_BIKE])
           .withBicyclesThatCrash([Lane.SOUTHBOUND_BIKE]);
@@ -631,6 +635,7 @@ class StreetBuilder {
     ({ street, y } = this.northboundVehicleLane(street, y));
     ({ street, y } = this.centerTurnLane(street, y));
     ({ street, y } = this.southboundVehicleLane(street, y));
+    const southboundVehicleLaneY = y;
     ({ street, y } = this.southboundBikeLane(street, y));
     ({ street, y } = this.southboundParkingLane(street, y));
     return street;
@@ -787,11 +792,10 @@ class StreetBuilder {
     y: number,
   ): { street: Street; y: number } {
     if (this.parkingIncluded) {
-      const parkingLaneWidth = 50;
-      y = y + parkingLaneWidth / 2;
+      y = y + this.parkingLaneWidth / 2;
       street = street.addLane(
         LaneDirection.RIGHT,
-        parkingLaneWidth,
+        this.parkingLaneWidth,
         new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
         this.parkingLaneObstacleProducers(y),
       );
@@ -816,16 +820,20 @@ class StreetBuilder {
     return 50;
   }
 
+  private get parkingLaneWidth(): number {
+    return 50;
+  }
+
   /** Vehicle lane width changes if bike lanes exist. The lanes get more narrow in modern designs. */
   private get vehicleLaneWidth(): number {
     return this.bikeLanes ? 60 : this.historicVehicleLaneWidth;
   }
 
-  /** Given the lane, this returns all of the obstacleTypes declared for the lane that match  
+  /** Given the lane, this returns all of the obstacleTypes declared for the lane that match
    * a vehicle type.  This is used to determine which vehicle types to produce for the lane.
    */
   private getVehicleTypesForLane(lane: Lane): ObstacleType[] {
-    const matchingObstacleTypes:ObstacleType[] = [];
+    const matchingObstacleTypes: ObstacleType[] = [];
     const vehicleTypes = [
       ObstacleType.VEHICLE,
       ObstacleType.PASSING_VEHICLE,
@@ -833,7 +841,10 @@ class StreetBuilder {
       ObstacleType.PARKING_VEHICLE,
     ];
     for (const obstacleType of this.obstacleTypes) {
-      if (obstacleType.lane == lane && vehicleTypes.includes(obstacleType.type)) {
+      if (
+        obstacleType.lane == lane &&
+        vehicleTypes.includes(obstacleType.type)
+      ) {
         matchingObstacleTypes.push(obstacleType.type);
       }
     }
@@ -871,13 +882,16 @@ class StreetBuilder {
     const vehicles = this.getVehicleTypesForLane(lane);
     for (const vehicle of vehicles) {
       const obstacleAvoidance = obstacleAvoidanceFromObstacleType(vehicle);
-      const vehicleTemplate = this.vehicleObstacle(
-        0,
-        y,
-        direction,
-        ObstacleSpeeds.MEDIUM,
-        obstacleAvoidance,
-      );
+      const vehicleTemplate =
+        vehicle == ObstacleType.PARKING_VEHICLE
+          ? this.parkingVehicleObstacle(y)
+          : this.vehicleObstacle(
+              0,
+              y,
+              direction,
+              ObstacleSpeeds.MEDIUM,
+              obstacleAvoidance,
+            );
       // always add cars
       producers.push(
         new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds),
@@ -1000,7 +1014,7 @@ class StreetBuilder {
       PARKED_CAR_4_X,
       PARKED_CAR_5_X,
       840,
-      940,
+      PARKED_CAR_7_X,
       1040,
       1150,
     ];
@@ -1258,6 +1272,13 @@ class StreetBuilder {
     );
   }
 
+  private parkingVehicleObstacle(y: number): ParkingCarObstacle {
+    return new ParkingCarObstacle(
+      y,
+      PARKED_CAR_7_X,
+      y + this.bikeLaneWidth + this.parkingLaneWidth / 2, //only works with the bike lanes street design
+    );
+  }
   /** An invisible obstacle that stops other vehicles at the crosswalk stop line
    *  when the crosswalk signal is flashing.
    *
@@ -1297,15 +1318,16 @@ export class ParkingCarObstacle extends Obstacle {
     y: number,
     public readonly parkingSpotX: number,
     public readonly parkingSpotY: number,
-    doorsOpen: boolean,
+    doorsOpen: boolean = false,
     closedDoorImage: HTMLImageElement = ParkingCarObstacle.getClosesDoorImage(),
     openDoorImage: HTMLImageElement = ParkingCarObstacle.getOpenDoorImage(),
   ) {
+    const imageScale = doorsOpen? 0.09 : 0.05;
     super(
       0,
       y,
-      doorsOpen ? 656 : 720,
-      doorsOpen ? 669 : 332,
+      (doorsOpen ? 656 : 1052 ) * imageScale,
+      (doorsOpen ? 669 : 701 ) * imageScale,
       ObstacleSpeeds.MEDIUM,
       LaneDirection.RIGHT,
       doorsOpen ? openDoorImage : closedDoorImage,
