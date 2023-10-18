@@ -13,6 +13,7 @@ import {
   ObstacleAvoidanceType,
 } from "./street";
 import { LaneDirection } from "./street";
+import { re } from "mathjs";
 
 /** Fixed point corresponding to the part of the starting sidewalk where the red curb exists.
  * Fathest left point putting the frog close to the parked cars.
@@ -29,7 +30,8 @@ const hiddenLineStyle = new LaneLineStyle(
   false,
   true,
 );
-
+const HEAVY_TRAFFIC_FREQUENCY = 2;
+const LIGHT_TRAFFIC_FREQUENCY = 4;
 /**
  * A class representing a scenario that educates the player about infrastructure challenges.
  */
@@ -83,10 +85,10 @@ export enum DeliveryType {
 
 /** Internally used to indicate traffic diversity in a single lane. */
 enum ObstacleType {
-  VEHICLE = "vehicle", // Obstacle Avoidance: None
+  CAR = "vehicle", // Obstacle Avoidance: None
   PASSING_VEHICLE = "passing-vehicle",
   BRAKING_VEHICLE = "stopping-vehicle",
-  PARKING_VEHICLE = "parking-vehicle",
+  PARKING_CAR = "parking-vehicle",
   DELIVERY_TRUCK = "delivery",
   BICYCLE = "bicycle",
   BICYCLE_CRASHING = "bicycle-crashing",
@@ -129,13 +131,13 @@ function obstacleAvoidanceFromObstacleType(obstacleType: ObstacleType) {
     case ObstacleType.AMBULANCE:
     case ObstacleType.AMBULANCE_CRASHING:
       return ObstacleAvoidanceType.PASS;
-    case ObstacleType.PARKING_VEHICLE:
+    case ObstacleType.PARKING_CAR:
       return ObstacleAvoidanceType.BRAKE;
     case ObstacleType.PASSING_VEHICLE:
       return ObstacleAvoidanceType.PASS;
     case ObstacleType.BRAKING_VEHICLE:
       return ObstacleAvoidanceType.BRAKE;
-    case ObstacleType.VEHICLE:
+    case ObstacleType.CAR:
     case ObstacleType.DELIVERY_TRUCK:
     default:
       return ObstacleAvoidanceType.NONE;
@@ -391,15 +393,12 @@ export class ScenarioProducer {
         description =
           "Drivers entering and exiting the parking spots can be dangerous for bicycle riders.  Opening doors can be tragic for a passing cyclist.";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withParkingCars()
-          .withBrakingVehicles([
-            Lane.NORTHBOUND_VEHICLE,
-            Lane.SOUTHBOUND_VEHICLE,
-          ])
+          .withTraffic(TrafficRequest.of(Lane.NORTHBOUND_VEHICLE,ObstacleType.CAR).withAvoidance(ObstacleAvoidanceType.BRAKE))
+          .withTraffic(TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE,ObstacleType.CAR).withAvoidance(ObstacleAvoidanceType.BRAKE))
           .withBikeLanes()
           .withBicycles([Lane.NORTHBOUND_BIKE])
           .withBicyclesThatCrash([Lane.SOUTHBOUND_BIKE]);
@@ -508,6 +507,74 @@ export class ScenarioProducer {
   }
 }
 
+/**
+ * An individual request for an obstacle to be produced with specfic properties.
+ *
+ */
+class TrafficRequest {
+  /**
+   * Creates an instance of TrafficRequest.
+   * @param lane The lane where the obstacle should be produced.
+   * @param type The type of vehicle.
+   * @param frequency Number of seconds between obstacles of this type.
+   * @param avoidance How to avoid traffic ahead of the obstacle.
+   * @param crash Indicates if the obstacle should crash into the player.
+   */
+  constructor(
+    public readonly lane: Lane,
+    public readonly type: ObstacleType,
+    public readonly speed: ObstacleSpeeds = ObstacleSpeeds.MEDIUM,
+    public readonly frequency: number = HEAVY_TRAFFIC_FREQUENCY,
+    public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
+    public readonly crash: boolean = false,
+  ) {}
+
+  public static of(lane:Lane,type:ObstacleType): TrafficRequest {
+    if (!lane || !type) throw new Error("Lane and type are required");
+    return new TrafficRequest(lane,type);
+  }
+  withFrequency(frequency: number): TrafficRequest {
+    return new TrafficRequest(
+      this.lane,
+      this.type,
+      this.speed,
+      frequency,
+      this.avoidance,
+      this.crash,
+    );
+  }
+  withAvoidance(avoidance: ObstacleAvoidanceType): TrafficRequest {
+    return new TrafficRequest(
+      this.lane,
+      this.type,
+      this.speed,
+      this.frequency,
+      avoidance,
+      this.crash,
+    );
+  }
+  withCrash(): TrafficRequest {
+    return new TrafficRequest(
+      this.lane,
+      this.type,
+      this.speed,
+      this.frequency,
+      this.avoidance,
+      true,
+    );
+  }
+  withSpeed(speed: ObstacleSpeeds): TrafficRequest {
+    return new TrafficRequest(
+      this.lane,
+      this.type,
+      speed,
+      this.frequency,
+      this.avoidance,
+      this.crash,
+    );
+  }
+}
+
 /** A class that builds a street for a scenario.
  * Use the with methods to set up the scenario.
  * The build method puts it all together and returns a street
@@ -523,7 +590,7 @@ class StreetBuilder {
   private crosswalk: CrosswalkType;
   private bikeLanes: boolean;
   private ambulance: boolean;
-  private obstacleTypes: { readonly lane: Lane; readonly type: ObstacleType }[];
+  private traffic: TrafficRequest[];
 
   constructor(
     public readonly streetWidth: number,
@@ -538,7 +605,7 @@ class StreetBuilder {
     this.crosswalk = CrosswalkType.NONE;
     this.bikeLanes = false;
     this.ambulance = false;
-    this.obstacleTypes = [];
+    this.traffic = [];
   }
 
   public withLightTraffic(): StreetBuilder {
@@ -551,28 +618,58 @@ class StreetBuilder {
     return this;
   }
 
+  public withTraffic(traffic: TrafficRequest): StreetBuilder {
+    this.traffic.push(traffic);
+    return this;
+  }
+
   public withParkingCars(): StreetBuilder {
-    this.obstacleTypes.push({
-      lane: Lane.SOUTHBOUND_VEHICLE,
-      type: ObstacleType.PARKING_VEHICLE,
-    });
+    this.withTraffic(
+      //parking cars settings are fixed for now
+      TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE,ObstacleType.PARKING_CAR).withFrequency(20)
+    );
     return this;
   }
-  public withPassingVehicles(lanes: Lane[]): StreetBuilder {
+  public withPassingVehicles(
+    lanes: Lane[],
+    frequency: number = HEAVY_TRAFFIC_FREQUENCY,
+  ): StreetBuilder {
     for (const lane of lanes) {
-      this.obstacleTypes.push({ lane, type: ObstacleType.PASSING_VEHICLE });
+      this.traffic.push(
+        new TrafficRequest(
+          lane,
+          ObstacleType.CAR,
+          frequency,
+          ObstacleAvoidanceType.PASS,
+        ),
+      );
     }
     return this;
   }
-  public withBrakingVehicles(lanes: Lane[]): StreetBuilder {
+  public withBrakingVehicles(
+    lanes: Lane[],
+    frequency: number = HEAVY_TRAFFIC_FREQUENCY,
+  ): StreetBuilder {
     for (const lane of lanes) {
-      this.obstacleTypes.push({ lane, type: ObstacleType.BRAKING_VEHICLE });
+      this.traffic.push(
+        new TrafficRequest(
+          lane,
+          ObstacleType.CAR,
+          frequency,
+          ObstacleAvoidanceType.BRAKE,
+        ),
+      );
     }
     return this;
   }
-  public withVehicles(lanes: Lane[]): StreetBuilder {
+  public withVehicles(
+    lanes: Lane[],
+    frequency: number = HEAVY_TRAFFIC_FREQUENCY,
+  ): StreetBuilder {
     for (const lane of lanes) {
-      this.obstacleTypes.push({ lane, type: ObstacleType.VEHICLE });
+      this.traffic.push(
+        new TrafficRequest(lane, ObstacleType.CAR, frequency),
+      );
     }
     return this;
   }
@@ -584,17 +681,35 @@ class StreetBuilder {
     return this;
   }
 
-  public withBicycles(lanes: Lane[]): StreetBuilder {
+  public withBicycles(
+    lanes: Lane[],
+    frequency: number = HEAVY_TRAFFIC_FREQUENCY,
+  ): StreetBuilder {
     this.bicycles = true;
     for (const lane of lanes) {
-      this.obstacleTypes.push({ lane, type: ObstacleType.BICYCLE });
+      this.traffic.push(
+        new TrafficRequest(
+          lane,
+          ObstacleType.BICYCLE,
+          frequency,
+          ObstacleAvoidanceType.BRAKE,
+        ),
+      );
     }
     return this;
   }
 
-  public withBicyclesThatCrash(lanes: Lane[] = []): StreetBuilder {
+  public withBicyclesThatCrash(
+    lanes: Lane[] = [],
+    frequency: number = HEAVY_TRAFFIC_FREQUENCY,
+  ): StreetBuilder {
     for (const lane of lanes) {
-      this.obstacleTypes.push({ lane, type: ObstacleType.BICYCLE_CRASHING });
+      this.traffic.push(
+        new TrafficRequest(lane, ObstacleType.BICYCLE)
+          .withAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withCrash()
+          .withSpeed(ObstacleSpeeds.SLOW),
+      );
     }
     return this.withBicycles(lanes);
   }
@@ -635,7 +750,6 @@ class StreetBuilder {
     ({ street, y } = this.northboundVehicleLane(street, y));
     ({ street, y } = this.centerTurnLane(street, y));
     ({ street, y } = this.southboundVehicleLane(street, y));
-    const southboundVehicleLaneY = y;
     ({ street, y } = this.southboundBikeLane(street, y));
     ({ street, y } = this.southboundParkingLane(street, y));
     return street;
@@ -832,23 +946,14 @@ class StreetBuilder {
   /** Given the lane, this returns all of the obstacleTypes declared for the lane that match
    * a vehicle type.  This is used to determine which vehicle types to produce for the lane.
    */
-  private getVehicleTypesForLane(lane: Lane): ObstacleType[] {
-    const matchingObstacleTypes: ObstacleType[] = [];
-    const vehicleTypes = [
-      ObstacleType.VEHICLE,
-      ObstacleType.PASSING_VEHICLE,
-      ObstacleType.BRAKING_VEHICLE,
-      ObstacleType.PARKING_VEHICLE,
-    ];
-    for (const obstacleType of this.obstacleTypes) {
-      if (
-        obstacleType.lane == lane &&
-        vehicleTypes.includes(obstacleType.type)
-      ) {
-        matchingObstacleTypes.push(obstacleType.type);
-      }
-    }
-    return matchingObstacleTypes;
+  private getTrafficRequestsForLane(
+    lane: Lane,
+    type: ObstacleType,
+  ): TrafficRequest[] {
+    return this.traffic.filter(
+      (trafficRequest) =>
+        trafficRequest.lane == lane && trafficRequest.type == type,
+    );
   }
 
   /**
@@ -879,24 +984,29 @@ class StreetBuilder {
     const producers = [];
 
     // add vehicles for the lane
-    const vehicles = this.getVehicleTypesForLane(lane);
-    for (const vehicle of vehicles) {
-      const obstacleAvoidance = obstacleAvoidanceFromObstacleType(vehicle);
-      const vehicleTemplate =
-        vehicle == ObstacleType.PARKING_VEHICLE
-          ? this.parkingVehicleObstacle(y)
-          : this.vehicleObstacle(
-              0,
-              y,
-              direction,
-              ObstacleSpeeds.MEDIUM,
-              obstacleAvoidance,
-            );
+    const requests = this.getTrafficRequestsForLane(lane, ObstacleType.CAR);
+    for (const request of requests) {
+      console.log(`request: ${request.lane} ${request.speed} ${request.avoidance} `);
+      const vehicleTemplate = this.vehicleObstacle(
+        0,
+        y,
+        direction,
+        request.speed,
+        request.avoidance,
+      );
       // always add cars
       producers.push(
         new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds),
       );
     }
+
+    //parking cars are special and different than other cars
+    this.getTrafficRequestsForLane(lane, ObstacleType.PARKING_CAR).forEach(request => {
+      console.log(`parking car request: ${request.lane} ${request.speed} ${request.avoidance} `);
+      const parkingCarTemplate = this.parkingCarObstacle(y);
+      producers.push(new ObstacleProducer(parkingCarTemplate, request.frequency));
+    });
+
     // add an ambulance first to demonstrate a clear path
     if (ambulance) {
       // detectCollsion if traffic contains ObstacleType.AMBULANCE_CRASHING
@@ -909,7 +1019,7 @@ class StreetBuilder {
     // bicycles are optional and move slower than cars
     if (
       bicycles ||
-      this.obstacleTypes.some(
+      this.traffic.some(
         (obstacle) =>
           obstacle.lane == lane && obstacle.type == ObstacleType.BICYCLE,
       )
@@ -1266,13 +1376,13 @@ class StreetBuilder {
       332,
       140,
       0.15,
-      this.obstacleTypes.some(
+      this.traffic.some(
         (ot) => ot.lane == lane && ot.type == ObstacleType.BICYCLE_CRASHING,
       ),
     );
   }
 
-  private parkingVehicleObstacle(y: number): ParkingCarObstacle {
+  private parkingCarObstacle(y: number): ParkingCarObstacle {
     return new ParkingCarObstacle(
       y,
       PARKED_CAR_7_X,
@@ -1322,12 +1432,12 @@ export class ParkingCarObstacle extends Obstacle {
     closedDoorImage: HTMLImageElement = ParkingCarObstacle.getClosesDoorImage(),
     openDoorImage: HTMLImageElement = ParkingCarObstacle.getOpenDoorImage(),
   ) {
-    const imageScale = doorsOpen? 0.09 : 0.05;
+    const imageScale = doorsOpen ? 0.09 : 0.05;
     super(
       0,
       y,
-      (doorsOpen ? 656 : 1052 ) * imageScale,
-      (doorsOpen ? 669 : 701 ) * imageScale,
+      (doorsOpen ? 656 : 1052) * imageScale,
+      (doorsOpen ? 669 : 701) * imageScale,
       ObstacleSpeeds.MEDIUM,
       LaneDirection.RIGHT,
       doorsOpen ? openDoorImage : closedDoorImage,
