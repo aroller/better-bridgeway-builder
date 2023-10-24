@@ -22,6 +22,8 @@ export class Scene {
   private ctx: CanvasRenderingContext2D;
   /** The current view of the street, initially provided by scenario. */
   private street: Street;
+  /** Keep track of the current level being played. */
+  private level: number = 0;
   /** The current view of the player, initially provided by scenario. */
   private player: Player;
   private deadPlayers: Player[] = [];
@@ -80,11 +82,13 @@ export class Scene {
    * @param scenarioKey - The scenario key to play. If not provided, the next level will be played.
    */
   private playNextLevel(scenarioKey?: ScenarioKey | string) {
-    const level = this.gameAttempts.currentLevel;
+    this.level++;
     //start the next scenario
     this.deadPlayers = [];
     if (!scenarioKey) {
-      scenarioKey = ScenarioProducer.getScenarioKeyForLevel(level);
+      scenarioKey = ScenarioProducer.getScenarioKeyForLevel(this.level);
+    } else {
+      this.level = ScenarioProducer.getLevelForScenarioKey(scenarioKey);
     }
     this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.street = this.scenario.street;

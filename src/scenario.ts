@@ -146,6 +146,18 @@ export class ScenarioProducer {
     return keys[level - 1];
   }
 
+  /** Given the key, this returns the number based on the index related to other levels declared in the enumeration.
+   *
+   */
+  static getLevelForScenarioKey(scenarioKey: ScenarioKey | string): number {
+    const keys = Object.values(ScenarioKey);
+    const index = keys.indexOf(scenarioKey as ScenarioKey);
+    if (index < 0) {
+      return 1;
+    }
+    return index + 1;
+  }
+
   /**
    * Returns a scenario for the specified level.
    * @param key The key that matches the scenario to be prepared.
@@ -289,8 +301,16 @@ export class ScenarioProducer {
         title = "A Crosswalk is a Safer Place to Cross";
         description = "Crosswalks show drivers where to expect pedestrians.";
         streetBuilder
-          .withTraffic(TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.CAR).withAvoidance(ObstacleAvoidanceType.BRAKE).withFrequency(LIGHT_TRAFFIC_FREQUENCY))
-          .withTraffic(TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.CAR).withAvoidance(ObstacleAvoidanceType.BRAKE).withFrequency(LIGHT_TRAFFIC_FREQUENCY))
+          .withTraffic(
+            TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withFrequency(LIGHT_TRAFFIC_FREQUENCY),
+          )
+          .withTraffic(
+            TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withFrequency(LIGHT_TRAFFIC_FREQUENCY),
+          )
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.BASIC);
@@ -565,7 +585,6 @@ class StreetBuilder {
   private delivery: DeliveryType;
   private crosswalk: CrosswalkType;
   private bikeLanes: boolean;
-  private ambulance: boolean;
   private traffic: TrafficRequest[];
 
   constructor(
@@ -580,7 +599,6 @@ class StreetBuilder {
     this.delivery = DeliveryType.NONE;
     this.crosswalk = CrosswalkType.NONE;
     this.bikeLanes = false;
-    this.ambulance = false;
     this.traffic = [];
   }
 
@@ -696,7 +714,12 @@ class StreetBuilder {
   }
 
   public withAmbulance(): StreetBuilder {
-    this.ambulance = true;
+    return this.withTraffic(
+      TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.AMBULANCE)
+        .withCrash()
+        .withAvoidance(ObstacleAvoidanceType.PASS)
+        .withFrequency(20),
+    );
     return this;
   }
 
