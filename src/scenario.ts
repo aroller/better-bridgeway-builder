@@ -86,8 +86,6 @@ export enum DeliveryType {
 /** Internally used to indicate traffic diversity in a single lane. */
 enum ObstacleType {
   CAR = "vehicle", // Obstacle Avoidance: None
-  PASSING_VEHICLE = "passing-vehicle",
-  BRAKING_VEHICLE = "stopping-vehicle",
   PARKING_CAR = "parking-vehicle",
   DELIVERY_TRUCK = "delivery",
   BICYCLE = "bicycle",
@@ -123,26 +121,7 @@ export enum CrosswalkType {
   SIGNAL = "signal", // Rapid Flashing Beacon
 }
 
-function obstacleAvoidanceFromObstacleType(obstacleType: ObstacleType) {
-  switch (obstacleType) {
-    case ObstacleType.BICYCLE:
-    case ObstacleType.BICYCLE_CRASHING:
-      return ObstacleAvoidanceType.BRAKE;
-    case ObstacleType.AMBULANCE:
-    case ObstacleType.AMBULANCE_CRASHING:
-      return ObstacleAvoidanceType.PASS;
-    case ObstacleType.PARKING_CAR:
-      return ObstacleAvoidanceType.BRAKE;
-    case ObstacleType.PASSING_VEHICLE:
-      return ObstacleAvoidanceType.PASS;
-    case ObstacleType.BRAKING_VEHICLE:
-      return ObstacleAvoidanceType.BRAKE;
-    case ObstacleType.CAR:
-    case ObstacleType.DELIVERY_TRUCK:
-    default:
-      return ObstacleAvoidanceType.NONE;
-  }
-}
+
 /**
  * Creates specific scenarios to be executed in the game.
  */
@@ -541,7 +520,7 @@ class TrafficRequest {
    * @param type The type of vehicle.
    * @param frequency Number of seconds between obstacles of this type.
    * @param avoidance How to avoid traffic ahead of the obstacle.
-   * @param crash Indicates if the obstacle should crash into the player.
+   * @param crash True will finalize obstacle if collision detected with another.
    */
   constructor(
     public readonly lane: Lane,
@@ -658,16 +637,13 @@ class StreetBuilder {
   }
   public withPassingVehicles(
     lanes: Lane[],
-    frequency: number = HEAVY_TRAFFIC_FREQUENCY,
   ): StreetBuilder {
     for (const lane of lanes) {
       this.traffic.push(
         new TrafficRequest(
           lane,
-          ObstacleType.CAR,
-          frequency,
-          ObstacleAvoidanceType.PASS,
-        ),
+          ObstacleType.CAR
+        ).withAvoidance(ObstacleAvoidanceType.PASS),
       );
     }
     return this;
@@ -799,7 +775,6 @@ class StreetBuilder {
           false,
           false,
           this.crosswalk,
-          [], // deprecated traffic. using this.obstacleTypes instead
         ),
       );
       //jump to the bike lane line
@@ -885,9 +860,6 @@ class StreetBuilder {
         false,
         this.ambulance,
         this.crosswalk,
-        this.ambulance && this.delivery == DeliveryType.CENTER_LANE
-          ? [ObstacleType.AMBULANCE_CRASHING, ObstacleType.BRAKING_VEHICLE]
-          : [ObstacleType.AMBULANCE, ObstacleType.BRAKING_VEHICLE],
       ),
     );
     y = y + this.vehicleLaneWidth / 2;
@@ -915,7 +887,6 @@ class StreetBuilder {
           false,
           false,
           this.crosswalk,
-          [], // deprecated traffic. using this.obstacleTypes instead
         ),
       );
       y += this.bikeLaneWidth / 2;
@@ -1001,7 +972,6 @@ class StreetBuilder {
     centerLaneDelivery: boolean = false,
     ambulance: boolean = false,
     crosswalk: CrosswalkType = CrosswalkType.NONE,
-    traffic: ObstacleType[] = [ObstacleType.PASSING_VEHICLE],
   ): readonly ObstacleProducer[] {
     const producers = [];
 
@@ -1036,13 +1006,18 @@ class StreetBuilder {
     );
 
     // add an ambulance first to demonstrate a clear path
-    if (ambulance) {
-      // detectCollsion if traffic contains ObstacleType.AMBULANCE_CRASHING
-      const detectCollision = traffic.includes(ObstacleType.AMBULANCE_CRASHING);
-      const ambulance = this.ambulanceObstacle(y, direction, detectCollision);
-      const ambulanceFrequency = 10; // multiple productions shows multiple scenarios
-      producers.push(new ObstacleProducer(ambulance, ambulanceFrequency));
-    }
+    this.getTrafficRequestsForLane(lane, ObstacleType.AMBULANCE).forEach(
+      (request) => {
+        const ambulanceTemplate = this.ambulanceObstacle(
+          y,
+          direction,
+          request.crash,
+        );
+        producers.push(
+          new ObstacleProducer(ambulanceTemplate, request.frequency),
+        );
+      },
+    );
 
     // bicycles are optional and move slower than cars
     if (
