@@ -189,8 +189,18 @@ export class ScenarioProducer {
         title = "Light Traffic is Easy to Cross";
         description = "Normal speed person crossing with light traffic.";
         streetBuilder
-          .withLightTraffic()
-          .withVehicles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE]);
+          .withTraffic(
+            TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.NONE)
+              .withSpeed(ObstacleSpeeds.MEDIUM)
+              .withFrequency(LIGHT_TRAFFIC_FREQUENCY),
+          )
+          .withTraffic(
+            TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.NONE)
+              .withSpeed(ObstacleSpeeds.MEDIUM)
+              .withFrequency(LIGHT_TRAFFIC_FREQUENCY),
+          );
         break;
       case ScenarioKey.HEAVY_TRAFFIC:
         title = "Heavy Traffic is Challenging to Cross";
@@ -397,8 +407,18 @@ export class ScenarioProducer {
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withParkingCars()
-          .withTraffic(TrafficRequest.of(Lane.NORTHBOUND_VEHICLE,ObstacleType.CAR).withAvoidance(ObstacleAvoidanceType.BRAKE))
-          .withTraffic(TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE,ObstacleType.CAR).withAvoidance(ObstacleAvoidanceType.BRAKE))
+          .withTraffic(
+            TrafficRequest.of(
+              Lane.NORTHBOUND_VEHICLE,
+              ObstacleType.CAR,
+            ).withAvoidance(ObstacleAvoidanceType.BRAKE),
+          )
+          .withTraffic(
+            TrafficRequest.of(
+              Lane.SOUTHBOUND_VEHICLE,
+              ObstacleType.CAR,
+            ).withAvoidance(ObstacleAvoidanceType.BRAKE),
+          )
           .withBikeLanes()
           .withBicycles([Lane.NORTHBOUND_BIKE])
           .withBicyclesThatCrash([Lane.SOUTHBOUND_BIKE]);
@@ -529,9 +549,9 @@ class TrafficRequest {
     public readonly crash: boolean = false,
   ) {}
 
-  public static of(lane:Lane,type:ObstacleType): TrafficRequest {
+  public static of(lane: Lane, type: ObstacleType): TrafficRequest {
     if (!lane || !type) throw new Error("Lane and type are required");
-    return new TrafficRequest(lane,type);
+    return new TrafficRequest(lane, type);
   }
   withFrequency(frequency: number): TrafficRequest {
     return new TrafficRequest(
@@ -626,7 +646,10 @@ class StreetBuilder {
   public withParkingCars(): StreetBuilder {
     this.withTraffic(
       //parking cars settings are fixed for now
-      TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE,ObstacleType.PARKING_CAR).withFrequency(20)
+      TrafficRequest.of(
+        Lane.SOUTHBOUND_VEHICLE,
+        ObstacleType.PARKING_CAR,
+      ).withFrequency(20),
     );
     return this;
   }
@@ -667,9 +690,7 @@ class StreetBuilder {
     frequency: number = HEAVY_TRAFFIC_FREQUENCY,
   ): StreetBuilder {
     for (const lane of lanes) {
-      this.traffic.push(
-        new TrafficRequest(lane, ObstacleType.CAR, frequency),
-      );
+      this.traffic.push(new TrafficRequest(lane, ObstacleType.CAR, frequency));
     }
     return this;
   }
@@ -986,7 +1007,9 @@ class StreetBuilder {
     // add vehicles for the lane
     const requests = this.getTrafficRequestsForLane(lane, ObstacleType.CAR);
     for (const request of requests) {
-      console.log(`request: ${request.lane} ${request.speed} ${request.avoidance} `);
+      console.log(
+        `request: ${request.lane} ${request.speed} ${request.avoidance} `,
+      );
       const vehicleTemplate = this.vehicleObstacle(
         0,
         y,
@@ -996,16 +1019,22 @@ class StreetBuilder {
       );
       // always add cars
       producers.push(
-        new ObstacleProducer(vehicleTemplate, maxFrequencyInSeconds),
+        new ObstacleProducer(vehicleTemplate, request.frequency),
       );
     }
 
     //parking cars are special and different than other cars
-    this.getTrafficRequestsForLane(lane, ObstacleType.PARKING_CAR).forEach(request => {
-      console.log(`parking car request: ${request.lane} ${request.speed} ${request.avoidance} `);
-      const parkingCarTemplate = this.parkingCarObstacle(y);
-      producers.push(new ObstacleProducer(parkingCarTemplate, request.frequency));
-    });
+    this.getTrafficRequestsForLane(lane, ObstacleType.PARKING_CAR).forEach(
+      (request) => {
+        console.log(
+          `parking car request: ${request.lane} ${request.speed} ${request.avoidance} `,
+        );
+        const parkingCarTemplate = this.parkingCarObstacle(y);
+        producers.push(
+          new ObstacleProducer(parkingCarTemplate, request.frequency),
+        );
+      },
+    );
 
     // add an ambulance first to demonstrate a clear path
     if (ambulance) {
