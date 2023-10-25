@@ -893,3 +893,48 @@ export class CrosswalkObstacleProducer extends ObstacleProducer {
     return false;
   }
 }
+
+
+/** A single obstacle that drives in the soutbound lane and parks
+ * in an open parking spot.  The doors open and close causing danger
+ * for bicyclists in the bike lane.
+ *
+ */
+export class ParkingCarObstacle extends Obstacle {
+  private readonly doorsOpen: boolean;
+
+  constructor(
+    y: number,
+    public readonly parkingSpotX: number,
+    public readonly parkingSpotY: number,
+    doorsOpen: boolean = false,
+    closedDoorImage: HTMLImageElement = ParkingCarObstacle.getClosesDoorImage(),
+    openDoorImage: HTMLImageElement = ParkingCarObstacle.getOpenDoorImage(),
+  ) {
+    const imageScale = doorsOpen ? 0.09 : 0.05;
+    super(
+      0,
+      y,
+      (doorsOpen ? 656 : 1052) * imageScale,
+      (doorsOpen ? 669 : 701) * imageScale,
+      ObstacleSpeeds.MEDIUM,
+      LaneDirection.RIGHT,
+      doorsOpen ? openDoorImage : closedDoorImage,
+      ObstacleAvoidanceType.BRAKE,
+    );
+    this.doorsOpen = doorsOpen;
+  }
+
+  
+  private static getClosesDoorImage(): HTMLImageElement {
+    const image = new Image();
+    image.src = "images/obstacles/car-door-closed.png";
+    return image;
+  }
+
+  private static getOpenDoorImage(): HTMLImageElement {
+    const image = new Image();
+    image.src = "images/obstacles/car-door-open.png";
+    return image;
+  }
+}
