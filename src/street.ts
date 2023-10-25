@@ -43,6 +43,7 @@ export class LaneLinesStyles {
   ) {}
 }
 
+/** adjust the speed for an obstacle based on other obstacles.  */
 interface ObstacleSpeedCalculator {
   calculateSpeed(
     target: Obstacle,
@@ -51,6 +52,7 @@ interface ObstacleSpeedCalculator {
   ): number;
 }
 
+/** Adjusts the speed to brake when an obstacle is blocking.  */
 class BrakingObstacleSpeedCalculator implements ObstacleSpeedCalculator {
   calculateSpeed(
     target: Obstacle,
@@ -84,6 +86,7 @@ class BrakingObstacleSpeedCalculator implements ObstacleSpeedCalculator {
   }
 }
 
+/** Calculates the Y to adjust lane positions.  */
 export interface ObstacleYCalculator {
   calculateY(
     target: Obstacle,
@@ -92,6 +95,7 @@ export interface ObstacleYCalculator {
   ): number;
 }
 
+/** Calculates the Y for passing blocking obstacles.  */
 export class PassObstacleYCalculator implements ObstacleYCalculator {
   calculateY(
     target: Obstacle,
@@ -139,6 +143,8 @@ export class PassObstacleYCalculator implements ObstacleYCalculator {
     return newY;
   }
 }
+
+/** Pulls over when ambulance is detected in the traffic.  */
 class AmbulanceTrafficObstacleYCalculator implements ObstacleYCalculator {
   public calculateY(
     target: Obstacle,
@@ -213,6 +219,7 @@ export class Obstacle extends GameObject {
       this.originalSpeed,
       this.originalY,
       this.speedCalculators,
+      this.yCalculators,
     );
   }
 
@@ -236,6 +243,7 @@ export class Obstacle extends GameObject {
         this.originalSpeed,
         this.originalY,
         this.speedCalculators,
+        this.yCalculators,
       );
     }
     const adjustedSpeed = this.calculateSpeed(player, obstacles);
@@ -255,6 +263,7 @@ export class Obstacle extends GameObject {
       this.originalSpeed,
       this.originalY,
       this.speedCalculators,
+      this.yCalculators,
     );
   }
 
@@ -972,6 +981,7 @@ export class ParkingCarObstacle extends Obstacle {
     openDoorImage: HTMLImageElement = ParkingCarObstacle.getOpenDoorImage(),
   ) {
     const imageScale = doorsOpen ? 0.09 : 0.05;
+    const calculator = new ParkingCarObstacleCalculator(parkingSpotX, parkingSpotY);
     super(
       0,
       y,
@@ -985,10 +995,8 @@ export class ParkingCarObstacle extends Obstacle {
       false,
       ObstacleSpeeds.MEDIUM,
       y,
-      [
-        // new BrakingObstacleSpeedCalculator(),
-        new ParkingCarObstacleCalculator(parkingSpotX, parkingSpotY),
-      ],
+      [calculator],
+      [calculator],
     );
     this.doorsOpen = doorsOpen;
   }
@@ -1006,11 +1014,20 @@ export class ParkingCarObstacle extends Obstacle {
   }
 }
 
-export class ParkingCarObstacleCalculator implements ObstacleSpeedCalculator {
+export class ParkingCarObstacleCalculator implements ObstacleSpeedCalculator, ObstacleYCalculator {
   constructor(
     public readonly parkingSpotX: number,
     public readonly parkingSpotY: number,
   ) {}
+
+  calculateY(target: Obstacle, player: Player, obstacles: readonly Obstacle[]): number {
+    const distance = Math.abs(target.x - this.parkingSpotX);
+    if (distance < 200) {
+      return Math.min(target.y + 5, this.parkingSpotY);;
+    }
+    return target.y;
+  }
+
   calculateSpeed(
     target: Obstacle,
     player: Player,

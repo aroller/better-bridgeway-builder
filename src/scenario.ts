@@ -1381,7 +1381,7 @@ class StreetBuilder {
     return new ParkingCarObstacle(
       y,
       PARKED_CAR_7_X,
-      y + this.bikeLaneWidth + this.parkingLaneWidth / 2, //only works with the bike lanes street design
+      y + this.bikeLaneWidth + this.parkingLaneWidth, //only works with the bike lanes street design
     );
   }
   /** An invisible obstacle that stops other vehicles at the crosswalk stop line
