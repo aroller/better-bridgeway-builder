@@ -43,6 +43,38 @@ export class LaneLinesStyles {
   ) {}
 }
 
+interface ObstacleSpeedCalculator {
+  calculateSpeed(target:Obstacle, player: Player, obstacles: readonly Obstacle[]): number;
+}
+
+class BrakingObstacleSpeedCalculator implements ObstacleSpeedCalculator {
+  calculateSpeed(target:Obstacle, player: Player, obstacles: readonly Obstacle[]): number {
+     // combine player and obstacles treating the same.  Exclude this obstacle
+     const gameObjects: GameObject[] = [...obstacles, player].filter(
+      (gameObject) => gameObject !== target,
+    );
+
+    const timeToCollision = target.calculateTimeToCollision(gameObjects);
+    let newSpeed = target.speed;
+    if (timeToCollision && timeToCollision > 0 && timeToCollision < 100) {
+      // If time to collision is less than a certain threshold, slow down
+      newSpeed -= 0.5; // Reduce speed by 10%
+    }
+
+    const distanceToClosest =
+      target.calculateDistanceToClosestObject(gameObjects);
+    if (distanceToClosest < 200) {
+      newSpeed -= 0.5;
+    }
+    if (distanceToClosest < 100 || target.emergencyVehicleDetected(obstacles)) {
+      newSpeed -= .25;
+    } else if (target.originalSpeed && newSpeed < target.originalSpeed) {
+      newSpeed += 0.25;
+    }
+
+    return Math.max(newSpeed, 0); // Ensure the speed is never negative
+  }
+}
 export class Obstacle extends GameObject {
   constructor(
     x: number,
@@ -55,8 +87,9 @@ export class Obstacle extends GameObject {
     public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
     public readonly detectCollisions: boolean = false,
     public readonly emergencyVehicle: boolean = false,
-    private readonly originalSpeed: ObstacleSpeeds = speed,
-    private readonly originalY: number = y,
+    public readonly originalSpeed: ObstacleSpeeds = speed,
+    public readonly originalY: number = y,
+    public readonly speedCalculators: ObstacleSpeedCalculator[] = avoidance == ObstacleAvoidanceType.BRAKE ? [new BrakingObstacleSpeedCalculator()] : [],
   ) {
     // some obstacles are hidden so image can be undefined
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
@@ -83,6 +116,7 @@ export class Obstacle extends GameObject {
       this.emergencyVehicle,
       this.originalSpeed,
       this.originalY,
+      this.speedCalculators,
     );
   }
 
@@ -105,6 +139,7 @@ export class Obstacle extends GameObject {
         false, // crash is no longer emergency vehicle
         this.originalSpeed,
         this.originalY,
+        this.speedCalculators,
       );
     }
     const adjustedSpeed = this.calculateSpeed(player, obstacles);
@@ -123,6 +158,7 @@ export class Obstacle extends GameObject {
       this.emergencyVehicle,
       this.originalSpeed,
       this.originalY,
+      this.speedCalculators,
     );
   }
 
@@ -198,7 +234,7 @@ export class Obstacle extends GameObject {
     return Math.abs(this.x - gameObject.x);
   }
 
-  private calculateDistanceToClosestObject(gameObjects: GameObject[]): number {
+  public calculateDistanceToClosestObject(gameObjects: GameObject[]): number {
     const closest = this.getClosestObject(gameObjects);
     if (closest) {
       return this.getDistanceTo(closest);
@@ -218,31 +254,12 @@ export class Obstacle extends GameObject {
     player: Player,
     obstacles: readonly Obstacle[],
   ): number {
-    if (this.avoidance === ObstacleAvoidanceType.BRAKE) {
-      // combine player and obstacles treating the same.  Exclude this obstacle
-      const gameObjects: GameObject[] = [...obstacles, player].filter(
-        (gameObject) => gameObject !== this,
-      );
-
-      const timeToCollision = this.calculateTimeToCollision(gameObjects);
-      let newSpeed = this.speed;
-      if (timeToCollision && timeToCollision > 0 && timeToCollision < 100) {
-        // If time to collision is less than a certain threshold, slow down
-        newSpeed -= 0.5; // Reduce speed by 10%
+    // consult each calculator until one returns a different speed
+    for (const calculator of this.speedCalculators) {
+      const newSpeed = calculator.calculateSpeed(this, player, obstacles);
+      if (newSpeed !== this.speed) {
+        return newSpeed;
       }
-
-      const distanceToClosest =
-        this.calculateDistanceToClosestObject(gameObjects);
-      if (distanceToClosest < 200) {
-        newSpeed -= 0.5;
-      }
-      if (distanceToClosest < 100 || this.emergencyVehicleDetected(obstacles)) {
-        newSpeed -= .25;
-      } else if (this.originalSpeed && newSpeed < this.originalSpeed) {
-        newSpeed += 0.25;
-      }
-
-      return Math.max(newSpeed, 0); // Ensure the speed is never negative
     }
 
     return this.speed;
@@ -253,7 +270,7 @@ export class Obstacle extends GameObject {
    * @param obstacles any collection of obstacles where emergency vehicles may be found
    * @returns true if an emergency vehicle is detected in the obstacles given
    */
-  private emergencyVehicleDetected(obstacles: readonly Obstacle[]): boolean {
+  public emergencyVehicleDetected(obstacles: readonly Obstacle[]): boolean {
     const emergencyVehicleDetected = obstacles.some((obstacle) => {
       if (obstacle === this) {
         return false;
