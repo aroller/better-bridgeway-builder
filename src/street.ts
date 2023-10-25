@@ -44,13 +44,21 @@ export class LaneLinesStyles {
 }
 
 interface ObstacleSpeedCalculator {
-  calculateSpeed(target:Obstacle, player: Player, obstacles: readonly Obstacle[]): number;
+  calculateSpeed(
+    target: Obstacle,
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number;
 }
 
 class BrakingObstacleSpeedCalculator implements ObstacleSpeedCalculator {
-  calculateSpeed(target:Obstacle, player: Player, obstacles: readonly Obstacle[]): number {
-     // combine player and obstacles treating the same.  Exclude this obstacle
-     const gameObjects: GameObject[] = [...obstacles, player].filter(
+  calculateSpeed(
+    target: Obstacle,
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number {
+    // combine player and obstacles treating the same.  Exclude this obstacle
+    const gameObjects: GameObject[] = [...obstacles, player].filter(
       (gameObject) => gameObject !== target,
     );
 
@@ -67,7 +75,7 @@ class BrakingObstacleSpeedCalculator implements ObstacleSpeedCalculator {
       newSpeed -= 0.5;
     }
     if (distanceToClosest < 100 || target.emergencyVehicleDetected(obstacles)) {
-      newSpeed -= .25;
+      newSpeed -= 0.25;
     } else if (target.originalSpeed && newSpeed < target.originalSpeed) {
       newSpeed += 0.25;
     }
@@ -89,7 +97,10 @@ export class Obstacle extends GameObject {
     public readonly emergencyVehicle: boolean = false,
     public readonly originalSpeed: ObstacleSpeeds = speed,
     public readonly originalY: number = y,
-    public readonly speedCalculators: ObstacleSpeedCalculator[] = avoidance == ObstacleAvoidanceType.BRAKE ? [new BrakingObstacleSpeedCalculator()] : [],
+    public readonly speedCalculators: ObstacleSpeedCalculator[] = avoidance ==
+    ObstacleAvoidanceType.BRAKE
+      ? [new BrakingObstacleSpeedCalculator()]
+      : [],
   ) {
     // some obstacles are hidden so image can be undefined
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
@@ -304,7 +315,6 @@ export class Obstacle extends GameObject {
     player: Player,
     obstacles: readonly Obstacle[],
   ): number {
-
     if (this.avoidance !== ObstacleAvoidanceType.PASS) {
       // pull over for emergency vehicles
       const maxEmergencyDistance = Math.floor(this.width * 0.6);
@@ -320,7 +330,7 @@ export class Obstacle extends GameObject {
         }
       } else if (distanceFromOriginal > 5) {
         return this.yToMoveLeft();
-      } 
+      }
       return this.y;
     }
 
@@ -911,7 +921,6 @@ export class CrosswalkObstacleProducer extends ObstacleProducer {
   }
 }
 
-
 /** A single obstacle that drives in the soutbound lane and parks
  * in an open parking spot.  The doors open and close causing danger
  * for bicyclists in the bike lane.
@@ -938,11 +947,18 @@ export class ParkingCarObstacle extends Obstacle {
       LaneDirection.RIGHT,
       doorsOpen ? openDoorImage : closedDoorImage,
       ObstacleAvoidanceType.BRAKE,
+      false,
+      false,
+      ObstacleSpeeds.MEDIUM,
+      y,
+      [
+        // new BrakingObstacleSpeedCalculator(),
+        new ParkingCarObstacleCalculator(parkingSpotX, parkingSpotY),
+      ],
     );
     this.doorsOpen = doorsOpen;
   }
 
-  
   private static getClosesDoorImage(): HTMLImageElement {
     const image = new Image();
     image.src = "images/obstacles/car-door-closed.png";
@@ -953,5 +969,27 @@ export class ParkingCarObstacle extends Obstacle {
     const image = new Image();
     image.src = "images/obstacles/car-door-open.png";
     return image;
+  }
+}
+
+export class ParkingCarObstacleCalculator implements ObstacleSpeedCalculator {
+  constructor(
+    public readonly parkingSpotX: number,
+    public readonly parkingSpotY: number,
+  ) {}
+  calculateSpeed(
+    target: Obstacle,
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number {
+    
+    const distance = Math.abs(target.x - this.parkingSpotX);
+    if (distance < 20) {
+      return ObstacleSpeeds.STOPPED;
+    }
+    if (distance < 300) {
+      return Math.max(target.speed - 0.3, ObstacleSpeeds.STOPPED);
+    }
+    return target.speed;
   }
 }
