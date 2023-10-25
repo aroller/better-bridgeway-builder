@@ -83,6 +83,87 @@ class BrakingObstacleSpeedCalculator implements ObstacleSpeedCalculator {
     return Math.max(newSpeed, 0); // Ensure the speed is never negative
   }
 }
+
+export interface ObstacleYCalculator {
+  calculateY(
+    target: Obstacle,
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number;
+}
+
+export class PassObstacleYCalculator implements ObstacleYCalculator {
+  calculateY(
+    target: Obstacle,
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number {
+    const closestObstacle = target.getClosestObject(obstacles) as Obstacle;
+    if (!closestObstacle) {
+      return target.y;
+    }
+    //only pass slower objects. If this is a slow object, put it back in the original lane
+    if (target.speed < closestObstacle.speed) {
+      return target.originalY;
+    }
+
+    // return to original lane if safe to do so
+    const distanceAwayFromOriginal = Math.abs(target.originalY - target.y);
+    if (distanceAwayFromOriginal > target.height) {
+      const returnPreview = target.clone(target.x, target.originalY);
+      if (!returnPreview.collisionDetected(obstacles)) {
+        const closestIfReturned = returnPreview.getClosestObject(obstacles);
+        if (!closestIfReturned) {
+          return target.originalY; // abrupt return could be smoothed out
+        }
+        if (returnPreview.getDistanceTo(closestIfReturned) > 5 * target.width) {
+          return target.originalY; // abrupt return could be smoothed out
+        }
+      }
+    }
+    if (target.getDistanceTo(closestObstacle) > 2 * target.width) {
+      return target.y;
+    }
+
+    let newY = target.y;
+    const directionMultiplier =
+      target.direction === LaneDirection.RIGHT ? -1 : 1; // -1 for right, 1 for left
+    const yAdjustment = 8 * directionMultiplier; // Adjust based on lane direction
+
+    //only adjust if the new y is not too far from the original
+    const maxPassDistance = target.height;
+    if (distanceAwayFromOriginal < maxPassDistance) {
+      newY = target.y + yAdjustment;
+    }
+
+    return newY;
+  }
+}
+class AmbulanceTrafficObstacleYCalculator implements ObstacleYCalculator {
+  public calculateY(
+    target: Obstacle,
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number {
+    // pull over for emergency vehicles
+    const maxEmergencyDistance = Math.floor(target.width * 0.6);
+    const distanceFromOriginal = Math.abs(target.originalY - target.y);
+    if (target.emergencyVehicleDetected(obstacles)) {
+      if (target.originalSpeed !== ObstacleSpeeds.STOPPED) {
+        //far enough if hitting something
+        if (distanceFromOriginal < maxEmergencyDistance) {
+          if (!target.collisionDetected(obstacles)) {
+            return target.yToMoveRight();
+          }
+        }
+      }
+    } else if (distanceFromOriginal > 5) {
+      return target.yToMoveLeft();
+    }
+    return target.y;
+  }
+}
+
 export class Obstacle extends GameObject {
   constructor(
     x: number,
@@ -101,6 +182,10 @@ export class Obstacle extends GameObject {
     ObstacleAvoidanceType.BRAKE
       ? [new BrakingObstacleSpeedCalculator()]
       : [],
+    public readonly yCalculators: ObstacleYCalculator[] = avoidance ==
+    ObstacleAvoidanceType.PASS
+      ? [new PassObstacleYCalculator()]
+      : [new AmbulanceTrafficObstacleYCalculator()],
   ) {
     // some obstacles are hidden so image can be undefined
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
@@ -155,7 +240,7 @@ export class Obstacle extends GameObject {
     }
     const adjustedSpeed = this.calculateSpeed(player, obstacles);
     const newX = this.x + adjustedSpeed * this.direction;
-    const newY = this.calculateYForPassing(player, obstacles);
+    const newY = this.calculateY(player, obstacles);
     return new Obstacle(
       newX,
       newY,
@@ -187,7 +272,7 @@ export class Obstacle extends GameObject {
     return collision;
   }
 
-  private getClosestObject(
+  public getClosestObject(
     gameObjects: readonly GameObject[],
   ): GameObject | undefined {
     let closestObstacle: GameObject | undefined;
@@ -241,7 +326,7 @@ export class Obstacle extends GameObject {
     return timeToCollision;
   }
 
-  private getDistanceTo(gameObject: GameObject): number {
+  public getDistanceTo(gameObject: GameObject): number {
     return Math.abs(this.x - gameObject.x);
   }
 
@@ -291,11 +376,11 @@ export class Obstacle extends GameObject {
     return emergencyVehicleDetected;
   }
 
-  private yToMoveRight(): number {
+  public yToMoveRight(): number {
     return this.y + 2 * this.direction;
   }
 
-  private yToMoveLeft(): number {
+  public yToMoveLeft(): number {
     return this.y - 2 * this.direction;
   }
 
@@ -311,68 +396,17 @@ export class Obstacle extends GameObject {
    * @param obstacles will pass these obstacles if blocked
    * @returns
    */
-  public calculateYForPassing(
+  public calculateY(
     player: Player,
     obstacles: readonly Obstacle[],
   ): number {
-    if (this.avoidance !== ObstacleAvoidanceType.PASS) {
-      // pull over for emergency vehicles
-      const maxEmergencyDistance = Math.floor(this.width * 0.6);
-      const distanceFromOriginal = Math.abs(this.originalY - this.y);
-      if (this.emergencyVehicleDetected(obstacles)) {
-        if (this.originalSpeed !== ObstacleSpeeds.STOPPED) {
-          //far enough if hitting something
-          if (distanceFromOriginal < maxEmergencyDistance) {
-            if (!this.collisionDetected(obstacles)) {
-              return this.yToMoveRight();
-            }
-          }
-        }
-      } else if (distanceFromOriginal > 5) {
-        return this.yToMoveLeft();
-      }
-      return this.y;
-    }
-
-    const closestObstacle = this.getClosestObject(obstacles) as Obstacle;
-
-    if (!closestObstacle) {
-      return this.y;
-    }
-    //only pass slower objects. If this is a slow object, put it back in the original lane
-    if (this.speed < closestObstacle.speed) {
-      return this.originalY;
-    }
-
-    // return to original lane if safe to do so
-    const distanceAwayFromOriginal = Math.abs(this.originalY - this.y);
-    if (distanceAwayFromOriginal > this.height) {
-      const returnPreview = this.clone(this.x, this.originalY);
-      if (!returnPreview.collisionDetected(obstacles)) {
-        const closestIfReturned = returnPreview.getClosestObject(obstacles);
-        if (!closestIfReturned) {
-          return this.originalY; // abrupt return could be smoothed out
-        }
-        if (returnPreview.getDistanceTo(closestIfReturned) > 5 * this.width) {
-          return this.originalY; // abrupt return could be smoothed out
-        }
+    for (const calculator of this.yCalculators) {
+      const newY = calculator.calculateY(this, player, obstacles);
+      if (newY !== this.y) {
+        return newY;
       }
     }
-    if (this.getDistanceTo(closestObstacle) > 2 * this.width) {
-      return this.y;
-    }
-
-    let newY = this.y;
-    const directionMultiplier = this.direction === LaneDirection.RIGHT ? -1 : 1; // -1 for right, 1 for left
-    const yAdjustment = 8 * directionMultiplier; // Adjust based on lane direction
-
-    //only adjust if the new y is not too far from the original
-    const maxPassDistance = this.height;
-    if (distanceAwayFromOriginal < maxPassDistance) {
-      newY = this.y + yAdjustment;
-    }
-
-    return newY;
+    return this.y;
   }
 }
 
@@ -982,7 +1016,6 @@ export class ParkingCarObstacleCalculator implements ObstacleSpeedCalculator {
     player: Player,
     obstacles: readonly Obstacle[],
   ): number {
-    
     const distance = Math.abs(target.x - this.parkingSpotX);
     if (distance < 20) {
       return ObstacleSpeeds.STOPPED;
