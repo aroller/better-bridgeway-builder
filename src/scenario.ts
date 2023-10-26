@@ -76,6 +76,7 @@ export enum ScenarioKey {
   BIKE_LANES = "bike-lanes",
   BIKE_LANES_AMBULANCE = "bike-lanes-ambulance",
   BIKE_LANES_PARKING = "bike-lanes-parking",
+  CYCLETRACK = "cycletrack",
   GAME_OVER = "game-over",
 }
 
@@ -111,6 +112,7 @@ export enum Background {
   CROSSWALK_DAYLIGHT = "images/scene/better-bridgeway-background-daylight.png",
   ACCESSIBLE = "images/scene/better-bridgeway-background-accessible.png",
   BIKE_LANES = "images/scene/better-bridgeway-background-bike-lanes.png",
+  CYCLETRACK = "images/scene/better-bridgeway-background-cycletrack.png",
 }
 
 /** Indicates the type of crosswalk to be implemented on the roadway. */
@@ -386,7 +388,8 @@ export class ScenarioProducer {
           .withBikeLanes()
           .withBicycles([Lane.NORTHBOUND_BIKE])
           .withParkingCars()
-          .withTraffic( // bicycles that crash
+          .withTraffic(
+            // bicycles that crash
             TrafficRequest.of(Lane.SOUTHBOUND_BIKE, ObstacleType.BICYCLE)
               .withAvoidance(ObstacleAvoidanceType.BRAKE)
               .withSpeed(ObstacleSpeeds.SLOW)
@@ -396,6 +399,20 @@ export class ScenarioProducer {
 
         player = this.curbsideDeliveryPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
+      case ScenarioKey.CYCLETRACK:
+        title = "Separating Cyclists is Best for Safety and Efficiency";
+        description =
+          "A Class IV Separated Bikeway is the safest and most efficient way to move people on bicycles.";
+        streetBuilder
+          .withCycletrack()
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.SIGNAL)
+          .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
+          .withBicycles([Lane.NORTHBOUND_BIKE, Lane.SOUTHBOUND_BIKE]);
+
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        background = Background.CYCLETRACK;
         break;
       case ScenarioKey.GAME_OVER:
       default:
@@ -578,6 +595,7 @@ class StreetBuilder {
   private delivery: DeliveryType;
   private crosswalk: CrosswalkType;
   private bikeLanes: boolean;
+  private cycletrack: boolean;
   private traffic: TrafficRequest[];
 
   constructor(
@@ -590,6 +608,7 @@ class StreetBuilder {
     this.delivery = DeliveryType.NONE;
     this.crosswalk = CrosswalkType.NONE;
     this.bikeLanes = false;
+    this.cycletrack = false;
     this.traffic = [];
   }
 
@@ -678,6 +697,11 @@ class StreetBuilder {
     return this;
   }
 
+  public withCycletrack(): StreetBuilder {
+    this.cycletrack = true;
+    return this;
+  }
+
   public withAmbulance(crash: boolean = true): StreetBuilder {
     const ambulance = TrafficRequest.of(
       Lane.SOUTHBOUND_VEHICLE,
@@ -701,11 +725,21 @@ class StreetBuilder {
     let y = this.topOfStreetY;
     let street = new Street(this.topOfStreetY, this.streetLength);
     // setup the lanes from top to bottom. each contribute to the y coordinate of the next lane.
-    ({ street, y } = this.northboundBikeLane(street, y));
-    ({ street, y } = this.northboundVehicleLane(street, y));
-    ({ street, y } = this.centerTurnLane(street, y));
-    ({ street, y } = this.southboundVehicleLane(street, y));
-    ({ street, y } = this.southboundBikeLane(street, y));
+    if (this.bikeLanes) {
+      ({ street, y } = this.northboundBikeLane(street, y));
+      ({ street, y } = this.northboundVehicleLane(street, y));
+      ({ street, y } = this.southboundVehicleLane(street, y));
+      ({ street, y } = this.southboundBikeLane(street, y));
+    } else if (this.cycletrack) {
+      ({ street, y } = this.northboundBikeLane(street, y));
+      ({ street, y } = this.southboundBikeLane(street, y));
+      ({ street, y } = this.northboundVehicleLane(street, y));
+      ({ street, y } = this.southboundVehicleLane(street, y));
+    } else {
+      ({ street, y } = this.northboundVehicleLane(street, y));
+      ({ street, y } = this.centerTurnLane(street, y));
+      ({ street, y } = this.southboundVehicleLane(street, y));
+    }
     ({ street, y } = this.southboundParkingLane(street, y));
     return street;
   }
@@ -714,29 +748,28 @@ class StreetBuilder {
     street: Street,
     y: number,
   ): { street: Street; y: number } {
-    if (this.bikeLanes) {
-      // y is the center of the lane.
-      y += this.bikeLaneWidth / 2;
-      street = street.addLane(
+    // y is the center of the lane.
+    y += this.bikeLaneWidth / 2;
+    street = street.addLane(
+      LaneDirection.LEFT,
+      this.bikeLaneWidth,
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+      this.vehicleTrafficObstacleProducers(
+        Lane.NORTHBOUND_BIKE,
+        y,
         LaneDirection.LEFT,
-        this.bikeLaneWidth,
-        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        this.vehicleTrafficObstacleProducers(
-          Lane.NORTHBOUND_BIKE,
-          y,
-          LaneDirection.LEFT,
-          this.obstacleFrequency,
-          this.parkingIncluded,
-          ObstacleAvoidanceType.NONE,
-          false,
-          false,
-          false,
-          this.crosswalk,
-        ),
-      );
-      //jump to the bike lane line
-      y += this.bikeLaneWidth / 2;
-    }
+        this.obstacleFrequency,
+        this.parkingIncluded,
+        ObstacleAvoidanceType.NONE,
+        false,
+        false,
+        false,
+        this.crosswalk,
+      ),
+    );
+    //jump to the bike lane line
+    y += this.bikeLaneWidth / 2;
+
     return { street, y };
   }
 
@@ -776,20 +809,19 @@ class StreetBuilder {
     street: Street,
     y: number,
   ): { street: Street; y: number } {
-    if (!this.bikeLanes) {
-      y += this.turnLaneWidth / 2;
-      const turnLaneProducers: ObstacleProducer[] = [];
-      if (this.delivery == DeliveryType.CENTER_LANE) {
-        turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
-      }
-      street = street.addLane(
-        LaneDirection.LEFT,
-        this.turnLaneWidth,
-        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        turnLaneProducers,
-      );
-      y = y + this.turnLaneWidth / 2;
+    y += this.turnLaneWidth / 2;
+    const turnLaneProducers: ObstacleProducer[] = [];
+    if (this.delivery == DeliveryType.CENTER_LANE) {
+      turnLaneProducers.push(...this.centerlaneDeliveryObstacleProducers(y));
     }
+    street = street.addLane(
+      LaneDirection.LEFT,
+      this.turnLaneWidth,
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+      turnLaneProducers,
+    );
+    y = y + this.turnLaneWidth / 2;
+
     return { street, y };
   }
 
@@ -827,27 +859,26 @@ class StreetBuilder {
     street: Street,
     y: number,
   ): { street: Street; y: number } {
-    if (this.bikeLanes) {
-      y += this.bikeLaneWidth / 2;
-      street = street.addLane(
+    y += this.bikeLaneWidth / 2;
+    street = street.addLane(
+      LaneDirection.RIGHT,
+      this.bikeLaneWidth,
+      new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
+      this.vehicleTrafficObstacleProducers(
+        Lane.SOUTHBOUND_BIKE,
+        y,
         LaneDirection.RIGHT,
-        this.bikeLaneWidth,
-        new LaneLinesStyles(hiddenLineStyle, hiddenLineStyle),
-        this.vehicleTrafficObstacleProducers(
-          Lane.SOUTHBOUND_BIKE,
-          y,
-          LaneDirection.RIGHT,
-          this.obstacleFrequency,
-          this.parkingIncluded,
-          ObstacleAvoidanceType.NONE,
-          false, //bicycles
-          false,
-          false,
-          this.crosswalk,
-        ),
-      );
-      y += this.bikeLaneWidth / 2;
-    }
+        this.obstacleFrequency,
+        this.parkingIncluded,
+        ObstacleAvoidanceType.NONE,
+        false, //bicycles
+        false,
+        false,
+        this.crosswalk,
+      ),
+    );
+    y += this.bikeLaneWidth / 2;
+
     return { street, y };
   }
 
@@ -890,7 +921,7 @@ class StreetBuilder {
 
   /** Vehicle lane width changes if bike lanes exist. The lanes get more narrow in modern designs. */
   private get vehicleLaneWidth(): number {
-    return this.bikeLanes ? 60 : this.historicVehicleLaneWidth;
+    return this.bikeLanes || this.cycletrack ? 60 : this.historicVehicleLaneWidth;
   }
 
   /** Given the lane, this returns all of the obstacleTypes declared for the lane that match
