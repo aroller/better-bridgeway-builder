@@ -288,13 +288,12 @@ export class Scene {
     this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
     this.ctx.fillRect(0, 0, this.ctx.canvas.width, 100);
     const currentAttempts = this.gameAttempts.getCurrentLevelAttempts();
-    const currentLevel = currentAttempts.level;
     const failedAttempts = currentAttempts.failureCount;
     const scenarioTitle = this.scenario.title;
     // Display the current level number and scenario title.
     this.ctx.font = "bold 24px sans-serif";
     this.ctx.fillStyle = "white";
-    this.ctx.fillText(`${currentLevel}: ${scenarioTitle}`, 10, 30);
+    this.ctx.fillText(`${scenarioTitle}`, 10, 30);
 
     // Display the failed attempts and time elapsed.
     let x = 10;
