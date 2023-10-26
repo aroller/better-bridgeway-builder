@@ -369,7 +369,7 @@ export class ScenarioProducer {
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withBikeLanes()
           .withBicycles([Lane.NORTHBOUND_BIKE, Lane.SOUTHBOUND_BIKE])
-          .withAmbulance();
+          .withAmbulance(false);
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
@@ -698,13 +698,17 @@ class StreetBuilder {
     return this;
   }
 
-  public withAmbulance(): StreetBuilder {
-    return this.withTraffic(
-      TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.AMBULANCE)
-        .withCrash()
-        .withAvoidance(ObstacleAvoidanceType.PASS)
-        .withFrequency(20),
-    );
+  public withAmbulance(crash: boolean = false): StreetBuilder {
+    const ambulance = TrafficRequest.of(
+      Lane.SOUTHBOUND_VEHICLE,
+      ObstacleType.AMBULANCE,
+    )
+      .withAvoidance(ObstacleAvoidanceType.PASS)
+      .withFrequency(20);
+    if (crash) {
+      ambulance.withCrash();
+    }
+    return this.withTraffic(ambulance);
     return this;
   }
 

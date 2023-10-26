@@ -717,7 +717,11 @@ export class Street {
               if (!producer.randomizeTraffic || index === randomProducerIndex) {
                 // only produce if a safe location is found
                 const newObstacle = producer.next(x);
-                if (!newObstacle.collisionDetected(lane.obstacles)) {
+                if (
+                  !newObstacle.detectCollisions ||
+                  (newObstacle.detectCollisions &&
+                    !newObstacle.collisionDetected(lane.obstacles))
+                ) {
                   lane = lane.addObstacle(newObstacle);
                 }
               }
