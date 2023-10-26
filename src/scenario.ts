@@ -382,22 +382,11 @@ export class ScenarioProducer {
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.SIGNAL)
-          .withParkingCars()
-          .withTraffic(
-            TrafficRequest.of(
-              Lane.NORTHBOUND_VEHICLE,
-              ObstacleType.CAR,
-            ).withAvoidance(ObstacleAvoidanceType.BRAKE),
-          )
-          .withTraffic(
-            TrafficRequest.of(
-              Lane.SOUTHBOUND_VEHICLE,
-              ObstacleType.CAR,
-            ).withAvoidance(ObstacleAvoidanceType.BRAKE),
-          )
+          .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withBikeLanes()
           .withBicycles([Lane.NORTHBOUND_BIKE])
-          .withTraffic(
+          .withParkingCars()
+          .withTraffic( // bicycles that crash
             TrafficRequest.of(Lane.SOUTHBOUND_BIKE, ObstacleType.BICYCLE)
               .withAvoidance(ObstacleAvoidanceType.BRAKE)
               .withSpeed(ObstacleSpeeds.SLOW)
@@ -405,14 +394,14 @@ export class ScenarioProducer {
               .withFrequency(HEAVY_TRAFFIC_FREQUENCY),
           );
 
-        player = this.frogPlayer(PlayerSpeed.SLOW);
+        player = this.curbsideDeliveryPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
         break;
       case ScenarioKey.GAME_OVER:
       default:
         title = "Game Over - Nobody Wins if Bridgeway is Not Improved";
         streetBuilder
-          .withObstacleAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withParkingIncluded()
           .withDelivery(DeliveryType.CENTER_LANE)
@@ -586,7 +575,6 @@ class TrafficRequest {
 class StreetBuilder {
   private lightTraffic: boolean;
   private parkingIncluded: boolean;
-  private obstacleAvoidance: ObstacleAvoidanceType;
   private delivery: DeliveryType;
   private crosswalk: CrosswalkType;
   private bikeLanes: boolean;
@@ -599,7 +587,6 @@ class StreetBuilder {
   ) {
     this.lightTraffic = false;
     this.parkingIncluded = false;
-    this.obstacleAvoidance = ObstacleAvoidanceType.NONE;
     this.delivery = DeliveryType.NONE;
     this.crosswalk = CrosswalkType.NONE;
     this.bikeLanes = false;
@@ -659,13 +646,6 @@ class StreetBuilder {
         new TrafficRequest(lane, ObstacleType.CAR).withFrequency(frequency),
       );
     }
-    return this;
-  }
-
-  public withObstacleAvoidance(
-    obstacleAvoidance: ObstacleAvoidanceType,
-  ): StreetBuilder {
-    this.obstacleAvoidance = obstacleAvoidance;
     return this;
   }
 
@@ -747,7 +727,7 @@ class StreetBuilder {
           LaneDirection.LEFT,
           this.obstacleFrequency,
           this.parkingIncluded,
-          this.obstacleAvoidance,
+          ObstacleAvoidanceType.NONE,
           false,
           false,
           false,
@@ -780,7 +760,7 @@ class StreetBuilder {
         northboundDirection,
         this.obstacleFrequency,
         false,
-        this.obstacleAvoidance,
+        ObstacleAvoidanceType.NONE,
         false,
         this.delivery == DeliveryType.CENTER_LANE,
         false,
@@ -832,7 +812,7 @@ class StreetBuilder {
         southboundDirection,
         this.obstacleFrequency,
         this.parkingIncluded,
-        this.obstacleAvoidance,
+        ObstacleAvoidanceType.NONE,
         false,
         false,
         false,
@@ -859,7 +839,7 @@ class StreetBuilder {
           LaneDirection.RIGHT,
           this.obstacleFrequency,
           this.parkingIncluded,
-          this.obstacleAvoidance,
+          ObstacleAvoidanceType.NONE,
           false, //bicycles
           false,
           false,
