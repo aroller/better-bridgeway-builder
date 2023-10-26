@@ -90,7 +90,6 @@ enum ObstacleType {
   PARKING_CAR = "parking-vehicle",
   DELIVERY_TRUCK = "delivery",
   BICYCLE = "bicycle",
-  BICYCLE_CRASHING = "bicycle-crashing",
   GHOST = "ghost",
   AMBULANCE = "ambulance",
   AMBULANCE_CRASHING = "ambulance-crashing",
@@ -398,7 +397,13 @@ export class ScenarioProducer {
           )
           .withBikeLanes()
           .withBicycles([Lane.NORTHBOUND_BIKE])
-          .withBicyclesThatCrash([Lane.SOUTHBOUND_BIKE]);
+          .withTraffic(
+            TrafficRequest.of(Lane.SOUTHBOUND_BIKE, ObstacleType.BICYCLE)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withSpeed(ObstacleSpeeds.SLOW)
+              .withCrash()
+              .withFrequency(HEAVY_TRAFFIC_FREQUENCY),
+          );
 
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
@@ -582,7 +587,6 @@ class StreetBuilder {
   private lightTraffic: boolean;
   private parkingIncluded: boolean;
   private obstacleAvoidance: ObstacleAvoidanceType;
-  private bicycles: boolean;
   private delivery: DeliveryType;
   private crosswalk: CrosswalkType;
   private bikeLanes: boolean;
@@ -596,7 +600,6 @@ class StreetBuilder {
     this.lightTraffic = false;
     this.parkingIncluded = false;
     this.obstacleAvoidance = ObstacleAvoidanceType.NONE;
-    this.bicycles = false;
     this.delivery = DeliveryType.NONE;
     this.crosswalk = CrosswalkType.NONE;
     this.bikeLanes = false;
@@ -670,7 +673,6 @@ class StreetBuilder {
     lanes: Lane[],
     frequency: number = HEAVY_TRAFFIC_FREQUENCY,
   ): StreetBuilder {
-    this.bicycles = true;
     for (const lane of lanes) {
       this.traffic.push(
         new TrafficRequest(
@@ -682,21 +684,6 @@ class StreetBuilder {
       );
     }
     return this;
-  }
-
-  public withBicyclesThatCrash(
-    lanes: Lane[] = [],
-    frequency: number = HEAVY_TRAFFIC_FREQUENCY,
-  ): StreetBuilder {
-    for (const lane of lanes) {
-      this.traffic.push(
-        new TrafficRequest(lane, ObstacleType.BICYCLE)
-          .withAvoidance(ObstacleAvoidanceType.BRAKE)
-          .withCrash()
-          .withSpeed(ObstacleSpeeds.SLOW),
-      );
-    }
-    return this.withBicycles(lanes);
   }
 
   public withDelivery(delivery: DeliveryType): StreetBuilder {
@@ -796,7 +783,7 @@ class StreetBuilder {
         this.obstacleFrequency,
         false,
         this.obstacleAvoidance,
-        this.bicycles && !this.bikeLanes,
+        false,
         this.delivery == DeliveryType.CENTER_LANE,
         false,
         this.crosswalk,
@@ -848,7 +835,7 @@ class StreetBuilder {
         this.obstacleFrequency,
         this.parkingIncluded,
         this.obstacleAvoidance,
-        this.bicycles && !this.bikeLanes,
+        false,
         false,
         false,
         this.crosswalk,
@@ -1011,19 +998,14 @@ class StreetBuilder {
       },
     );
 
-    // bicycles are optional and move slower than cars
-    if (
-      bicycles ||
-      this.traffic.some(
-        (obstacle) =>
-          obstacle.lane == lane && obstacle.type == ObstacleType.BICYCLE,
-      )
-    ) {
-      const bicycleTemplate = this.bicycleObstacle(lane, y, direction);
-      producers.push(
-        new ObstacleProducer(bicycleTemplate, maxFrequencyInSeconds),
-      );
-    }
+    this.getTrafficRequestsForLane(lane, ObstacleType.BICYCLE).forEach(
+      (request) => {
+        const bicycleTemplate = this.bicycleObstacle(y, direction, request);
+        producers.push(
+          new ObstacleProducer(bicycleTemplate, request.frequency),
+        );
+      },
+    );
 
     // ghost vehicles appear when the player reaches the lane hidden by parked cars
     if (
@@ -1356,24 +1338,21 @@ class StreetBuilder {
   }
 
   private bicycleObstacle(
-    lane: Lane,
     y: number,
     direction: LaneDirection,
-    obstacleAvoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.BRAKE,
+    request: TrafficRequest,
   ): Obstacle {
     return this.obstacle(
       0,
       y,
       direction,
       ObstacleSpeeds.SLOW,
-      obstacleAvoidance,
+      request.avoidance,
       "images/obstacles/bicycle.png",
       332,
       140,
       0.15,
-      this.traffic.some(
-        (ot) => ot.lane == lane && ot.type == ObstacleType.BICYCLE_CRASHING,
-      ),
+      request.crash,
     );
   }
 
@@ -1410,5 +1389,3 @@ class StreetBuilder {
     return new CrosswalkSign(x, y, direction, crosswalk);
   }
 }
-
-
