@@ -716,18 +716,10 @@ export class Street {
             if (producer.readyForNext(objects)) {
               if (!producer.randomizeTraffic || index === randomProducerIndex) {
                 // only produce if a safe location is found
-                let safeX = x;
-                let newObstacle;
-                let attempts = 0; // circuit breaker
-                do {
-                  newObstacle = producer.next(safeX);
-                  safeX += 2 * newObstacle.width * -lane.direction; // grows off screen
-                  attempts++;
-                } while (
-                  attempts < 3 &&
-                  newObstacle.collisionDetected(lane.obstacles)
-                );
-                lane = lane.addObstacle(newObstacle);
+                const newObstacle = producer.next(x);
+                if (!newObstacle.collisionDetected(lane.obstacles)) {
+                  lane = lane.addObstacle(newObstacle);
+                }
               }
             }
           });
@@ -1016,7 +1008,7 @@ export class ParkingCarObstacle extends Obstacle {
 
 /**
  * Simulates a car parking in a designated spot.
- * 
+ *
  * Determines the y position of the obstacle and speed based on the parking spot.
  * The obstacle will park in the spot for a few seconds before exiting.
  */
@@ -1048,15 +1040,15 @@ export class ParkingCarObstacleCalculator
     }
     const distance = Math.abs(target.x - this.parkingSpotX);
     if (distance < this.distanceAwayFromSpotBeforeParking) {
-      return  Math.min(target.yToMoveRight(), this.parkingSpotY);
+      return Math.min(target.yToMoveRight(), this.parkingSpotY);
     }
     return target.y;
   }
 
-  /** Parked when originally reaching the parking spot, as indicated by stopped speed. 
+  /** Parked when originally reaching the parking spot, as indicated by stopped speed.
    *  Done exiting when the y position is back to the original position.
-   * 
-  */
+   *
+   */
   private parked(): void {
     if (!this.exitingParkingSpot) {
       if (this.parkedAtTime === undefined) {
@@ -1079,13 +1071,13 @@ export class ParkingCarObstacleCalculator
   ): number {
     const distance = Math.abs(target.x - this.parkingSpotX);
     if (this.exitingParkingSpot) {
-      return Math.min(target.speed + 0.3,target.originalSpeed);
+      return Math.min(target.speed + 0.3, target.originalSpeed);
     }
     if (distance < 20 || target.speed === ObstacleSpeeds.STOPPED) {
       this.parked();
       return ObstacleSpeeds.STOPPED;
     }
-    if (distance <  this.distanceAwayFromSpotBeforeParking) {
+    if (distance < this.distanceAwayFromSpotBeforeParking) {
       return Math.max(target.speed - 0.3, ObstacleSpeeds.STOPPED);
     }
     return target.speed;
