@@ -405,10 +405,7 @@ export class Obstacle extends GameObject {
    * @param obstacles will pass these obstacles if blocked
    * @returns
    */
-  public calculateY(
-    player: Player,
-    obstacles: readonly Obstacle[],
-  ): number {
+  public calculateY(player: Player, obstacles: readonly Obstacle[]): number {
     for (const calculator of this.yCalculators) {
       const newY = calculator.calculateY(this, player, obstacles);
       if (newY !== this.y) {
@@ -981,7 +978,10 @@ export class ParkingCarObstacle extends Obstacle {
     openDoorImage: HTMLImageElement = ParkingCarObstacle.getOpenDoorImage(),
   ) {
     const imageScale = doorsOpen ? 0.09 : 0.05;
-    const calculator = new ParkingCarObstacleCalculator(parkingSpotX, parkingSpotY);
+    const calculator = new ParkingCarObstacleCalculator(
+      parkingSpotX,
+      parkingSpotY,
+    );
     super(
       0,
       y,
@@ -1014,30 +1014,78 @@ export class ParkingCarObstacle extends Obstacle {
   }
 }
 
-export class ParkingCarObstacleCalculator implements ObstacleSpeedCalculator, ObstacleYCalculator {
+/**
+ * Simulates a car parking in a designated spot.
+ * 
+ * Determines the y position of the obstacle and speed based on the parking spot.
+ * The obstacle will park in the spot for a few seconds before exiting.
+ */
+export class ParkingCarObstacleCalculator
+  implements ObstacleSpeedCalculator, ObstacleYCalculator
+{
+  private parkedAtTime: number | undefined;
+  private exitingParkingSpot: boolean = false;
+
   constructor(
     public readonly parkingSpotX: number,
     public readonly parkingSpotY: number,
+    public readonly parkingTimeInSeconds: number = 10,
+    public readonly distanceAwayFromSpotBeforeParking: number = 150,
   ) {}
 
-  calculateY(target: Obstacle, player: Player, obstacles: readonly Obstacle[]): number {
+  calculateY(
+    target: Obstacle,
+    player: Player,
+    obstacles: readonly Obstacle[],
+  ): number {
+    if (this.exitingParkingSpot) {
+      // when reaching orginal lane, mark as done exiting
+      if (target.y < target.originalY) {
+        this.exitingParkingSpot = false;
+        return target.originalY;
+      }
+      return target.yToMoveLeft();
+    }
     const distance = Math.abs(target.x - this.parkingSpotX);
-    if (distance < 200) {
-      return Math.min(target.y + 5, this.parkingSpotY);;
+    if (distance < this.distanceAwayFromSpotBeforeParking) {
+      return  Math.min(target.yToMoveRight(), this.parkingSpotY);
     }
     return target.y;
   }
 
+  /** Parked when originally reaching the parking spot, as indicated by stopped speed. 
+   *  Done exiting when the y position is back to the original position.
+   * 
+  */
+  private parked(): void {
+    if (!this.exitingParkingSpot) {
+      if (this.parkedAtTime === undefined) {
+        console.log(`parking at ${Date.now()}`);
+        this.parkedAtTime = Date.now();
+      } else if (
+        Date.now() - this.parkedAtTime >
+        this.parkingTimeInSeconds * 1000
+      ) {
+        console.log("exiting parking spot");
+        this.exitingParkingSpot = true;
+        this.parkedAtTime = undefined;
+      }
+    }
+  }
   calculateSpeed(
     target: Obstacle,
     player: Player,
     obstacles: readonly Obstacle[],
   ): number {
     const distance = Math.abs(target.x - this.parkingSpotX);
-    if (distance < 20) {
+    if (this.exitingParkingSpot) {
+      return Math.min(target.speed + 0.3,target.originalSpeed);
+    }
+    if (distance < 20 || target.speed === ObstacleSpeeds.STOPPED) {
+      this.parked();
       return ObstacleSpeeds.STOPPED;
     }
-    if (distance < 300) {
+    if (distance <  this.distanceAwayFromSpotBeforeParking) {
       return Math.max(target.speed - 0.3, ObstacleSpeeds.STOPPED);
     }
     return target.speed;

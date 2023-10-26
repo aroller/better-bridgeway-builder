@@ -92,7 +92,6 @@ enum ObstacleType {
   BICYCLE = "bicycle",
   GHOST = "ghost",
   AMBULANCE = "ambulance",
-  AMBULANCE_CRASHING = "ambulance-crashing",
 }
 
 enum Lane {
@@ -957,9 +956,6 @@ class StreetBuilder {
     // add vehicles for the lane
     const requests = this.getTrafficRequestsForLane(lane, ObstacleType.CAR);
     for (const request of requests) {
-      console.log(
-        `request: ${request.lane} ${request.speed} ${request.avoidance} `,
-      );
       const vehicleTemplate = this.vehicleObstacle(
         0,
         y,
@@ -974,9 +970,6 @@ class StreetBuilder {
     //parking cars are special and different than other cars
     this.getTrafficRequestsForLane(lane, ObstacleType.PARKING_CAR).forEach(
       (request) => {
-        console.log(
-          `parking car request: ${request.lane} ${request.speed} ${request.avoidance} `,
-        );
         const parkingCarTemplate = this.parkingCarObstacle(y);
         producers.push(
           new ObstacleProducer(parkingCarTemplate, request.frequency),
@@ -1054,8 +1047,6 @@ class StreetBuilder {
       direction,
     );
 
-    // this is the target that will trigger the ghost car when the player reaches the lane
-    console.log(`vehicleLaneY: ${vehicleLaneY}`);
     // trigger point is the bottom of the vehicle lane
     const yTriggerPoint = vehicleLaneY + hiddenVehicleTemplate.height;
     const targetX = PARKED_CAR_3_X;
