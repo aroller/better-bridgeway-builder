@@ -1068,13 +1068,11 @@ export class ParkingCarObstacleCalculator
   private parked(): void {
     if (!this.exitingParkingSpot) {
       if (this.parkedAtTime === undefined) {
-        console.log(`parking at ${Date.now()}`);
         this.parkedAtTime = Date.now();
       } else if (
         Date.now() - this.parkedAtTime >
         this.parkingTimeInSeconds * 1000
       ) {
-        console.log("exiting parking spot");
         this.exitingParkingSpot = true;
         this.parkedAtTime = undefined;
       }
