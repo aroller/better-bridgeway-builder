@@ -555,14 +555,14 @@ class TrafficRequest {
       this.crash,
     );
   }
-  withCrash(): TrafficRequest {
+  withCrash(crash: boolean = true): TrafficRequest {
     return new TrafficRequest(
       this.lane,
       this.type,
       this.speed,
       this.frequency,
       this.avoidance,
-      true,
+      crash,
     );
   }
   withSpeed(speed: ObstacleSpeeds): TrafficRequest {
@@ -698,18 +698,15 @@ class StreetBuilder {
     return this;
   }
 
-  public withAmbulance(crash: boolean = false): StreetBuilder {
+  public withAmbulance(crash: boolean = true): StreetBuilder {
     const ambulance = TrafficRequest.of(
       Lane.SOUTHBOUND_VEHICLE,
       ObstacleType.AMBULANCE,
     )
       .withAvoidance(ObstacleAvoidanceType.PASS)
-      .withFrequency(20);
-    if (crash) {
-      ambulance.withCrash();
-    }
+      .withFrequency(20)
+      .withCrash(crash);
     return this.withTraffic(ambulance);
-    return this;
   }
 
   /** Based on the properties given, this prouces the street that will produce

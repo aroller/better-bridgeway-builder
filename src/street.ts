@@ -1,4 +1,4 @@
-import { string } from "mathjs";
+import { count, string } from "mathjs";
 import { GameObject } from "./game";
 import { Player } from "./player";
 
@@ -716,12 +716,20 @@ export class Street {
             if (producer.readyForNext(objects)) {
               if (!producer.randomizeTraffic || index === randomProducerIndex) {
                 // only produce if a safe location is found
-                const newObstacle = producer.next(x);
-                if (
-                  !newObstacle.detectCollisions ||
-                  (newObstacle.detectCollisions &&
-                    !newObstacle.collisionDetected(lane.obstacles))
-                ) {
+                let safeX = x;
+                let newObstacle;
+                let counter = 0;
+                do {
+                  newObstacle = producer.next(safeX);
+                  // move farther off screen until safe place is found
+                  safeX -= newObstacle.width * 2 * newObstacle.direction;
+                  counter++;
+                } while (
+                  newObstacle.collisionDetected(lane.obstacles) &&
+                  counter < 10
+                );
+                //one last check to make sure new obstacle is not colliding with scene objects
+                if (!newObstacle.collisionDetected(lane.obstacles)) {
                   lane = lane.addObstacle(newObstacle);
                 }
               }
