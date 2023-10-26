@@ -25,6 +25,7 @@ const PARKED_CAR_3_X = 240;
 const PARKED_CAR_4_X = 360;
 const PARKED_CAR_5_X = 560;
 const PARKED_CAR_7_X = 940;
+const PARKED_CAR_8_X = 1040;
 const solidWhiteLineStyle = new LaneLineStyle();
 const hiddenLineStyle = new LaneLineStyle(
   solidWhiteLineStyle.color,
@@ -674,12 +675,9 @@ class StreetBuilder {
   ): StreetBuilder {
     for (const lane of lanes) {
       this.traffic.push(
-        new TrafficRequest(
-          lane,
-          ObstacleType.BICYCLE,
-          frequency,
-          ObstacleAvoidanceType.BRAKE,
-        ),
+        TrafficRequest.of(lane, ObstacleType.BICYCLE)
+          .withAvoidance(ObstacleAvoidanceType.BRAKE)
+          .withFrequency(frequency),
       );
     }
     return this;
@@ -1093,7 +1091,7 @@ class StreetBuilder {
       PARKED_CAR_5_X,
       840,
       PARKED_CAR_7_X,
-      1040,
+      PARKED_CAR_8_X,
       1150,
     ];
     // array matches the x array, but indicates if the vehicle is a commercial vehicle
@@ -1350,7 +1348,7 @@ class StreetBuilder {
   private parkingCarObstacle(y: number): ParkingCarObstacle {
     return new ParkingCarObstacle(
       y,
-      PARKED_CAR_7_X,
+      PARKED_CAR_8_X,
       y + this.bikeLaneWidth + this.parkingLaneWidth, //only works with the bike lanes street design
     );
   }
