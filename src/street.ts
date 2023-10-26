@@ -729,7 +729,11 @@ export class Street {
                   counter < 10
                 );
                 //one last check to make sure new obstacle is not colliding with scene objects
-                if (!newObstacle.collisionDetected(lane.obstacles)) {
+                if (
+                  !newObstacle.detectCollisions ||
+                  (newObstacle.detectCollisions &&
+                    !newObstacle.collisionDetected(lane.obstacles))
+                ) {
                   lane = lane.addObstacle(newObstacle);
                 }
               }
