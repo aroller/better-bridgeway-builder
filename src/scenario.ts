@@ -77,6 +77,7 @@ export enum ScenarioKey {
   BIKE_LANES_AMBULANCE = "bike-lanes-ambulance",
   BIKE_LANES_PARKING = "bike-lanes-parking",
   CYCLETRACK = "cycletrack",
+  CYCLETRACK_AMBULANCE = "cycletrack-ambulance",
   GAME_OVER = "game-over",
 }
 
@@ -407,6 +408,22 @@ export class ScenarioProducer {
           .withCycletrack()
           .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.SIGNAL)
+          .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
+          .withBicycles([Lane.NORTHBOUND_BIKE, Lane.SOUTHBOUND_BIKE]);
+
+        player = this.frogPlayer(PlayerSpeed.SLOW);
+        background = Background.CYCLETRACK;
+        break;
+      case ScenarioKey.CYCLETRACK_AMBULANCE:
+        title = "Cycletrack allows Ambulance to Pass";
+        description =
+          "The protected bikeway can allow for vehicles to pull into it for emergency access.";
+        streetBuilder
+          .withCycletrack()
+          .withParkingIncluded()
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withAmbulance(false)
           .withCrosswalk(CrosswalkType.SIGNAL)
           .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withBicycles([Lane.NORTHBOUND_BIKE, Lane.SOUTHBOUND_BIKE]);
