@@ -311,8 +311,8 @@ export class Obstacle extends GameObject {
         isObjectInLane &&
         ((this.direction === LaneDirection.RIGHT && this.x < gameObject.x) ||
           (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
-      const isNotCrashed = gameObject instanceof Obstacle && !gameObject.crashed;
-      if (isObjectInFront && isNotCrashed) {
+      const isCrashed = gameObject instanceof Obstacle && gameObject.crashed;
+      if (isObjectInFront && !isCrashed) {
         const distance = Math.abs(this.x - gameObject.x);
         if (distance < closestDistance) {
           closestDistance = distance;
