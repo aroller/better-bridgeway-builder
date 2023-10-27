@@ -362,7 +362,8 @@ export class Scene {
     dialog.style.border = "1px solid black";
     dialog.style.padding = "20px";
     dialog.style.textAlign = "center";
-
+    dialog.style.opacity = "0.9";
+    
     // Create an iframe element for the HTML page.
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
