@@ -86,6 +86,7 @@ export class Scene {
     this.level++;
     //start the next scenario
     this.deadPlayers = [];
+    this.crashedEmergencyVehicles = 0;
     if (!scenarioKey) {
       scenarioKey = ScenarioProducer.getScenarioKeyForLevel(this.level);
     } else {
