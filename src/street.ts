@@ -171,6 +171,9 @@ class AmbulanceTrafficObstacleYCalculator implements ObstacleYCalculator {
 }
 
 export class Obstacle extends GameObject {
+  /** indicates if the obstacle collision has been detected and crash image is shown */
+  public readonly crashed:boolean;
+
   constructor(
     x: number,
     y: number,
@@ -195,11 +198,15 @@ export class Obstacle extends GameObject {
   ) {
     // some obstacles are hidden so image can be undefined
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
+    this.crashed = image?.src.includes(Obstacle.getCrashedImageSrc()) === true;
   }
 
+  public static getCrashedImageSrc(): string {
+    return "images/obstacles/crashed.png"
+  }
   public static getCrashedImage(): HTMLImageElement {
     const image = new Image();
-    image.src = "images/obstacles/crashed.png";
+    image.src = Obstacle.getCrashedImageSrc();
     return image;
   }
 
@@ -227,6 +234,9 @@ export class Obstacle extends GameObject {
     player: Player,
     obstacles: readonly Obstacle[],
   ): Obstacle {
+    if(this.crashed){
+      return this;
+    }
     const collided = this.detectCollisions && this.collisionDetected(obstacles);
     if (collided) {
       return new Obstacle(
@@ -273,7 +283,7 @@ export class Obstacle extends GameObject {
    */
   public collisionDetected(obstacles: readonly Obstacle[]) {
     const collision = obstacles.some((obstacle) => {
-      if (obstacle === this) {
+      if (obstacle === this || obstacle.crashed) {
         return false;
       }
       return this.intersects(obstacle);
@@ -295,7 +305,8 @@ export class Obstacle extends GameObject {
         isObjectInLane &&
         ((this.direction === LaneDirection.RIGHT && this.x < gameObject.x) ||
           (this.direction === LaneDirection.LEFT && this.x > gameObject.x));
-      if (isObjectInFront) {
+      const isNotCrashed = gameObject instanceof Obstacle && !gameObject.crashed;
+      if (isObjectInFront && isNotCrashed) {
         const distance = Math.abs(this.x - gameObject.x);
         if (distance < closestDistance) {
           closestDistance = distance;
