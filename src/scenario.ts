@@ -248,7 +248,6 @@ export class ScenarioProducer {
           "Traffic congestion increases when bicycles are present because they share the lane.";
         streetBuilder
           .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
-          .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
           .withParkingIncluded()
           .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE]);
         player = this.frogPlayer(PlayerSpeed.SLOW);
@@ -266,13 +265,12 @@ export class ScenarioProducer {
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
       case ScenarioKey.CENTER_LANE_DELIVERY:
-        title = "Commercial Delivery in the Center Turn Lane";
+        title = "Center Lane Trucks Block the View of Pedestrians";
         description =
-          "Trucks block the center lane so cars no longer pass bicycles.";
+          "The pedestrian crossing the street is not seen by oncoming cars.";
         streetBuilder
           .withParkingIncluded()
-          .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
-          .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
+          .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE],LIGHT_TRAFFIC_FREQUENCY)
           .withDelivery(DeliveryType.CENTER_LANE);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
@@ -607,7 +605,6 @@ class TrafficRequest {
  *
  */
 class StreetBuilder {
-  private lightTraffic: boolean;
   private parkingIncluded: boolean;
   private delivery: DeliveryType;
   private crosswalk: CrosswalkType;
@@ -620,7 +617,6 @@ class StreetBuilder {
     public readonly streetLength: number,
     public readonly topOfStreetY: number,
   ) {
-    this.lightTraffic = false;
     this.parkingIncluded = false;
     this.delivery = DeliveryType.NONE;
     this.crosswalk = CrosswalkType.NONE;
@@ -659,16 +655,12 @@ class StreetBuilder {
     }
     return this;
   }
-  public withBrakingCars(lanes: Lane[]): StreetBuilder {
+  public withBrakingCars(lanes: Lane[],frequency:number=HEAVY_TRAFFIC_FREQUENCY): StreetBuilder {
     for (const lane of lanes) {
       this.traffic.push(
         new TrafficRequest(lane, ObstacleType.CAR)
           .withAvoidance(ObstacleAvoidanceType.BRAKE)
-          .withFrequency(
-            this.lightTraffic
-              ? LIGHT_TRAFFIC_FREQUENCY
-              : HEAVY_TRAFFIC_FREQUENCY,
-          ),
+          .withFrequency(frequency)
       );
     }
     return this;
@@ -775,7 +767,7 @@ class StreetBuilder {
         Lane.NORTHBOUND_BIKE,
         y,
         LaneDirection.LEFT,
-        this.obstacleFrequency,
+        HEAVY_TRAFFIC_FREQUENCY,
         this.parkingIncluded,
         ObstacleAvoidanceType.NONE,
         false,
@@ -808,7 +800,7 @@ class StreetBuilder {
         Lane.NORTHBOUND_VEHICLE,
         y,
         northboundDirection,
-        this.obstacleFrequency,
+        HEAVY_TRAFFIC_FREQUENCY,
         false,
         ObstacleAvoidanceType.NONE,
         false,
@@ -859,7 +851,7 @@ class StreetBuilder {
         Lane.SOUTHBOUND_VEHICLE,
         y,
         southboundDirection,
-        this.obstacleFrequency,
+        HEAVY_TRAFFIC_FREQUENCY,
         this.parkingIncluded,
         ObstacleAvoidanceType.NONE,
         false,
@@ -885,7 +877,7 @@ class StreetBuilder {
         Lane.SOUTHBOUND_BIKE,
         y,
         LaneDirection.RIGHT,
-        this.obstacleFrequency,
+        HEAVY_TRAFFIC_FREQUENCY,
         this.parkingIncluded,
         ObstacleAvoidanceType.NONE,
         false, //bicycles
@@ -915,10 +907,7 @@ class StreetBuilder {
     return { street, y };
   }
 
-  /** Provides the number of seconds between obstacle production */
-  private get obstacleFrequency(): number {
-    return this.lightTraffic ? 4 : 2;
-  }
+
 
   private get bikeLaneWidth(): number {
     return 30;
