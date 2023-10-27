@@ -1,4 +1,4 @@
-import { Street } from "./street";
+import { Street, Obstacle, ObstacleSpeeds, LaneDirection } from "./street";
 import { Player } from "./player";
 import { Scenario, ScenarioProducer, ScenarioKey } from "./scenario";
 import { GameAttempts } from "./game";
@@ -32,6 +32,7 @@ export class Scene {
   private gameAttempts: GameAttempts;
   private scenario: Scenario;
   private scenarioProducer: ScenarioProducer;
+  private crashedEmergencyVehicles: number = 0;
 
   /**
    * Creates a new Scene instance.
@@ -232,6 +233,11 @@ export class Scene {
     this.street = this.street.updateObstacles(
       this.player,
       this.street.getAllObstacles(),
+      (obstacle) => {
+        if (obstacle.emergencyVehicle) {
+          this.crashedEmergencyVehicles++;
+        }
+      },
     );
 
     // move to the position if controls instruct to do so
@@ -313,7 +319,31 @@ export class Scene {
       this.ctx.drawImage(image, x, y, 50, 50);
     }
 
-
+    // display crashed ambulances, if any
+    if (this.crashedEmergencyVehicles > 0) {
+      let emergencyX = 400;
+      const ambulanceHeight = 40;
+      const ambulanceWidth = 2 * ambulanceHeight;
+      const ambulanceY = y + ambulanceHeight / 2;
+      if (this.crashedEmergencyVehicles >= 0) {
+        const ambulanceImage = new Image();
+        ambulanceImage.src = "images/obstacles/truck-ambulance.png";
+        const ambulanceObstacle = new Obstacle(
+          emergencyX,
+          ambulanceY,
+          2 * ambulanceHeight,
+          ambulanceHeight,
+          ObstacleSpeeds.STOPPED,
+          LaneDirection.RIGHT,
+          ambulanceImage,
+        );
+        ambulanceObstacle.draw(this.ctx);
+        for (let i = 0; i < this.crashedEmergencyVehicles; i++) {
+          emergencyX += ambulanceWidth + 10;
+          ambulanceObstacle.clone(emergencyX).cloneAsCrashed().draw(this.ctx);
+        }
+      }
+    }
   }
 
   public displayDialogWithHtmlFromFile(

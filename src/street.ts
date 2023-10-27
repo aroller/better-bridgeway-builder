@@ -230,31 +230,37 @@ export class Obstacle extends GameObject {
     );
   }
 
+  public cloneAsCrashed(): Obstacle {
+    return new Obstacle(
+      this.x,
+      this.y,
+      this.width,
+      this.height,
+      ObstacleSpeeds.STOPPED,
+      this.direction,
+      Obstacle.getCrashedImage(),
+      ObstacleAvoidanceType.NONE,
+      false, // no collision detection for crashed obstacles
+      false, // crash is no longer emergency vehicle
+      this.originalSpeed,
+      this.originalY,
+      this.speedCalculators,
+      this.yCalculators,
+    );
+  }
+
   public moveObstacle(
     player: Player,
     obstacles: readonly Obstacle[],
+    crashCallback: (obstacle:Obstacle) => void
   ): Obstacle {
     if(this.crashed){
       return this;
     }
     const collided = this.detectCollisions && this.collisionDetected(obstacles);
     if (collided) {
-      return new Obstacle(
-        this.x,
-        this.y,
-        this.width,
-        this.height,
-        ObstacleSpeeds.STOPPED,
-        this.direction,
-        Obstacle.getCrashedImage(),
-        ObstacleAvoidanceType.NONE,
-        false, // no collision detection for crashed obstacles
-        false, // crash is no longer emergency vehicle
-        this.originalSpeed,
-        this.originalY,
-        this.speedCalculators,
-        this.yCalculators,
-      );
+      crashCallback(this);
+      return this.cloneAsCrashed();
     }
     const adjustedSpeed = this.calculateSpeed(player, obstacles);
     const newX = this.x + adjustedSpeed * this.direction;
@@ -557,10 +563,10 @@ export class Lane {
    * Updates the obstacles in the lane.
    * @returns A new instance of Lane with the updated obstacles.
    */
-  public updateObstacles(player: Player, obstacles: readonly Obstacle[]): Lane {
+  public updateObstacles(player: Player, obstacles: readonly Obstacle[], crashCallback: (obstacle:Obstacle) => void): Lane {
     // remove obstacles off screen.  Far off screen for realistic traffic behavior. 
     const newObstacles = this.obstacles
-      .map((obstacle) => obstacle.moveObstacle(player, obstacles))
+      .map((obstacle) => obstacle.moveObstacle(player, obstacles, crashCallback))
       .filter((obstacle) => {
         if (this.direction === LaneDirection.LEFT) {
           return obstacle.x + obstacle.width > -this.streetLength;
@@ -761,9 +767,10 @@ export class Street {
   public updateObstacles(
     player: Player,
     obstacles: readonly Obstacle[],
+    crashCallback: (obstacle:Obstacle) => void
   ): Street {
     const newLanes = this.lanes.map((lane) =>
-      lane.updateObstacles(player, obstacles),
+      lane.updateObstacles(player, obstacles,crashCallback),
     );
     const newSceneObjects = this.sceneObjects.map((sceneObject) =>
       sceneObject.update([...obstacles, player]),
@@ -815,6 +822,7 @@ export class Street {
   public getAllObstacles(): readonly Obstacle[] {
     return this.lanes.flatMap((lane) => lane.obstacles);
   }
+
 }
 
 /**
