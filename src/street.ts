@@ -547,13 +547,14 @@ export class Lane {
    * @returns A new instance of Lane with the updated obstacles.
    */
   public updateObstacles(player: Player, obstacles: readonly Obstacle[]): Lane {
+    // remove obstacles off screen.  Far off screen for realistic traffic behavior. 
     const newObstacles = this.obstacles
       .map((obstacle) => obstacle.moveObstacle(player, obstacles))
       .filter((obstacle) => {
         if (this.direction === LaneDirection.LEFT) {
-          return obstacle.x + obstacle.width > 0;
+          return obstacle.x + obstacle.width > -this.streetLength;
         } else {
-          return obstacle.x < this.streetLength;
+          return obstacle.x < 2 * this.streetLength;
         }
       });
 
