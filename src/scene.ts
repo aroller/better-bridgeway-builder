@@ -285,7 +285,7 @@ export class Scene {
 
   public displayScoreboard() {
     // Add a fixed rectangular background.
-    this.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    this.ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
     this.ctx.fillRect(0, 0, this.ctx.canvas.width, 100);
     const currentAttempts = this.gameAttempts.getCurrentLevelAttempts();
     const failedAttempts = currentAttempts.failureCount;
@@ -295,21 +295,25 @@ export class Scene {
     this.ctx.fillStyle = "white";
     this.ctx.fillText(`${scenarioTitle}`, 10, 30);
 
-    // Display the failed attempts and time elapsed.
-    let x = 10;
     let y = 50;
-    for (let i = 0; i < failedAttempts; i++) {
-      const image = Player.getSquashedImage();
-      this.ctx.drawImage(image, x, y, 50, 50);
-      x += 60;
-    }
-
     const timeElapsed = Math.trunc(
       this.gameAttempts.getCurrentLevelAttempt().durationInSeconds,
     );
     this.ctx.font = "bold 24px sans-serif";
     this.ctx.fillStyle = "white";
-    this.ctx.fillText(`${timeElapsed}`, x, y + 30);
+    this.ctx.fillText(`${timeElapsed}`, 10, y + 30);
+
+    // Display the failed attempts and time elapsed.
+    let x = 100;
+    // draw the image of the player
+    this.ctx.drawImage(this.player.image, x, y, 50, 50);
+    for (let i = 0; i < failedAttempts; i++) {
+      x += 60;
+      const image = Player.getSquashedImage();
+      this.ctx.drawImage(image, x, y, 50, 50);
+    }
+
+
   }
 
   public displayDialogWithHtmlFromFile(
