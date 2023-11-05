@@ -101,7 +101,7 @@ export class Scene {
     // Create the street object with four lanes, two for vehicles and two for bikes.
 
     this.displayDialogWithHtmlFromFile(
-      `dialogs/${scenarioKey}.html`,
+      `${scenarioKey}.html`,
       "Play",
       () => {},
     );
