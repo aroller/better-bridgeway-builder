@@ -320,6 +320,15 @@ export class Scene {
       this.ctx.drawImage(image, x, y, 50, 50);
     }
 
+    // show a qr code at the top right of the screen
+    const qrCodePadding = 10;
+    const qrCodeSize = 75;
+    const qrCodeX = this.ctx.canvas.width - qrCodeSize - qrCodePadding;
+    const qrCodeY = 0 + qrCodePadding;
+    const qrCodeImage = new Image();
+    qrCodeImage.src = "images/dialogs/url-qr-code.png";
+    this.ctx.drawImage(qrCodeImage, qrCodeX, qrCodeY, qrCodeSize, qrCodeSize);
+
     // display crashed ambulances, if any
     if (this.crashedEmergencyVehicles > 0) {
       let emergencyX = 400;
