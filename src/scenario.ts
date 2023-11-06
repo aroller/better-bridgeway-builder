@@ -398,6 +398,7 @@ export class ScenarioProducer {
 
         player = this.curbsideDeliveryPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
+        break;
       case ScenarioKey.CYCLETRACK:
         title = "Separating Cyclists is Best for Safety and Efficiency";
         description =
