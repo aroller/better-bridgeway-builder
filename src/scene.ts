@@ -100,11 +100,7 @@ export class Scene {
     this.ctx.canvas.style.backgroundSize = "cover";
     // Create the street object with four lanes, two for vehicles and two for bikes.
 
-    this.displayDialogWithHtmlFromFile(
-      `${scenarioKey}.html`,
-      "Play",
-      () => {},
-    );
+    this.displayDialogWithHtmlFromFile(scenarioKey);
   }
 
   /**
@@ -320,15 +316,6 @@ export class Scene {
       this.ctx.drawImage(image, x, y, 50, 50);
     }
 
-    // show a qr code at the top right of the screen
-    const qrCodePadding = 10;
-    const qrCodeSize = 75;
-    const qrCodeX = this.ctx.canvas.width - qrCodeSize - qrCodePadding;
-    const qrCodeY = 0 + qrCodePadding;
-    const qrCodeImage = new Image();
-    qrCodeImage.src = "images/dialogs/url-qr-code.png";
-    this.ctx.drawImage(qrCodeImage, qrCodeX, qrCodeY, qrCodeSize, qrCodeSize);
-
     // display crashed ambulances, if any
     if (this.crashedEmergencyVehicles > 0) {
       let emergencyX = 400;
@@ -356,11 +343,8 @@ export class Scene {
     }
   }
 
-  public displayDialogWithHtmlFromFile(
-    filePath: string,
-    buttonText: string,
-    callback: () => void,
-  ) {
+  public displayDialogWithHtmlFromFile(scenarioKey: string) {
+    
     // Create a div element for the dialog.
     const dialog = document.createElement("div");
     dialog.style.position = "absolute";
@@ -378,19 +362,20 @@ export class Scene {
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
     iframe.style.height = "400px";
+    const filePath = `${scenarioKey}.html`;
     iframe.src = filePath;
     dialog.appendChild(iframe);
 
     // Add the continue button to the dialog.
-    const button = document.createElement("button");
-    button.textContent = buttonText;
-    button.addEventListener("click", () => {
+    const playButton = document.createElement("button");
+    //show click pointer when hovering over the button
+    playButton.style.cursor = "pointer";
+    playButton.textContent = "Play";
+    playButton.addEventListener("click", () => {
       // Remove the dialog from the DOM.
       dialog.remove();
-      // Call the callback function.
-      callback();
     });
-    dialog.appendChild(button);
+    dialog.appendChild(playButton);
 
     // Add the dialog to the DOM.
     document.body.appendChild(dialog);
@@ -403,8 +388,47 @@ export class Scene {
         event.key === "Escape"
       ) {
         dialog.remove();
-        callback();
       }
+    });
+
+    // add a share button to the far right of the play button
+    const shareButton = document.createElement("button");
+    // use font awesome share icon
+    shareButton.textContent = "\uf1e0";
+    shareButton.style.fontFamily = "FontAwesome";
+    shareButton.style.position = "absolute";
+    shareButton.style.cursor = "pointer";
+    shareButton.style.right = "10px";
+    shareButton.addEventListener("click", () => {
+      this.copyUrlToClipboard();
+     
+    });
+    dialog.appendChild(shareButton);
+  }
+
+  /** 
+   *  Shares the url to the given level by copying it to the clipboard.
+   */
+  public copyUrlToClipboard() {
+    const url = Scene.getLevelHttpUrl(this.scenario.key);
+    navigator.clipboard.writeText(url).then(() => {
+     // show a message that the url was copied to the clipboard
+      const message = document.createElement("div");
+      message.style.position = "absolute";
+      message.style.top = "50%";
+      message.style.left = "50%";
+      message.style.transform = "translate(-50%, -50%)";
+      message.style.width = "75%";
+      message.style.backgroundColor = "white";
+      message.style.border = "1px solid black";
+      message.style.padding = "20px";
+      message.style.textAlign = "center";
+      message.style.opacity = "0.9";
+      message.textContent = `URL for this level copied to clipboard ...`;
+      document.body.appendChild(message);
+      setTimeout(() => {
+        message.remove();
+      }, 4000);
     });
   }
 
