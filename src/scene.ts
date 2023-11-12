@@ -365,16 +365,43 @@ export class Scene {
     iframe.src = filePath;
     dialog.appendChild(iframe);
 
+    const levelButtonWidth = "100px";
+    const levelButtonPadding = "10px";
+    // Add a button to replay the previous level
+    const previousLevelButton = document.createElement("button");
+    previousLevelButton.textContent = "<< Previous";
+    previousLevelButton.style.cursor = "pointer";
+    previousLevelButton.style.width = levelButtonWidth;
+    previousLevelButton.style.marginRight = levelButtonPadding;
+    previousLevelButton.addEventListener("click", () => {
+      this.playNextLevel(this.scenario.previousScenarioKey);
+      dialog.remove();
+    });
+    dialog.appendChild(previousLevelButton);
+
     // Add the continue button to the dialog.
     const playButton = document.createElement("button");
     //show click pointer when hovering over the button
     playButton.style.cursor = "pointer";
     playButton.textContent = "Play";
+    playButton.style.width = levelButtonWidth;
     playButton.addEventListener("click", () => {
       // Remove the dialog from the DOM.
       dialog.remove();
     });
     dialog.appendChild(playButton);
+
+    // Add a button to skip to the next level
+    const nextLevelButton = document.createElement("button");
+    nextLevelButton.textContent = "Next >>";
+    nextLevelButton.style.cursor = "pointer";
+    nextLevelButton.style.width = levelButtonWidth;
+    nextLevelButton.style.marginLeft = levelButtonPadding;
+    nextLevelButton.addEventListener("click", () => {
+      this.playNextLevel(this.scenario.nextScenarioKey);
+      dialog.remove();
+    });
+    dialog.appendChild(nextLevelButton);
 
     // add a share button to the far right of the play button
     const shareButton = document.createElement("button");

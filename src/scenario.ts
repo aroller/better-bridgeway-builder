@@ -57,8 +57,31 @@ export class Scenario {
     public readonly finishLineY: number,
     public readonly background: string,
   ) {}
+
+  /**
+   * @returns The next scenario key after this.key or the same if at the end.
+   */
+  public get nextScenarioKey(): ScenarioKey {
+    const keys = Object.values(ScenarioKey);
+    const index = keys.indexOf(this.key);
+    if (index < 0) {
+      return keys[0];
+    }
+    return keys[index + 1];
+  }
+
+  /** Previous key before this.key or the same if at the beginning. */
+  public get previousScenarioKey(): ScenarioKey {
+    const keys = Object.values(ScenarioKey);
+    const index = keys.indexOf(this.key);
+    if (index < 0) {
+      return keys[0];
+    }
+    return keys[index - 1];
+  }
 }
 
+/** String representing a level used in URL. */
 export enum ScenarioKey {
   LIGHT_TRAFFIC = "light-traffic",
   HEAVY_TRAFFIC = "heavy-traffic",
@@ -80,6 +103,8 @@ export enum ScenarioKey {
   CYCLETRACK_AMBULANCE = "cycletrack-ambulance",
   GAME_OVER = "game-over",
 }
+
+
 
 export enum DeliveryType {
   CENTER_LANE = "center-lane",
