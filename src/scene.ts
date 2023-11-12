@@ -344,7 +344,6 @@ export class Scene {
   }
 
   public displayDialogWithHtmlFromFile(scenarioKey: string) {
-    
     // Create a div element for the dialog.
     const dialog = document.createElement("div");
     dialog.style.position = "absolute";
@@ -357,7 +356,7 @@ export class Scene {
     dialog.style.padding = "20px";
     dialog.style.textAlign = "center";
     dialog.style.opacity = "0.9";
-    
+
     // Create an iframe element for the HTML page.
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
@@ -377,6 +376,19 @@ export class Scene {
     });
     dialog.appendChild(playButton);
 
+    // add a share button to the far right of the play button
+    const shareButton = document.createElement("button");
+    // use font awesome share icon
+    shareButton.textContent = "\uf1e0";
+    shareButton.style.fontFamily = "FontAwesome";
+    shareButton.style.position = "absolute";
+    shareButton.style.cursor = "pointer";
+    shareButton.style.right = "10px";
+    shareButton.addEventListener("click", () => {
+      this.copyUrlToClipboard();
+    });
+    dialog.appendChild(shareButton);
+
     // Add the dialog to the DOM.
     document.body.appendChild(dialog);
 
@@ -390,29 +402,15 @@ export class Scene {
         dialog.remove();
       }
     });
-
-    // add a share button to the far right of the play button
-    const shareButton = document.createElement("button");
-    // use font awesome share icon
-    shareButton.textContent = "\uf1e0";
-    shareButton.style.fontFamily = "FontAwesome";
-    shareButton.style.position = "absolute";
-    shareButton.style.cursor = "pointer";
-    shareButton.style.right = "10px";
-    shareButton.addEventListener("click", () => {
-      this.copyUrlToClipboard();
-     
-    });
-    dialog.appendChild(shareButton);
   }
 
-  /** 
+  /**
    *  Shares the url to the given level by copying it to the clipboard.
    */
   public copyUrlToClipboard() {
     const url = Scene.getLevelHttpUrl(this.scenario.key);
     navigator.clipboard.writeText(url).then(() => {
-     // show a message that the url was copied to the clipboard
+      // show a message that the url was copied to the clipboard
       const message = document.createElement("div");
       message.style.position = "absolute";
       message.style.top = "50%";
