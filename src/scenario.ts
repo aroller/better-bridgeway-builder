@@ -15,7 +15,6 @@ import {
 } from "./street";
 import { LaneDirection } from "./street";
 
-
 /** Fixed point corresponding to the part of the starting sidewalk where the red curb exists.
  * Fathest left point putting the frog close to the parked cars.
  */
@@ -103,8 +102,6 @@ export enum ScenarioKey {
   CYCLE_TRACK_AMBULANCE = "cycle-track-ambulance",
   GAME_OVER = "game-over",
 }
-
-
 
 export enum DeliveryType {
   CENTER_LANE = "center-lane",
@@ -295,7 +292,10 @@ export class ScenarioProducer {
           "The pedestrian crossing the street is not seen by oncoming cars.";
         streetBuilder
           .withParkingIncluded()
-          .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE],LIGHT_TRAFFIC_FREQUENCY)
+          .withBrakingCars(
+            [Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE],
+            LIGHT_TRAFFIC_FREQUENCY,
+          )
           .withDelivery(DeliveryType.CENTER_LANE);
         player = this.frogPlayer(PlayerSpeed.SLOW);
         break;
@@ -460,7 +460,41 @@ export class ScenarioProducer {
         title = "Game Over - Nobody Wins if Bridgeway is Not Improved";
         streetBuilder
           .withBrakingCars([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
-          .withBicycles([Lane.NORTHBOUND_VEHICLE, Lane.SOUTHBOUND_VEHICLE])
+          .withTraffic(
+            TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.PASS)
+              .withCrash()
+              .withFrequency(6),
+          )
+          .withTraffic(
+            TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.PASS)
+              .withCrash()
+              .withFrequency(7),
+          )
+          .withTraffic(
+            TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withCrash()
+              .withFrequency(8),
+          )
+          .withTraffic(
+            TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withCrash()
+              .withFrequency(9),
+          )
+          .withTraffic(
+            TrafficRequest.of(
+              Lane.NORTHBOUND_VEHICLE,
+              ObstacleType.BICYCLE,
+            ).withFrequency(12),
+          )
+          .withTraffic(
+            TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.BICYCLE)
+              .withCrash()
+              .withFrequency(15),
+          )
           .withParkingIncluded()
           .withDelivery(DeliveryType.CENTER_LANE)
           .withAmbulance();
@@ -681,12 +715,15 @@ class StreetBuilder {
     }
     return this;
   }
-  public withBrakingCars(lanes: Lane[],frequency:number=HEAVY_TRAFFIC_FREQUENCY): StreetBuilder {
+  public withBrakingCars(
+    lanes: Lane[],
+    frequency: number = HEAVY_TRAFFIC_FREQUENCY,
+  ): StreetBuilder {
     for (const lane of lanes) {
       this.traffic.push(
         new TrafficRequest(lane, ObstacleType.CAR)
           .withAvoidance(ObstacleAvoidanceType.BRAKE)
-          .withFrequency(frequency)
+          .withFrequency(frequency),
       );
     }
     return this;
@@ -933,8 +970,6 @@ class StreetBuilder {
     return { street, y };
   }
 
-
-
   private get bikeLaneWidth(): number {
     return 30;
   }
@@ -953,7 +988,9 @@ class StreetBuilder {
 
   /** Vehicle lane width changes if bike lanes exist. The lanes get more narrow in modern designs. */
   private get vehicleLaneWidth(): number {
-    return this.bikeLanes || this.cycletrack ? 60 : this.historicVehicleLaneWidth;
+    return this.bikeLanes || this.cycletrack
+      ? 60
+      : this.historicVehicleLaneWidth;
   }
 
   /** Given the lane, this returns all of the obstacleTypes declared for the lane that match
