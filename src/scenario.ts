@@ -95,7 +95,7 @@ export enum ScenarioKey {
   CURBSIDE_DELIVERY = "curbside-delivery",
   CROSSWALK = "crosswalk",
   CROSSWALK_DAYLIGHT = "crosswalk-daylight",
-  WHEELCHAIR = "wheelchair",
+  CROSSWALK_RFB = "crosswalk-rfb",
   BIKE_LANES = "bike-lanes",
   BIKE_LANES_AMBULANCE = "bike-lanes-ambulance",
   BIKE_LANES_PARKING = "bike-lanes-parking",
@@ -355,7 +355,7 @@ export class ScenarioProducer {
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.CROSSWALK_DAYLIGHT;
         break;
-      case ScenarioKey.WHEELCHAIR:
+      case ScenarioKey.CROSSWALK_RFB:
         title = "Wheelchairs Cross Safely with Rapid Flashing Beacons";
         description =
           "Flashing sign alerts drivers to stop for pedestrians in the crosswalk. Accessibile parking for wheelchairs.";
