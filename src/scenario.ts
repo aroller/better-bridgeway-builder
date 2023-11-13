@@ -14,7 +14,7 @@ import {
   ObstacleAvoidanceType,
 } from "./street";
 import { LaneDirection } from "./street";
-import { re } from "mathjs";
+
 
 /** Fixed point corresponding to the part of the starting sidewalk where the red curb exists.
  * Fathest left point putting the frog close to the parked cars.
