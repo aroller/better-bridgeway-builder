@@ -99,8 +99,8 @@ export enum ScenarioKey {
   BIKE_LANES = "bike-lanes",
   BIKE_LANES_AMBULANCE = "bike-lanes-ambulance",
   BIKE_LANES_PARKING = "bike-lanes-parking",
-  CYCLETRACK = "cycletrack",
-  CYCLETRACK_AMBULANCE = "cycletrack-ambulance",
+  CYCLE_TRACK = "cycle-track",
+  CYCLE_TRACK_AMBULANCE = "cycle-track-ambulance",
   GAME_OVER = "game-over",
 }
 
@@ -424,7 +424,7 @@ export class ScenarioProducer {
         player = this.curbsideDeliveryPlayer(PlayerSpeed.SLOW);
         background = Background.BIKE_LANES;
         break;
-      case ScenarioKey.CYCLETRACK:
+      case ScenarioKey.CYCLE_TRACK:
         title = "Separating Cyclists is Best for Safety and Efficiency";
         description =
           "A Class IV Separated Bikeway is the safest and most efficient way to move people on bicycles.";
@@ -439,7 +439,7 @@ export class ScenarioProducer {
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.CYCLETRACK;
         break;
-      case ScenarioKey.CYCLETRACK_AMBULANCE:
+      case ScenarioKey.CYCLE_TRACK_AMBULANCE:
         title = "Cycletrack allows Ambulance to Pass";
         description =
           "The protected bikeway can allow for vehicles to pull into it for emergency access.";
