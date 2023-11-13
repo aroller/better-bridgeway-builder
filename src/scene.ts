@@ -365,6 +365,16 @@ export class Scene {
     iframe.src = filePath;
     dialog.appendChild(iframe);
 
+    // Add a link to betterbridgeway.org
+    const link = document.createElement("a");
+    link.href = "https://betterbridgeway.org";
+    link.target = "_blank";
+    link.textContent = "betterbridgeway.org";
+    link.style.position = "absolute";
+    link.style.left = "20px";
+    link.title = "Learn more about Better Bridgeway";
+    dialog.appendChild(link);
+
     const levelButtonWidth = "100px";
     const levelButtonPadding = "10px";
     // Add a button to replay the previous level
@@ -373,6 +383,7 @@ export class Scene {
     previousLevelButton.style.cursor = "pointer";
     previousLevelButton.style.width = levelButtonWidth;
     previousLevelButton.style.marginRight = levelButtonPadding;
+    previousLevelButton.title = "Replay the previous level";
     previousLevelButton.addEventListener("click", () => {
       this.playNextLevel(this.scenario.previousScenarioKey);
       dialog.remove();
@@ -385,6 +396,7 @@ export class Scene {
     playButton.style.cursor = "pointer";
     playButton.textContent = "Play";
     playButton.style.width = levelButtonWidth;
+    playButton.title = "Play this level";
     playButton.addEventListener("click", () => {
       // Remove the dialog from the DOM.
       dialog.remove();
@@ -397,6 +409,7 @@ export class Scene {
     nextLevelButton.style.cursor = "pointer";
     nextLevelButton.style.width = levelButtonWidth;
     nextLevelButton.style.marginLeft = levelButtonPadding;
+    nextLevelButton.title = "Skip to the next level";
     nextLevelButton.addEventListener("click", () => {
       this.playNextLevel(this.scenario.nextScenarioKey);
       dialog.remove();
@@ -410,7 +423,8 @@ export class Scene {
     shareButton.style.fontFamily = "FontAwesome";
     shareButton.style.position = "absolute";
     shareButton.style.cursor = "pointer";
-    shareButton.style.right = "10px";
+    shareButton.style.right = "20px";
+    shareButton.title = "Share this level";
     shareButton.addEventListener("click", () => {
       this.copyUrlToClipboard();
     });
