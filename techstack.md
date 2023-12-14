@@ -1,7 +1,8 @@
 <!--
---- Readme.md Snippet without images Start ---
+&lt;--- Readme.md Snippet without images Start ---&gt;
 ## Tech Stack
 aroller/better-bridgeway-builder is built on the following main stack:
+
 - [Jest](http://facebook.github.io/jest/) – Javascript Testing Framework
 - [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript) – Languages
 - [TypeScript](http://www.typescriptlang.org) – Languages
@@ -13,11 +14,13 @@ aroller/better-bridgeway-builder is built on the following main stack:
 - [Docker](https://www.docker.com/) – Virtual Machine Platforms & Containers
 
 Full tech stack [here](/techstack.md)
---- Readme.md Snippet without images End ---
 
---- Readme.md Snippet with images Start ---
+&lt;--- Readme.md Snippet without images End ---&gt;
+
+&lt;--- Readme.md Snippet with images Start ---&gt;
 ## Tech Stack
 aroller/better-bridgeway-builder is built on the following main stack:
+
 - <img width='25' height='25' src='https://img.stackshare.io/service/830/jest.png' alt='Jest'/> [Jest](http://facebook.github.io/jest/) – Javascript Testing Framework
 - <img width='25' height='25' src='https://img.stackshare.io/service/1209/javascript.jpeg' alt='JavaScript'/> [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript) – Languages
 - <img width='25' height='25' src='https://img.stackshare.io/service/1612/bynNY5dJ.jpg' alt='TypeScript'/> [TypeScript](http://www.typescriptlang.org) – Languages
@@ -29,14 +32,15 @@ aroller/better-bridgeway-builder is built on the following main stack:
 - <img width='25' height='25' src='https://img.stackshare.io/service/586/n4u37v9t_400x400.png' alt='Docker'/> [Docker](https://www.docker.com/) – Virtual Machine Platforms & Containers
 
 Full tech stack [here](/techstack.md)
---- Readme.md Snippet with images End ---
+
+&lt;--- Readme.md Snippet with images End ---&gt;
 -->
 <div align="center">
 
 # Tech Stack File
 ![](https://img.stackshare.io/repo.svg "repo") [aroller/better-bridgeway-builder](https://github.com/aroller/better-bridgeway-builder)![](https://img.stackshare.io/public_badge.svg "public")
 <br/><br/>
-|25<br/>Tools used|11/13/23 <br/>Report generated|
+|25<br/>Tools used|12/14/23 <br/>Report generated|
 |------|------|
 </div>
 
@@ -68,7 +72,7 @@ Full tech stack [here](/techstack.md)
   <br>
   <sub><a href="http://babeljs.io/">Babel</a></sub>
   <br>
-  <sub>v7.23.2</sub>
+  <sub>v7.23.3</sub>
 </td>
 
 <td align='center'>
@@ -140,23 +144,35 @@ Full tech stack [here](/techstack.md)
 </tr>
 </table>
 
+## Other (1)
+<table><tr>
+  <td align='center'>
+  <img width='36' height='36' src='https://img.stackshare.io/service/2270/no-img-open-source.png' alt='HTML'>
+  <br>
+  <sub><a href="http://">HTML</a></sub>
+  <br>
+  <sub></sub>
+</td>
 
-## <img src='https://img.stackshare.io/group.svg' /> Open source packages (14)</h2>
+</tr>
+</table>
 
-## <img width='24' height='24' src='https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png'/> npm (14)
+
+## <img src='https://img.stackshare.io/group.svg' /> Open source packages (13)</h2>
+
+## <img width='24' height='24' src='https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png'/> npm (13)
 
 |NAME|VERSION|LAST UPDATED|LAST UPDATED BY|LICENSE|VULNERABILITIES|
 |:------|:------|:------|:------|:------|:------|
-|[@babel/core](https://www.npmjs.com/@babel/core)|v7.23.2|10/12/23|dependabot[bot] |MIT|N/A|
-|[@babel/preset-env](https://www.npmjs.com/@babel/preset-env)|v7.23.2|10/12/23|dependabot[bot] |MIT|N/A|
-|[@babel/preset-typescript](https://www.npmjs.com/@babel/preset-typescript)|v7.23.2|10/12/23|dependabot[bot] |MIT|N/A|
-|[@types/jest](https://www.npmjs.com/@types/jest)|v27.5.2|10/12/23|dependabot[bot] |MIT|N/A|
-|[babel-core](https://www.npmjs.com/babel-core)|v6.26.3|10/12/23|dependabot[bot] |MIT|N/A|
-|[babel-loader](https://www.npmjs.com/babel-loader)|v9.1.3|10/12/23|dependabot[bot] |MIT|N/A|
-|[babel-preset-es2015](https://www.npmjs.com/babel-preset-es2015)|v6.24.1|10/12/23|dependabot[bot] |MIT|N/A|
+|[@babel/core](https://www.npmjs.com/@babel/core)|v7.23.3|11/13/23|dependabot[bot] |MIT|N/A|
+|[@babel/preset-env](https://www.npmjs.com/@babel/preset-env)|v7.23.3|11/13/23|dependabot[bot] |MIT|N/A|
+|[@babel/preset-typescript](https://www.npmjs.com/@babel/preset-typescript)|v7.23.3|11/13/23|dependabot[bot] |MIT|N/A|
+|[@types/jest](https://www.npmjs.com/@types/jest)|v27.5.2|11/13/23|dependabot[bot] |MIT|N/A|
+|[babel-core](https://www.npmjs.com/babel-core)|v6.26.3|11/13/23|dependabot[bot] |MIT|N/A|
+|[babel-loader](https://www.npmjs.com/babel-loader)|v9.1.3|11/13/23|dependabot[bot] |MIT|N/A|
+|[babel-preset-es2015](https://www.npmjs.com/babel-preset-es2015)|v6.24.1|11/13/23|dependabot[bot] |MIT|N/A|
 |[copy-webpack-plugin](https://www.npmjs.com/copy-webpack-plugin)|v11.0.0|10/05/23|Aaron Roller |MIT|N/A|
 |[html-webpack-plugin](https://www.npmjs.com/html-webpack-plugin)|v5.5.3|10/07/23|Aaron Roller |MIT|N/A|
-|[mathjs](https://www.npmjs.com/mathjs)|v11.11.2|10/11/23|dependabot[bot] |Apache-2.0|N/A|
 |[ts-jest](https://www.npmjs.com/ts-jest)|v27.1.5|10/01/23|Aaron Roller |MIT|N/A|
 |[ts-loader](https://www.npmjs.com/ts-loader)|v9.4.4|07/14/23|dependabot[bot] |MIT|N/A|
 |[webpack-cli](https://www.npmjs.com/webpack-cli)|v5.0.2|10/05/23|Aaron Roller |MIT|N/A|
@@ -165,4 +181,4 @@ Full tech stack [here](/techstack.md)
 <br/>
 <div align='center'>
 
-Generated via [Stack File](https://github.com/apps/stack-file)
+Generated via [Stack File](https://github.com/marketplace/stack-file)
