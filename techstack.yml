@@ -1,7 +1,8 @@
 repo_name: aroller/better-bridgeway-builder
-report_id: 8189d6186e863b9ec9a81db4481267ee
+report_id: 39d21ae7980f1305a7d3e20b4faf7105
+version: 0.1
 repo_type: Public
-timestamp: '2023-12-14T10:34:50+00:00'
+timestamp: '2024-01-05T08:46:36+00:00'
 requested_by: aroller
 provider: github
 branch: develop
@@ -16,6 +17,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/1209/javascript.jpeg
+  detection_source_url: https://github.com/aroller/better-bridgeway-builder
   detection_source: Repo Metadata
 - name: TypeScript
   description: A superset of JavaScript that compiles to clean JavaScript output
@@ -26,6 +28,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/1612/bynNY5dJ.jpg
+  detection_source_url: https://github.com/aroller/better-bridgeway-builder
   detection_source: Repo Metadata
 - name: Babel
   description: Use next generation JavaScript, today.
@@ -50,6 +53,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Virtual Machine Platforms & Containers
   image_url: https://img.stackshare.io/service/586/n4u37v9t_400x400.png
+  detection_source_url: https://github.com/aroller/better-bridgeway-builder
   detection_source: Repo Metadata
 - name: ESLint
   description: The fully pluggable JavaScript code quality tool
@@ -60,6 +64,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Code Review
   image_url: https://img.stackshare.io/service/3337/Q4L7Jncy.jpg
+  detection_source_url: https://github.com/aroller/better-bridgeway-builder/blob/develop/package.json
   detection_source: package.json
   last_updated_by: Ryo Ota
   last_updated_on: 2019-05-28 01:16:39.000000000 Z
@@ -71,6 +76,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Version Control System
   image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/aroller/better-bridgeway-builder
   detection_source: Repo Metadata
 - name: GitHub Actions
   description: Automate your workflow from idea to production
@@ -80,6 +86,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Continuous Integration
   image_url: https://img.stackshare.io/service/11563/actions.png
+  detection_source_url: https://github.com/aroller/better-bridgeway-builder/blob/develop/.github/workflows/pages.yml
   detection_source: ".github/workflows/pages.yml"
   last_updated_by: Aaron Roller
   last_updated_on: 2023-10-04 05:44:12.000000000 Z
@@ -133,6 +140,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Front End Package Manager
   image_url: https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png
+  detection_source_url: https://github.com/aroller/better-bridgeway-builder/blob/develop/package.json
   detection_source: package.json
   last_updated_by: Ryo Ota
   last_updated_on: 2019-05-28 01:16:39.000000000 Z
@@ -142,6 +150,7 @@ tools:
   open_source: false
   hosted_saas: false
   image_url: https://img.stackshare.io/service/2270/no-img-open-source.png
+  detection_source_url: https://github.com/aroller/better-bridgeway-builder/blob/develop/public/bicycles-shared-lane.html
   detection_source: public/bicycles-shared-lane.html
   last_updated_by: Aaron Roller
   last_updated_on: 2023-10-11 08:46:00.000000000 Z
