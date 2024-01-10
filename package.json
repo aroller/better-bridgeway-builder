@@ -23,7 +23,7 @@
     "babel-core": "^6.26.3",
     "babel-loader": "^9.1.3",
     "babel-preset-es2015": "^6.24.1",
-    "copy-webpack-plugin": "^11.0.0",
+    "copy-webpack-plugin": "^12.0.0",
     "html-webpack-plugin": "^5.5.3",
     "jest": "^27.5.1",
     "prettier": "3.0.3",
