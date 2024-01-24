@@ -30,7 +30,7 @@
     "ts-jest": "^27.1.5",
     "ts-loader": "^9.4.4",
     "typescript": "^5.2.2",
-    "webpack": "^5.88.2",
+    "webpack": "^5.90.0",
     "webpack-cli": "^5.0.2",
     "webpack-dev-server": "^4.15.1"
   },
