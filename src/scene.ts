@@ -250,14 +250,9 @@ export class Scene {
       player.draw(this.ctx);
     });
 
-    // debug code displaying x,y for the player
-    // this.ctx.fillText(
-    //     `x: ${this.player.x}, y: ${this.player.y}`,
-    //     this.player.x,
-    //     this.player.y - 10,
-    // );
     this.street.draw(this.ctx);
     this.displayScoreboard();
+    this.displayPromoUrl();
   }
 
   private nextAttemptOrLevelIfReady() {
@@ -511,5 +506,32 @@ export class Scene {
     } else {
       return new Scene(ctx);
     }
+  }
+
+  private displayPromoUrl() {
+    const text = "betterbridgeway.org";
+    const fontSize = 24;
+    const padding = 10; // Padding around text
+    
+    // Set font to measure text dimensions
+    this.ctx.font = `bold ${fontSize}px sans-serif`;
+    const textMetrics = this.ctx.measureText(text);
+    
+    // Calculate positions
+    const x = this.ctx.canvas.width - textMetrics.width - 20;
+    const y = this.ctx.canvas.height - 20;
+    
+    // Draw white background
+    this.ctx.fillStyle = "white";
+    this.ctx.fillRect(
+      x - padding,
+      y - fontSize - padding/2,
+      textMetrics.width + padding * 2,
+      fontSize + padding
+    );
+    
+    // Draw text
+    this.ctx.fillStyle = "black";
+    this.ctx.fillText(text, x, y);
   }
 }
