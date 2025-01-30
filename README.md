@@ -51,46 +51,50 @@ The previous levels showed the challenges with the existing infrastructure.  Now
 
 Download Visual Studio Code and open the project in the [Docker Dev Container](https://code.visualstudio.com/docs/devcontainers/containers) when prompted. 
 
+### Development Process
 
-## How to change
+1. Create a feature branch from `develop`:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
 
-First, you can serve a develop server as follows.
+2. Start the development server:
+   ```bash
+   npm install
+   npm run serve
+   ```
 
-```bash
-npm install
-npm run serve
-```
+3. Access the game at http://localhost:8080/. The page will automatically reload when you make changes.
 
-Then, you can access to <http://localhost:8080/>, which will be loaded automatically if file changes detected.
+4. Make your changes and commit them with descriptive messages following the conventional commit format:
+   ```bash
+   git add .
+   git commit -m "feat: description of your feature"
+   # or "fix:", "docs:", etc.
+   ```
 
-You can modify [src/index.ts](src/index.ts) as you want.
-
-## Build
-
-```bash
-npm install
-npm run build
-```
-
-Then, you get `./dist` directory. The file structure should be the following.
-
-```
-dist/
-├── bundle.js
-├── index.html
-└── src
-    └── index.d.ts
-```
-
-`bundle.js` includes an inline source map.
+5. Create a pull request to merge your changes into the `develop` branch.
 
 ### Deployment
 
 Static content is hosted at [Github Pages](https://aroller.github.io/better-bridgeway-builder/) for convenience and cost. 
 
-Deployment is handled by Github Actions pages.yml: `.github/workflows/pages.yml`.  
-The action builds the project static pages and deploys the content, currently when committed to the main branch.
+The deployment process is automated through GitHub Actions (`.github/workflows/pages.yml`):
 
+1. Deployment is triggered by either:
+   - Pushing a version tag (e.g., `v1`, `v2`, etc.)
+   - Manual trigger from the GitHub Actions tab
+
+2. The workflow will:
+   - Install dependencies
+   - Build the project
+   - Deploy to GitHub Pages
+
+To create a new release:
+```bash
+git tag v1  # increment number as needed
+git push origin v1
+```
 
 ## Application Development 
 
