@@ -33,6 +33,7 @@ export class Scene {
   private scenario: Scenario;
   private scenarioProducer: ScenarioProducer;
   private crashedEmergencyVehicles: number = 0;
+  private promoUrlArea: {x: number, y: number, width: number, height: number} | null = null;
 
   /**
    * Creates a new Scene instance.
@@ -172,6 +173,17 @@ export class Scene {
     const scaleY = this.ctx.canvas.height / rect.height;
     const x = (clientX - rect.left) * scaleX;
     const y = (clientY - rect.top) * scaleY;
+
+    // Check if click is in promo URL area
+    if (this.promoUrlArea && 
+        x >= this.promoUrlArea.x && 
+        x <= this.promoUrlArea.x + this.promoUrlArea.width &&
+        y >= this.promoUrlArea.y && 
+        y <= this.promoUrlArea.y + this.promoUrlArea.height) {
+      window.open("https://betterbridgeway.org", "_blank");
+      return;
+    }
+
     this.playerDestination = new Point(x, y);
   }
   /**
@@ -511,27 +523,42 @@ export class Scene {
   private displayPromoUrl() {
     const text = "betterbridgeway.org";
     const fontSize = 24;
-    const padding = 10; // Padding around text
+    const padding = 10;
     
-    // Set font to measure text dimensions
     this.ctx.font = `bold ${fontSize}px sans-serif`;
     const textMetrics = this.ctx.measureText(text);
     
-    // Calculate positions
     const x = this.ctx.canvas.width - textMetrics.width - 20;
     const y = this.ctx.canvas.height - 20;
+    
+    // Store clickable area
+    this.promoUrlArea = {
+      x: x - padding,
+      y: y - fontSize - padding/2,
+      width: textMetrics.width + padding * 2,
+      height: fontSize + padding
+    };
     
     // Draw white background
     this.ctx.fillStyle = "white";
     this.ctx.fillRect(
-      x - padding,
-      y - fontSize - padding/2,
-      textMetrics.width + padding * 2,
-      fontSize + padding
+      this.promoUrlArea.x,
+      this.promoUrlArea.y,
+      this.promoUrlArea.width,
+      this.promoUrlArea.height
     );
     
     // Draw text
     this.ctx.fillStyle = "black";
     this.ctx.fillText(text, x, y);
+
+    // Add cursor pointer when hovering over the area
+    this.ctx.canvas.style.cursor = 
+      x >= this.promoUrlArea.x && 
+      x <= this.promoUrlArea.x + this.promoUrlArea.width &&
+      y >= this.promoUrlArea.y && 
+      y <= this.promoUrlArea.y + this.promoUrlArea.height 
+        ? 'pointer' 
+        : 'default';
   }
 }
