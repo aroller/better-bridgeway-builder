@@ -19,10 +19,10 @@ jobs:
     
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           
@@ -34,10 +34,11 @@ jobs:
         
       - name: Deploy Preview
         id: preview-deployment
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: preview-build-${{ github.event.pull_request.number }}
           path: dist
+          retention-days: 1
           
       - name: Set Preview URL
         id: preview-url
@@ -45,7 +46,7 @@ jobs:
           echo "url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
           
       - name: Comment PR
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const url = '${{ steps.preview-url.outputs.url }}';
