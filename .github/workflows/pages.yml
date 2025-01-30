@@ -2,11 +2,10 @@
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch, tags, or preview branches
+  # Runs on pushes targeting the default branch or a tag
   push:
     branches:
       - develop
-      - 'pr-preview-*'
     tags:
       - 'v[0-9]+'
   
@@ -55,7 +54,7 @@ jobs:
   # Deploy job
   deploy:
     needs: [create-release]
-    if: always() && (github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/heads/pr-preview-'))
+    if: always() && (github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/tags/v'))
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -76,7 +75,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: dist
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
