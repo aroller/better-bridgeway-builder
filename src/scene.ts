@@ -353,21 +353,26 @@ export class Scene {
   public displayDialogWithHtmlFromFile(scenarioKey: string) {
     // Create a div element for the dialog.
     const dialog = document.createElement("div");
-    dialog.style.position = "absolute";
+    dialog.style.position = "fixed";
     dialog.style.top = "50%";
     dialog.style.left = "50%";
     dialog.style.transform = "translate(-50%, -50%)";
-    dialog.style.width = "75%";
+    dialog.style.maxWidth = "800px";
+    dialog.style.width = "90%";
     dialog.style.backgroundColor = "white";
-    dialog.style.border = "1px solid black";
+    dialog.style.border = "none";
+    dialog.style.borderRadius = "10px";
+    dialog.style.boxShadow = "0 4px 6px rgba(0, 0, 0, 0.1)";
     dialog.style.padding = "20px";
     dialog.style.textAlign = "center";
-    dialog.style.opacity = "0.9";
+    dialog.style.opacity = "0.95";
+    dialog.style.zIndex = "1000";
 
     // Create an iframe element for the HTML page.
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
     iframe.style.height = "400px";
+    iframe.style.border = "none";
     const filePath = `${scenarioKey}.html`;
     iframe.src = filePath;
     dialog.appendChild(iframe);
@@ -379,58 +384,73 @@ export class Scene {
     link.textContent = "betterbridgeway.org";
     link.style.position = "absolute";
     link.style.left = "20px";
+    link.style.color = "#0066cc";
     link.title = "Learn more about Better Bridgeway";
     dialog.appendChild(link);
 
-    const levelButtonWidth = "100px";
-    const levelButtonPadding = "10px";
+    const buttonContainer = document.createElement("div");
+    buttonContainer.style.marginTop = "20px";
+    buttonContainer.style.display = "flex";
+    buttonContainer.style.justifyContent = "center";
+    buttonContainer.style.gap = "10px";
+
+    const levelButtonStyle = `
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #0066cc;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      min-width: 100px;
+      transition: background-color 0.2s;
+    `;
+
     // Add a button to replay the previous level
     const previousLevelButton = document.createElement("button");
     previousLevelButton.textContent = "<< Previous";
-    previousLevelButton.style.cursor = "pointer";
-    previousLevelButton.style.width = levelButtonWidth;
-    previousLevelButton.style.marginRight = levelButtonPadding;
+    previousLevelButton.style.cssText = levelButtonStyle;
     previousLevelButton.title = "Replay the previous level";
     previousLevelButton.addEventListener("click", () => {
       this.playNextLevel(this.scenario.previousScenarioKey);
       dialog.remove();
     });
-    dialog.appendChild(previousLevelButton);
+    buttonContainer.appendChild(previousLevelButton);
 
     // Add the continue button to the dialog.
     const playButton = document.createElement("button");
-    //show click pointer when hovering over the button
-    playButton.style.cursor = "pointer";
     playButton.textContent = "Play";
-    playButton.style.width = levelButtonWidth;
+    playButton.style.cssText = levelButtonStyle;
     playButton.title = "Play this level";
     playButton.addEventListener("click", () => {
-      // Remove the dialog from the DOM.
       dialog.remove();
     });
-    dialog.appendChild(playButton);
+    buttonContainer.appendChild(playButton);
 
     // Add a button to skip to the next level
     const nextLevelButton = document.createElement("button");
     nextLevelButton.textContent = "Next >>";
-    nextLevelButton.style.cursor = "pointer";
-    nextLevelButton.style.width = levelButtonWidth;
-    nextLevelButton.style.marginLeft = levelButtonPadding;
+    nextLevelButton.style.cssText = levelButtonStyle;
     nextLevelButton.title = "Skip to the next level";
     nextLevelButton.addEventListener("click", () => {
       this.playNextLevel(this.scenario.nextScenarioKey);
       dialog.remove();
     });
-    dialog.appendChild(nextLevelButton);
+    buttonContainer.appendChild(nextLevelButton);
 
-    // add a share button to the far right of the play button
+    dialog.appendChild(buttonContainer);
+
+    // add a share button
     const shareButton = document.createElement("button");
-    // use font awesome share icon
     shareButton.textContent = "\uf1e0";
-    shareButton.style.fontFamily = "FontAwesome";
-    shareButton.style.position = "absolute";
-    shareButton.style.cursor = "pointer";
-    shareButton.style.right = "20px";
+    shareButton.style.cssText = `
+      ${levelButtonStyle}
+      position: absolute;
+      right: 20px;
+      font-family: FontAwesome;
+      min-width: auto;
+      padding: 8px 12px;
+    `;
     shareButton.title = "Share this level";
     shareButton.addEventListener("click", () => {
       this.copyUrlToClipboard();
