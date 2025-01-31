@@ -463,9 +463,9 @@ export class ScenarioProducer {
         description = "Emergency vehicles need clear access through this corridor.";
         background = Background.FIRE_LANE;
         streetBuilder
+          .withParkingIncluded()
           .withDelivery(DeliveryType.CURBSIDE)
           .withCrosswalk(CrosswalkType.RFB)
-          // Add blue non-passing cars in both directions
           .withTraffic(
             TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.CAR)
               .withAvoidance(ObstacleAvoidanceType.BRAKE)
@@ -478,7 +478,6 @@ export class ScenarioProducer {
               .withFrequency(12)
               .withColor("blue"),
           )
-          // Add bicycles in the same vehicle lanes
           .withTraffic(
             TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.BICYCLE)
               .withAvoidance(ObstacleAvoidanceType.BRAKE)
@@ -489,7 +488,6 @@ export class ScenarioProducer {
               .withAvoidance(ObstacleAvoidanceType.BRAKE)
               .withFrequency(15),
           )
-          // Add ambulance that vehicles need to make way for
           .withAmbulance(false);
         break;
       case ScenarioKey.GAME_OVER:
