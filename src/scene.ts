@@ -368,6 +368,34 @@ export class Scene {
     dialog.style.opacity = "0.95";
     dialog.style.zIndex = "1000";
 
+    // Create a container for the top share button
+    const topContainer = document.createElement("div");
+    topContainer.style.display = "flex";
+    topContainer.style.justifyContent = "flex-end";
+    topContainer.style.marginBottom = "10px";
+
+    // add a share button
+    const shareButton = document.createElement("button");
+    shareButton.innerHTML = `<i class="fa fa-share-alt"></i> Share this level`;
+    shareButton.style.cssText = `
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #4a4a4a;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    `;
+    shareButton.title = "Share this level";
+    shareButton.addEventListener("click", () => {
+      this.copyUrlToClipboard();
+    });
+    topContainer.appendChild(shareButton);
+    dialog.appendChild(topContainer);
+
     // Create an iframe element for the HTML page.
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
@@ -376,17 +404,6 @@ export class Scene {
     const filePath = `${scenarioKey}.html`;
     iframe.src = filePath;
     dialog.appendChild(iframe);
-
-    // Add a link to betterbridgeway.org
-    const link = document.createElement("a");
-    link.href = "https://betterbridgeway.org";
-    link.target = "_blank";
-    link.textContent = "betterbridgeway.org";
-    link.style.position = "absolute";
-    link.style.left = "20px";
-    link.style.color = "#0066cc";
-    link.title = "Learn more about Better Bridgeway";
-    dialog.appendChild(link);
 
     const buttonContainer = document.createElement("div");
     buttonContainer.style.marginTop = "20px";
@@ -440,23 +457,6 @@ export class Scene {
 
     dialog.appendChild(buttonContainer);
 
-    // add a share button
-    const shareButton = document.createElement("button");
-    shareButton.textContent = "\uf1e0";
-    shareButton.style.cssText = `
-      ${levelButtonStyle}
-      position: absolute;
-      right: 20px;
-      font-family: FontAwesome;
-      min-width: auto;
-      padding: 8px 12px;
-    `;
-    shareButton.title = "Share this level";
-    shareButton.addEventListener("click", () => {
-      this.copyUrlToClipboard();
-    });
-    dialog.appendChild(shareButton);
-
     // Add the dialog to the DOM.
     document.body.appendChild(dialog);
 
@@ -480,21 +480,27 @@ export class Scene {
     navigator.clipboard.writeText(url).then(() => {
       // show a message that the url was copied to the clipboard
       const message = document.createElement("div");
-      message.style.position = "absolute";
-      message.style.top = "50%";
-      message.style.left = "50%";
-      message.style.transform = "translate(-50%, -50%)";
-      message.style.width = "75%";
-      message.style.backgroundColor = "white";
-      message.style.border = "1px solid black";
-      message.style.padding = "20px";
-      message.style.textAlign = "center";
-      message.style.opacity = "0.9";
-      message.textContent = `URL for this level copied to clipboard ...`;
+      message.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 4px;
+        font-size: 14px;
+        z-index: 2000;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        text-align: center;
+      `;
+      message.textContent = `Level URL copied to clipboard`;
       document.body.appendChild(message);
       setTimeout(() => {
-        message.remove();
-      }, 4000);
+        message.style.transition = 'opacity 0.3s ease';
+        message.style.opacity = '0';
+        setTimeout(() => message.remove(), 300);
+      }, 2000);
     });
   }
 
