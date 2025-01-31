@@ -100,6 +100,7 @@ export enum ScenarioKey {
   BIKE_LANES_PARKING = "bike-lanes-parking",
   CYCLE_TRACK = "cycle-track",
   CYCLE_TRACK_AMBULANCE = "cycle-track-ambulance",
+  FIRE_LANE = "fire-lane",
   GAME_OVER = "game-over",
 }
 
@@ -136,6 +137,7 @@ export enum Background {
   ACCESSIBLE = "images/scene/better-bridgeway-background-accessible.png",
   BIKE_LANES = "images/scene/better-bridgeway-background-bike-lanes.png",
   CYCLETRACK = "images/scene/better-bridgeway-background-cycletrack.png",
+  FIRE_LANE = "images/scene/better-bridgeway-background-fire-lane.png",
 }
 
 /** Indicates the type of crosswalk to be implemented on the roadway. */
@@ -144,6 +146,7 @@ export enum CrosswalkType {
   BASIC = "basic", // minimal paint
   DAYLIGHT = "daylight", // removed parking to improve visibility
   SIGNAL = "signal", // Rapid Flashing Beacon
+  RFB = "rfb",
 }
 
 /**
@@ -455,6 +458,40 @@ export class ScenarioProducer {
         player = this.frogPlayer(PlayerSpeed.SLOW);
         background = Background.CYCLETRACK;
         break;
+      case ScenarioKey.FIRE_LANE:
+        title = "Fire Lane - Emergency Access Only";
+        description = "Emergency vehicles need clear access through this corridor.";
+        background = Background.FIRE_LANE;
+        streetBuilder
+          .withDelivery(DeliveryType.CURBSIDE)
+          .withCrosswalk(CrosswalkType.RFB)
+          // Add blue non-passing cars in both directions
+          .withTraffic(
+            TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withFrequency(10)
+              .withColor("blue"),
+          )
+          .withTraffic(
+            TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.CAR)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withFrequency(12)
+              .withColor("blue"),
+          )
+          // Add bicycles in the same vehicle lanes
+          .withTraffic(
+            TrafficRequest.of(Lane.NORTHBOUND_VEHICLE, ObstacleType.BICYCLE)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withFrequency(15),
+          )
+          .withTraffic(
+            TrafficRequest.of(Lane.SOUTHBOUND_VEHICLE, ObstacleType.BICYCLE)
+              .withAvoidance(ObstacleAvoidanceType.BRAKE)
+              .withFrequency(15),
+          )
+          // Add ambulance that vehicles need to make way for
+          .withAmbulance(false);
+        break;
       case ScenarioKey.GAME_OVER:
       default:
         title = "Game Over - Nobody Wins if Bridgeway is Not Improved";
@@ -610,6 +647,7 @@ class TrafficRequest {
     public readonly frequency: number = HEAVY_TRAFFIC_FREQUENCY,
     public readonly avoidance: ObstacleAvoidanceType = ObstacleAvoidanceType.NONE,
     public readonly crash: boolean = false,
+    public readonly color: string = "",
   ) {}
 
   public static of(lane: Lane, type: ObstacleType): TrafficRequest {
@@ -624,6 +662,7 @@ class TrafficRequest {
       frequency,
       this.avoidance,
       this.crash,
+      this.color,
     );
   }
   withAvoidance(avoidance: ObstacleAvoidanceType): TrafficRequest {
@@ -634,6 +673,7 @@ class TrafficRequest {
       this.frequency,
       avoidance,
       this.crash,
+      this.color,
     );
   }
   withCrash(crash: boolean = true): TrafficRequest {
@@ -644,6 +684,7 @@ class TrafficRequest {
       this.frequency,
       this.avoidance,
       crash,
+      this.color,
     );
   }
   withSpeed(speed: ObstacleSpeeds): TrafficRequest {
@@ -654,6 +695,18 @@ class TrafficRequest {
       this.frequency,
       this.avoidance,
       this.crash,
+      this.color,
+    );
+  }
+  withColor(color: string): TrafficRequest {
+    return new TrafficRequest(
+      this.lane,
+      this.type,
+      this.speed,
+      this.frequency,
+      this.avoidance,
+      this.crash,
+      color,
     );
   }
 }
@@ -1041,6 +1094,7 @@ class StreetBuilder {
         direction,
         request.speed,
         request.avoidance,
+        request.color,
       );
       // always add cars
       producers.push(new ObstacleProducer(vehicleTemplate, request.frequency));
@@ -1225,6 +1279,7 @@ class StreetBuilder {
             LaneDirection.RIGHT,
             speed,
             ObstacleAvoidanceType.NONE,
+            "",
           );
       const DO_NOT_ASSIGN_X = false;
       const DO_NOT_RANDOMIZE = false;
@@ -1369,12 +1424,14 @@ class StreetBuilder {
   /** Regular cars that populate the lanes.
    * The car is a red racer if obstacleAvoidance will not stop for the player.
    * The car is a blue wagon if obstacleAvoidance will stop for the player.
+   * If a specific color is provided, that color car will be used.
    *
    * @param x
    * @param y
    * @param direction
    * @param speed
    * @param obstacleAvoidance
+   * @param color Optional color to override default car color
    * @returns
    */
   private vehicleObstacle(
@@ -1383,14 +1440,20 @@ class StreetBuilder {
     direction: LaneDirection,
     speed: number = ObstacleSpeeds.MEDIUM,
     obstacleAvoidance: ObstacleAvoidanceType,
+    color: string = "",
   ): Obstacle {
     const racer =
       (speed != ObstacleSpeeds.STOPPED &&
         obstacleAvoidance === ObstacleAvoidanceType.NONE) ||
       obstacleAvoidance === ObstacleAvoidanceType.PASS;
-    const imageSrc = racer
-      ? "images/obstacles/car-racer.png"
-      : "images/obstacles/car-wagon.png";
+    
+    let imageSrc = "";
+    if (color === "blue") {
+      imageSrc = "images/obstacles/car-wagon.png";
+    } else {
+      imageSrc = racer ? "images/obstacles/car-racer.png" : "images/obstacles/car-wagon.png";
+    }
+    
     const imageWidth = racer ? 512 : 720;
     const imageHeight = racer ? 285 : 332;
     const imageScale = racer ? 0.13 : 0.1;
