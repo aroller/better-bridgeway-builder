@@ -151,19 +151,37 @@ class AmbulanceTrafficObstacleYCalculator implements ObstacleYCalculator {
     obstacles: readonly Obstacle[],
   ): number {
     // pull over for emergency vehicles
-    const maxEmergencyDistance = Math.floor(target.width * 0.6);
+    const maxEmergencyDistance = Math.floor(target.width * 0.3); // Reduced from 0.6 to be more conservative
     const distanceFromOriginal = Math.abs(target.originalY - target.y);
+    
+    // Define lane boundaries based on original position
+    // A lane is typically 2x the height of a vehicle
+    const laneHeight = target.height * 2;
+    const laneCenterY = target.originalY + target.height / 2;
+    const laneTopBoundary = laneCenterY - laneHeight / 2;
+    const laneBottomBoundary = laneCenterY + laneHeight / 2;
+    
+    // Helper to check if a position is within lane
+    const isWithinLane = (y: number) => y >= laneTopBoundary && y <= laneBottomBoundary;
+    
     if (target.emergencyVehicleDetected(obstacles)) {
       if (target.originalSpeed !== ObstacleSpeeds.STOPPED) {
-        //far enough if hitting something
         if (distanceFromOriginal < maxEmergencyDistance) {
-          if (!target.collisionDetected(obstacles)) {
-            return target.yToMoveRight();
+          const proposedY = target.yToMoveRight();
+          // Check if the entire vehicle would stay within lane
+          if (isWithinLane(proposedY) && isWithinLane(proposedY + target.height)) {
+            if (!target.collisionDetected(obstacles)) {
+              return proposedY;
+            }
           }
         }
       }
     } else if (distanceFromOriginal > 5) {
-      return target.yToMoveLeft();
+      // Return to original position if no emergency vehicle
+      const proposedY = target.yToMoveLeft();
+      if (isWithinLane(proposedY) && isWithinLane(proposedY + target.height)) {
+        return proposedY;
+      }
     }
     return target.y;
   }
@@ -540,6 +558,36 @@ export class Lane {
     public readonly obstacles: readonly Obstacle[] = [],
   ) {}
 
+  /** Get the top boundary y-coordinate of the lane */
+  public get topBoundary(): number {
+    return this.centerY - this.laneWidth / 2;
+  }
+
+  /** Get the bottom boundary y-coordinate of the lane */
+  public get bottomBoundary(): number {
+    return this.centerY + this.laneWidth / 2;
+  }
+
+  /** Check if a y-coordinate is within the lane boundaries */
+  public isWithinBoundaries(y: number): boolean {
+    return y >= this.topBoundary && y <= this.bottomBoundary;
+  }
+
+  /** Check if an obstacle is completely within the lane boundaries */
+  public isObstacleWithinBoundaries(obstacle: Obstacle): boolean {
+    const obstacleTop = obstacle.y;
+    const obstacleBottom = obstacle.y + obstacle.height;
+    const withinBoundaries = this.isWithinBoundaries(obstacleTop) && this.isWithinBoundaries(obstacleBottom);
+    if (!withinBoundaries) {
+      console.log(`Lane boundary violation:
+        Obstacle: ${obstacle.image?.src || 'unknown'} 
+        Position: (${obstacle.x}, ${obstacle.y})
+        Size: ${obstacle.width}x${obstacle.height}
+        Lane boundaries: ${this.topBoundary} to ${this.bottomBoundary}`);
+    }
+    return withinBoundaries;
+  }
+
   /**
    * Adds an obstacle to the lane.
    * @param obstacle - The obstacle to add.
@@ -565,7 +613,12 @@ export class Lane {
   public updateObstacles(player: Player, obstacles: readonly Obstacle[], crashCallback: (obstacle:Obstacle) => void): Lane {
     // remove obstacles off screen.  Far off screen for realistic traffic behavior. 
     const newObstacles = this.obstacles
-      .map((obstacle) => obstacle.moveObstacle(player, obstacles, crashCallback))
+      .map((obstacle) => {
+        const movedObstacle = obstacle.moveObstacle(player, obstacles, crashCallback);
+        // Check if the moved obstacle is within boundaries
+        this.isObstacleWithinBoundaries(movedObstacle);
+        return movedObstacle;
+      })
       .filter((obstacle) => {
         if (this.direction === LaneDirection.LEFT) {
           return obstacle.x + obstacle.width > -this.streetLength;
