@@ -54,6 +54,13 @@ export class Scene {
       streetLength,
       this.topOfStreetY,
     );
+
+    // Check URL parameters for initial level
+    const urlLevel = Scene.getLevelHttpParamValue();
+    if (urlLevel) {
+      scenarioKey = urlLevel;
+    }
+
     //assign defaults to make instances happy
     this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.player = this.scenario.player;
@@ -93,6 +100,12 @@ export class Scene {
     } else {
       this.level = ScenarioProducer.getLevelForScenarioKey(scenarioKey);
     }
+    
+    // Update URL to reflect current level
+    const url = new URL(window.location.href);
+    url.searchParams.set(Scene.getLevelHttpParamKey(), scenarioKey.toString());
+    window.history.replaceState({}, '', url.toString());
+
     this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.street = this.scenario.street;
     this.player = this.scenario.player;
@@ -429,7 +442,11 @@ export class Scene {
     previousLevelButton.style.cssText = levelButtonStyle;
     previousLevelButton.title = "Replay the previous level";
     previousLevelButton.addEventListener("click", () => {
-      this.playNextLevel(this.scenario.previousScenarioKey);
+      const previousLevel = this.scenario.previousScenarioKey;
+      const url = new URL(window.location.href);
+      url.searchParams.set(Scene.getLevelHttpParamKey(), previousLevel.toString());
+      window.history.replaceState({}, '', url.toString());
+      this.playNextLevel(previousLevel);
       dialog.remove();
     });
     buttonContainer.appendChild(previousLevelButton);
@@ -450,7 +467,11 @@ export class Scene {
     nextLevelButton.style.cssText = levelButtonStyle;
     nextLevelButton.title = "Skip to the next level";
     nextLevelButton.addEventListener("click", () => {
-      this.playNextLevel(this.scenario.nextScenarioKey);
+      const nextLevel = this.scenario.nextScenarioKey;
+      const url = new URL(window.location.href);
+      url.searchParams.set(Scene.getLevelHttpParamKey(), nextLevel.toString());
+      window.history.replaceState({}, '', url.toString());
+      this.playNextLevel(nextLevel);
       dialog.remove();
     });
     buttonContainer.appendChild(nextLevelButton);
