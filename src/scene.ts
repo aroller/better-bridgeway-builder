@@ -34,6 +34,7 @@ export class Scene {
   private scenarioProducer: ScenarioProducer;
   private crashedEmergencyVehicles: number = 0;
   private promoUrlArea: {x: number, y: number, width: number, height: number} | null = null;
+  private exitButtonArea: {x: number, y: number, width: number, height: number} | null = null;
 
   /**
    * Creates a new Scene instance.
@@ -187,6 +188,16 @@ export class Scene {
     const x = (clientX - rect.left) * scaleX;
     const y = (clientY - rect.top) * scaleY;
 
+    // Check if click is in exit button area
+    if (this.exitButtonArea && 
+        x >= this.exitButtonArea.x && 
+        x <= this.exitButtonArea.x + this.exitButtonArea.width &&
+        y >= this.exitButtonArea.y && 
+        y <= this.exitButtonArea.y + this.exitButtonArea.height) {
+      this.displayDialogWithHtmlFromFile(this.scenario.key);
+      return;
+    }
+
     // Check if click is in promo URL area
     if (this.promoUrlArea && 
         x >= this.promoUrlArea.x && 
@@ -278,6 +289,7 @@ export class Scene {
     this.street.draw(this.ctx);
     this.displayScoreboard();
     this.displayPromoUrl();
+    this.displayExitButton();
   }
 
   private nextAttemptOrLevelIfReady() {
@@ -607,5 +619,43 @@ export class Scene {
       y <= this.promoUrlArea.y + this.promoUrlArea.height 
         ? 'pointer' 
         : 'default';
+  }
+
+  private displayExitButton() {
+    const text = "Exit";
+    const fontSize = 24;
+    const padding = 10;
+    const margin = 20; // margin from the edge
+    
+    this.ctx.font = `bold ${fontSize}px sans-serif`;
+    const textMetrics = this.ctx.measureText(text);
+    
+    // Position in top right corner
+    const x = this.ctx.canvas.width - textMetrics.width - margin;
+    const y = margin + fontSize; // Align with other top elements
+    
+    // Store clickable area
+    this.exitButtonArea = {
+      x: x - padding,
+      y: y - fontSize - padding/2,
+      width: textMetrics.width + padding * 2,
+      height: fontSize + padding
+    };
+    
+    // Draw button background with rounded corners
+    this.ctx.fillStyle = "#0066cc";
+    this.ctx.beginPath();
+    this.ctx.roundRect(
+      this.exitButtonArea.x,
+      this.exitButtonArea.y,
+      this.exitButtonArea.width,
+      this.exitButtonArea.height,
+      5 // border radius
+    );
+    this.ctx.fill();
+    
+    // Draw text
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(text, x, y);
   }
 }
