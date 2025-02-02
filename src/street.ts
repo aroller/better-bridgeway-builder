@@ -151,25 +151,16 @@ class AmbulanceTrafficObstacleYCalculator implements ObstacleYCalculator {
     obstacles: readonly Obstacle[],
   ): number {
     // pull over for emergency vehicles
-    const maxEmergencyDistance = Math.floor(target.width * 0.3); // Reduced from 0.6 to be more conservative
+    const maxEmergencyDistance = Math.floor(target.width * 0.3);
     const distanceFromOriginal = Math.abs(target.originalY - target.y);
-    
-    // Define lane boundaries based on original position
-    // A lane is typically 2x the height of a vehicle
-    const laneHeight = target.height * 2;
-    const laneCenterY = target.originalY + target.height / 2;
-    const laneTopBoundary = laneCenterY - laneHeight / 2;
-    const laneBottomBoundary = laneCenterY + laneHeight / 2;
-    
-    // Helper to check if a position is within lane
-    const isWithinLane = (y: number) => y >= laneTopBoundary && y <= laneBottomBoundary;
     
     if (target.emergencyVehicleDetected(obstacles)) {
       if (target.originalSpeed !== ObstacleSpeeds.STOPPED) {
         if (distanceFromOriginal < maxEmergencyDistance) {
           const proposedY = target.yToMoveRight();
           // Check if the entire vehicle would stay within lane
-          if (isWithinLane(proposedY) && isWithinLane(proposedY + target.height)) {
+          if (target.isWithinLaneBoundaries(proposedY) && 
+              target.isWithinLaneBoundaries(proposedY + target.height)) {
             if (!target.collisionDetected(obstacles)) {
               return proposedY;
             }
@@ -179,7 +170,8 @@ class AmbulanceTrafficObstacleYCalculator implements ObstacleYCalculator {
     } else if (distanceFromOriginal > 5) {
       // Return to original position if no emergency vehicle
       const proposedY = target.yToMoveLeft();
-      if (isWithinLane(proposedY) && isWithinLane(proposedY + target.height)) {
+      if (target.isWithinLaneBoundaries(proposedY) && 
+          target.isWithinLaneBoundaries(proposedY + target.height)) {
         return proposedY;
       }
     }
@@ -212,6 +204,8 @@ export class Obstacle extends GameObject {
     ObstacleAvoidanceType.PASS
       ? [new PassObstacleYCalculator()]
       : [new AmbulanceTrafficObstacleYCalculator()],
+    public readonly laneTopBoundary: number = y - height,
+    public readonly laneBottomBoundary: number = y + height * 2,
   ) {
     // some obstacles are hidden so image can be undefined
     super(x, y, width, height, image, direction === LaneDirection.LEFT);
@@ -225,6 +219,11 @@ export class Obstacle extends GameObject {
     const image = new Image();
     image.src = Obstacle.getCrashedImageSrc();
     return image;
+  }
+
+  /** Check if a y-coordinate is within this obstacle's lane boundaries */
+  public isWithinLaneBoundaries(y: number): boolean {
+    return y >= this.laneTopBoundary && y <= this.laneBottomBoundary;
   }
 
   /** Helps the producers create a new obstacle in the given location.  */
@@ -244,6 +243,8 @@ export class Obstacle extends GameObject {
       this.originalY,
       this.speedCalculators,
       this.yCalculators,
+      this.laneTopBoundary,
+      this.laneBottomBoundary,
     );
   }
 
@@ -263,6 +264,8 @@ export class Obstacle extends GameObject {
       this.originalY,
       this.speedCalculators,
       this.yCalculators,
+      this.laneTopBoundary,
+      this.laneBottomBoundary,
     );
   }
 
@@ -297,6 +300,8 @@ export class Obstacle extends GameObject {
       this.originalY,
       this.speedCalculators,
       this.yCalculators,
+      this.laneTopBoundary,
+      this.laneBottomBoundary,
     );
   }
 
@@ -578,8 +583,11 @@ export class Lane {
     const obstacleTop = obstacle.y;
     const obstacleBottom = obstacle.y + obstacle.height;
     const withinBoundaries = this.isWithinBoundaries(obstacleTop) && this.isWithinBoundaries(obstacleBottom);
-    if (!withinBoundaries) {
-      // Only log if there's an actual violation and only show relevant info
+    
+    // Only log if there's an actual violation AND the obstacle's own boundary check would have allowed it
+    if (!withinBoundaries && 
+        obstacle.isWithinLaneBoundaries(obstacleTop) && 
+        obstacle.isWithinLaneBoundaries(obstacleBottom)) {
       const imageName = obstacle.image?.src.split('/').pop() || 'unknown';
       console.log(`Lane violation: ${imageName} at y:${Math.round(obstacle.y)} (lane: ${Math.round(this.topBoundary)}-${Math.round(this.bottomBoundary)})`);
     }
@@ -592,7 +600,27 @@ export class Lane {
    * @returns A new instance of Lane with the added obstacle.
    */
   public addObstacle(obstacle: Obstacle): Lane {
-    const newObstacles = [...this.obstacles, obstacle];
+    // Create a new obstacle with the lane's boundaries
+    const obstacleWithBoundaries = new Obstacle(
+      obstacle.x,
+      obstacle.y,
+      obstacle.width,
+      obstacle.height,
+      obstacle.speed,
+      obstacle.direction,
+      obstacle.image,
+      obstacle.avoidance,
+      obstacle.detectCollisions,
+      obstacle.emergencyVehicle,
+      obstacle.originalSpeed,
+      obstacle.originalY,
+      obstacle.speedCalculators,
+      obstacle.yCalculators,
+      this.topBoundary,
+      this.bottomBoundary,
+    );
+    
+    const newObstacles = [...this.obstacles, obstacleWithBoundaries];
     return new Lane(
       this.direction,
       this.laneWidth,
