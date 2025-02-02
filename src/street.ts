@@ -579,11 +579,9 @@ export class Lane {
     const obstacleBottom = obstacle.y + obstacle.height;
     const withinBoundaries = this.isWithinBoundaries(obstacleTop) && this.isWithinBoundaries(obstacleBottom);
     if (!withinBoundaries) {
-      console.log(`Lane boundary violation:
-        Obstacle: ${obstacle.image?.src || 'unknown'} 
-        Position: (${obstacle.x}, ${obstacle.y})
-        Size: ${obstacle.width}x${obstacle.height}
-        Lane boundaries: ${this.topBoundary} to ${this.bottomBoundary}`);
+      // Only log if there's an actual violation and only show relevant info
+      const imageName = obstacle.image?.src.split('/').pop() || 'unknown';
+      console.log(`Lane violation: ${imageName} at y:${Math.round(obstacle.y)} (lane: ${Math.round(this.topBoundary)}-${Math.round(this.bottomBoundary)})`);
     }
     return withinBoundaries;
   }
