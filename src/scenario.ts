@@ -424,7 +424,7 @@ export class ScenarioProducer {
               .withFrequency(HEAVY_TRAFFIC_FREQUENCY),
           );
 
-        player = this.curbsideDeliveryPlayer(PlayerSpeed.SLOW);
+        player = this.curbsideDeliveryPlayer(PlayerSpeed.NORMAL);
         background = Background.BIKE_LANES;
         break;
       case ScenarioKey.CYCLE_TRACK:
