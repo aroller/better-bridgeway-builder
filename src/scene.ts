@@ -34,6 +34,7 @@ export class Scene {
   private scenarioProducer: ScenarioProducer;
   private crashedEmergencyVehicles: number = 0;
   private promoUrlArea: {x: number, y: number, width: number, height: number} | null = null;
+  private exitButtonArea: {x: number, y: number, width: number, height: number} | null = null;
 
   /**
    * Creates a new Scene instance.
@@ -54,6 +55,13 @@ export class Scene {
       streetLength,
       this.topOfStreetY,
     );
+
+    // Check URL parameters for initial level
+    const urlLevel = Scene.getLevelHttpParamValue();
+    if (urlLevel) {
+      scenarioKey = urlLevel;
+    }
+
     //assign defaults to make instances happy
     this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.player = this.scenario.player;
@@ -93,6 +101,12 @@ export class Scene {
     } else {
       this.level = ScenarioProducer.getLevelForScenarioKey(scenarioKey);
     }
+    
+    // Update URL to reflect current level
+    const url = new URL(window.location.href);
+    url.searchParams.set(Scene.getLevelHttpParamKey(), scenarioKey.toString());
+    window.history.replaceState({}, '', url.toString());
+
     this.scenario = this.scenarioProducer.getScenario(scenarioKey);
     this.street = this.scenario.street;
     this.player = this.scenario.player;
@@ -173,6 +187,16 @@ export class Scene {
     const scaleY = this.ctx.canvas.height / rect.height;
     const x = (clientX - rect.left) * scaleX;
     const y = (clientY - rect.top) * scaleY;
+
+    // Check if click is in exit button area
+    if (this.exitButtonArea && 
+        x >= this.exitButtonArea.x && 
+        x <= this.exitButtonArea.x + this.exitButtonArea.width &&
+        y >= this.exitButtonArea.y && 
+        y <= this.exitButtonArea.y + this.exitButtonArea.height) {
+      this.displayDialogWithHtmlFromFile(this.scenario.key);
+      return;
+    }
 
     // Check if click is in promo URL area
     if (this.promoUrlArea && 
@@ -265,6 +289,7 @@ export class Scene {
     this.street.draw(this.ctx);
     this.displayScoreboard();
     this.displayPromoUrl();
+    this.displayExitButton();
   }
 
   private nextAttemptOrLevelIfReady() {
@@ -429,7 +454,11 @@ export class Scene {
     previousLevelButton.style.cssText = levelButtonStyle;
     previousLevelButton.title = "Replay the previous level";
     previousLevelButton.addEventListener("click", () => {
-      this.playNextLevel(this.scenario.previousScenarioKey);
+      const previousLevel = this.scenario.previousScenarioKey;
+      const url = new URL(window.location.href);
+      url.searchParams.set(Scene.getLevelHttpParamKey(), previousLevel.toString());
+      window.history.replaceState({}, '', url.toString());
+      this.playNextLevel(previousLevel);
       dialog.remove();
     });
     buttonContainer.appendChild(previousLevelButton);
@@ -450,7 +479,11 @@ export class Scene {
     nextLevelButton.style.cssText = levelButtonStyle;
     nextLevelButton.title = "Skip to the next level";
     nextLevelButton.addEventListener("click", () => {
-      this.playNextLevel(this.scenario.nextScenarioKey);
+      const nextLevel = this.scenario.nextScenarioKey;
+      const url = new URL(window.location.href);
+      url.searchParams.set(Scene.getLevelHttpParamKey(), nextLevel.toString());
+      window.history.replaceState({}, '', url.toString());
+      this.playNextLevel(nextLevel);
       dialog.remove();
     });
     buttonContainer.appendChild(nextLevelButton);
@@ -586,5 +619,43 @@ export class Scene {
       y <= this.promoUrlArea.y + this.promoUrlArea.height 
         ? 'pointer' 
         : 'default';
+  }
+
+  private displayExitButton() {
+    const text = "Exit";
+    const fontSize = 24;
+    const padding = 10;
+    const margin = 20; // margin from the edge
+    
+    this.ctx.font = `bold ${fontSize}px sans-serif`;
+    const textMetrics = this.ctx.measureText(text);
+    
+    // Position in top right corner
+    const x = this.ctx.canvas.width - textMetrics.width - margin;
+    const y = margin + fontSize; // Align with other top elements
+    
+    // Store clickable area
+    this.exitButtonArea = {
+      x: x - padding,
+      y: y - fontSize - padding/2,
+      width: textMetrics.width + padding * 2,
+      height: fontSize + padding
+    };
+    
+    // Draw button background with rounded corners
+    this.ctx.fillStyle = "#0066cc";
+    this.ctx.beginPath();
+    this.ctx.roundRect(
+      this.exitButtonArea.x,
+      this.exitButtonArea.y,
+      this.exitButtonArea.width,
+      this.exitButtonArea.height,
+      5 // border radius
+    );
+    this.ctx.fill();
+    
+    // Draw text
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(text, x, y);
   }
 }

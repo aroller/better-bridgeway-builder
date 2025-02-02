@@ -24,5 +24,6 @@
     }
   },
   "postCreateCommand": "npm install",
-  "runArgs": ["--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"]
+  "runArgs": ["--network=host"],
+  "forwardPorts": [8080]
 }
